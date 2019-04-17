@@ -12,8 +12,10 @@ Currently supported endponts:
   
   - Auth Methods:
     - Token
+    
   - Secret Engines:
     - Consul
+    
   - Secret Backend:
     - Init
     - Health
