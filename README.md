@@ -10,20 +10,18 @@ The Scala client for HashiCorp's Vault.
 
 Currently supported endpoints:
   
-- Auth Methods:
-  - Token
-  
-- Secret Engines:
-  - Consul
-  
-- Secret Backend:
-  - Init
-  - Health
-  - Seal/Unseal/Seal status
-  - Leader/Step down
-  - Generate Root
-  - Leases
-  - Policy
+  - Auth Methods:
+    - Token
+  - Secret Engines:
+    - Consul
+  - Secret Backend:
+    - Init
+    - Health
+    - Seal/Unseal/Seal status
+    - Leader/Step down
+    - Generate Root
+    - Leases
+    - Policy
 
 [Latest scaladoc documentation](https://ist-dsi.github.io/scala-vault/latest/api/pt/tecnico/dsi/scala-vault/index.html)
 

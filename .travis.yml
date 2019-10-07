@@ -1,11 +1,14 @@
 language: scala
-sudo: false
 
 scala:
   - 2.12.8
+  - 2.13.0
+
+services: docker
 
 jdk:
-  - oraclejdk8
+  - openjdk8
+  - openjdk11
 
 before_cache:
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
@@ -16,9 +19,14 @@ cache:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
 
+before_script:
+  #- docker run -e SKIP_SETCAP=true --cap-add IPC_LOCK -d --name=dev-vault -p 8200:8200 vault
+  - |
+    docker run --cap-add IPC_LOCK -d --name=dev-vault -p 8200:8200 vault
+
 script:
-   - sbt compile
-#  - sbt coverage test
+  - sbt compile
+  - sbt coverage test
 
 #after_success:
 #  - sbt coverageReport codacyCoverage

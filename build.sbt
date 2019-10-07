@@ -1,81 +1,72 @@
 organization := "pt.tecnico.dsi"
 name := "scala-vault"
+version := "0.4.107-SNAPSHOT"
 
 // ======================================================================================================================
 // ==== Compile Options =================================================================================================
 // ======================================================================================================================
 javacOptions ++= Seq("-Xlint", "-encoding", "UTF-8", "-Dfile.encoding=utf-8")
-scalaVersion := "2.12.8"
-crossScalaVersions := Seq(scalaVersion.value, "2.13.0-RC1")
+scalaVersion := "2.13.1"
 
 scalacOptions ++= Seq(
-  "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
   "-encoding", "utf-8",                // Specify character encoding used by source files.
   "-explaintypes",                     // Explain type errors in more detail.
-  "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
   "-language:higherKinds",             // Allow higher-kinded types
   "-language:implicitConversions",     // Explicitly enables the implicit conversions feature
-  "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
+  "-Ybackend-parallelism", "4",        // Maximum worker threads for backend.
+  "-Ybackend-worker-queue", "10",      // Backend threads worker queue size.
+  "-Ymacro-annotations",               // Enable support for macro annotations, formerly in macro paradise.
   "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
-  "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
-  "-Xmigration:2.13.0",                // Warn about constructs whose behavior may have changed since version.
-  "-Xfuture",                          // Turn on future language features.
-  "-Xlint",                            // Enables every warning. scalac -Xlint:help for a list and explanation
-  "-Ywarn-dead-code",                  // Warn when dead code is identified.
-  "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
-  "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
-  "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-  "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-  "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-  //"-Ywarn-value-discard",              // Warn when non-Unit expression results are unused.
-  "-Ybackend-parallelism", "4",        // Maximum worker threads for backend
-) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
-  case Some((2, 12)) => Seq(
-    "-Ypartial-unification",             // Enable partial unification in type constructor inference
-    "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-    "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
-    "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
-    "-Ywarn-unused:privates",            // Warn if a private member is unused.
-    "-Ywarn-unused:locals",              // Warn if a local definition is unused.
-    "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
-    "-Ywarn-unused:params",              // Warn if a value parameter is unused.
-    "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
-  )
-  case _ => Nil
-})
+  "-Xmigration:2.14.0",                // Warn about constructs whose behavior may have changed since version.
+  "-Xfatal-warnings", "-Werror",       // Fail the compilation if there are any warnings.
+  "-Xlint:_",                          // Enables every warning. scalac -Xlint:help for a list and explanation
+  "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
+  "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
+  "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
+  "-Wdead-code",                       // Warn when dead code is identified.
+  "-Wextra-implicit",                  // Warn when more than one implicit parameter section is defined.
+  "-Wnumeric-widen",                   // Warn when numerics are widened.
+  "-Woctal-literal",                   // Warn on obsolete octal syntax.
+  //"-Wself-implicit",                   // Warn when an implicit resolves to an enclosing self-definition.
+  "-Wunused:_",                        // Enables every warning of unused members/definitions/etc
+  "-Wunused:patvars",                  // Warn if a variable bound in a pattern is unused.
+  "-Wunused:params",                   // Enable -Wunused:explicits,implicits. Warn if an explicit/implicit parameter is unused.
+  "-Wunused:linted",                   // -Xlint:unused <=> Enable -Wunused:imports,privates,locals,implicits.
+  "-Wvalue-discard",                   // Warn when non-Unit expression results are unused.
+)
 // These lines ensure that in sbt console or sbt test:console the -Ywarn* and the -Xfatal-warning are not bothersome.
 // https://stackoverflow.com/questions/26940253/in-sbt-how-do-you-override-scalacoptions-for-console-in-all-configurations
 scalacOptions in (Compile, console) ~= (_ filterNot { option =>
-  option.startsWith("-Ywarn") || option == "-Xfatal-warnings"
+  option.startsWith("-Ywarn") || option == "-Xfatal-warnings" || option.startsWith("-W") || option.startsWith("-Xlint")
 })
 scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
 
-Compile / run / fork := true
+fork := true
 
 // ======================================================================================================================
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
-val Http4sVersion = "0.20.0-M7"
-val CirceVersion = "0.11.1"
-
-libraryDependencies ++= Seq(
-  "org.http4s"      %% "http4s-blaze-client"  % Http4sVersion,
-  "org.http4s"      %% "http4s-circe"         % Http4sVersion,
-  "org.http4s"      %% "http4s-dsl"           % Http4sVersion,
-  "io.circe"        %% "circe-generic"        % CirceVersion,
-  "io.circe"        %% "circe-generic-extras" % CirceVersion,
-  "ch.qos.logback"  %  "logback-classic"      % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"            % "3.0.6-SNAP2" % Test,
+libraryDependencies ++= Seq("blaze-client", "dsl", "circe").map { module =>
+  "org.http4s"      %% s"http4s-$module" % "0.21.0-M4"
+} ++ Seq(
+  "io.circe"        %% "circe-derivation"  % "0.12.0-M7",
+  "io.circe"        %% "circe-generic-extras"  % "0.12.2",
+  "io.circe"        %% "circe-parser"  % "0.12.2",
+  "ch.qos.logback"  %  "logback-classic" % "1.2.3" % Test,
+  "org.scalatest"   %% "scalatest"       % "3.0.8" % Test,
 )
-addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0-M4")
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
+Test / logBuffered := false
+Test / fork := true
+//coverageEnabled := true
 
 // ======================================================================================================================
 // ==== Scaladoc ========================================================================================================
 // ======================================================================================================================
 val latestReleasedVersion = SettingKey[String]("latest released version")
 git.useGitDescribe := true
-latestReleasedVersion := git.gitDescribedVersion.value.getOrElse("0.1.0")
+latestReleasedVersion := git.gitDescribedVersion.value.getOrElse("0.2.0")
 
 autoAPIMappings := true // Tell scaladoc to look for API documentation of managed dependencies in their metadata.
 scalacOptions in (Compile, doc) ++= Seq(

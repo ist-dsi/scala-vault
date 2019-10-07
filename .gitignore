@@ -272,3 +272,7 @@ test-result
 server.pid
 *.eml
 /dist/
+
+
+.metals/
+.bloop/
