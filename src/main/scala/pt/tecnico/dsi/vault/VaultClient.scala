@@ -50,5 +50,6 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
     def consul(at: String): Consul[F] = new Consul[F](uri.withPath(uri.path + "/" + at))
     def pki(at: String): PKI[F] = new PKI[F](uri.withPath(uri.path + "/" + at))
     def mysql(at: String): MySql[F] = new MySql[F](uri.withPath(uri.path + "/" + at))
+    def mongodb(at: String): MongoDB[F] = new MongoDB[F](uri.withPath(uri.path + "/" + at))
   }
 }
