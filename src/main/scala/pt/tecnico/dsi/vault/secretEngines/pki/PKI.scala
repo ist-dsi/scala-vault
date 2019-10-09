@@ -352,8 +352,9 @@ class PKI[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) { sel
   //<editor-fold desc="Roles/Certificate">
 
   object roles {
-    private val uri = self.uri / "roles"
+    val uri: Uri = self.uri / "roles"
 
+    /** List the available roles. */
     def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
     def apply(name: String): F[Role] = get(name).map(_.get)
@@ -363,9 +364,8 @@ class PKI[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) { sel
         response <- client.expectOption[Context[Role]](request)
       } yield response.map(_.data)
 
-    def create(name: String, role: Role): F[Unit] = {
-      execute(POST(role.asJson, uri / name, token))
-    }
+    /** Creates or updates a role definition. */
+    def create(name: String, role: Role): F[Unit] = execute(POST(role, uri / name, token))
     /**
       * Alternative syntax to create a role:
       * * {{{ client.secretEngines.pki("path").roles += "a" -> Role(...) }}}
@@ -382,6 +382,7 @@ class PKI[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) { sel
       */
     def ++=(list: List[(String, Role)]): F[List[Unit]] = list.map(+=).sequence
 
+    /** Delete the role with the given `name`. */
     def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
     /**
       * Alternative syntax to delete a role:

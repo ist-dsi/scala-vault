@@ -44,9 +44,11 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
     import pt.tecnico.dsi.vault.secretEngines.consul.Consul
     import pt.tecnico.dsi.vault.secretEngines.kv.KeyValueV1
     import pt.tecnico.dsi.vault.secretEngines.pki.PKI
+    import pt.tecnico.dsi.vault.secretEngines.databases._
 
     def kv(at: String): KeyValueV1[F] = new KeyValueV1[F](uri.withPath(uri.path + "/" + at))
     def consul(at: String): Consul[F] = new Consul[F](uri.withPath(uri.path + "/" + at))
     def pki(at: String): PKI[F] = new PKI[F](uri.withPath(uri.path + "/" + at))
+    def mysql(at: String): MySql[F] = new MySql[F](uri.withPath(uri.path + "/" + at))
   }
 }
