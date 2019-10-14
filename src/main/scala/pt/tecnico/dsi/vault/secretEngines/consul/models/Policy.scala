@@ -2,7 +2,6 @@ package pt.tecnico.dsi.vault.secretEngines.consul.models
 
 import java.nio.charset.StandardCharsets
 import java.util.Base64
-
 import io.circe.{Decoder, Encoder}
 
 object Policy {

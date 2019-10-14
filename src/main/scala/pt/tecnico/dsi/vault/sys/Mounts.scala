@@ -5,9 +5,9 @@ import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.traverse._
-import org.http4s.{Header, Uri}
-import org.http4s.client.Client
 import io.circe.syntax._
+import org.http4s.client.Client
+import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.vault._
 import pt.tecnico.dsi.vault.sys.models.SecretEngine
 import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions

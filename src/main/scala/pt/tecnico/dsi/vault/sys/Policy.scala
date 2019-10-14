@@ -5,9 +5,9 @@ import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.traverse._
+import io.circe.generic.auto._
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import io.circe.generic.auto._
 import pt.tecnico.dsi.vault._
 import pt.tecnico.dsi.vault.sys.models.{Policy => PolicyModel}
 

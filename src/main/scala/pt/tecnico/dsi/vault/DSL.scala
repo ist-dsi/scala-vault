@@ -1,9 +1,9 @@
 package pt.tecnico.dsi.vault
 
 import cats.effect.Sync
+import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.syntax.applicative._
 import cats.syntax.option._
 import io.circe.Decoder
 import org.http4s.Status.Successful

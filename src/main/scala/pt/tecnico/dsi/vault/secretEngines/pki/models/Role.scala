@@ -1,10 +1,9 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
+import scala.concurrent.duration.Duration
 import io.circe.derivation._
 import pt.tecnico.dsi.vault.secretEngines.pki.models.KeySettings.RSA
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
-
-import scala.concurrent.duration.Duration
 
 object Role {
   implicit val encoder = deriveEncoder[Role](renaming.snakeCase, None)

@@ -1,7 +1,6 @@
 package pt.tecnico.dsi.vault.sys.models
 
 import java.time.OffsetDateTime
-
 import io.circe.Decoder
 import io.circe.derivation.{deriveDecoder, renaming}
 

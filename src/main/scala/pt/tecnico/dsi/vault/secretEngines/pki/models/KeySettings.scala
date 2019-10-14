@@ -1,8 +1,8 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
-import io.circe.{Decoder, Encoder}
 import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
 import io.circe.generic.extras.semiauto.{deriveEnumerationDecoder, deriveEnumerationEncoder}
+import io.circe.{Decoder, Encoder}
 
 object KeySettings {
   implicit val encoder = deriveEncoder[KeySettings](renaming.snakeCase, None)

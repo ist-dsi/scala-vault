@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
-import io.circe.generic.extras.semiauto.{deriveEnumerationEncoder, deriveEnumerationDecoder}
+import io.circe.generic.extras.semiauto.{deriveEnumerationDecoder, deriveEnumerationEncoder}
 
 object Format {
   // A little ugly :(

@@ -1,7 +1,6 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
 import java.security.cert.X509Certificate
-
 import io.circe.Decoder
 import io.circe.derivation._
 import pt.tecnico.dsi.vault.secretEngines.pki.PKI._

@@ -2,9 +2,9 @@ package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
 import cats.syntax.functor._
+import io.circe.generic.auto._
 import org.http4s.Uri
 import org.http4s.client.Client
-import io.circe.generic.auto._
 import pt.tecnico.dsi.vault._
 import pt.tecnico.dsi.vault.sys.models.{InitOptions, InitResult}
 

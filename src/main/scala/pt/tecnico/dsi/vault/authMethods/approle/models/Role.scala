@@ -1,10 +1,9 @@
 package pt.tecnico.dsi.vault.authMethods.approle.models
 
+import scala.concurrent.duration.Duration
 import io.circe.derivation._
 import io.circe.{Decoder, Encoder}
-import pt.tecnico.dsi.vault.{Service, TokenType}
-import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
-import scala.concurrent.duration.Duration
+import pt.tecnico.dsi.vault.{Service, TokenType, decoderDuration, encodeDuration}
 
 object Role {
   implicit val encoder: Encoder[Role] = deriveEncoder(renaming.snakeCase, None)

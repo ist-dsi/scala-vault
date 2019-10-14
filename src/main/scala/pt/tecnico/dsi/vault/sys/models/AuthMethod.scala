@@ -1,11 +1,9 @@
 package pt.tecnico.dsi.vault.sys.models
 
+import scala.concurrent.duration.Duration
 import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
 import io.circe.{Decoder, Encoder}
-import pt.tecnico.dsi.vault.{DefaultService, TokenType}
-import pt.tecnico.dsi.vault.{encodeDuration, decoderDuration}
-
-import scala.concurrent.duration.Duration
+import pt.tecnico.dsi.vault.{DefaultService, TokenType, encodeDuration, decoderDuration}
 
 object AuthMethod {
   object TuneOptions {

@@ -1,12 +1,10 @@
 package pt.tecnico.dsi.vault.authMethods.token.models
 
 import java.time.OffsetDateTime
-
+import scala.concurrent.duration.Duration
 import io.circe.derivation._
 import io.circe.{Decoder, Encoder}
-import pt.tecnico.dsi.vault.TokenType
-import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
-import scala.concurrent.duration.Duration
+import pt.tecnico.dsi.vault.{TokenType, decoderDuration, encodeDuration}
 
 object Token {
   implicit val encoder: Encoder[Token] = deriveEncoder(renaming.snakeCase, None)

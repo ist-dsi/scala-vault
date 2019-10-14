@@ -1,10 +1,10 @@
 package pt.tecnico.dsi.vault.secretEngines.databases.models.MongoDB
 
-import io.circe.{Decoder, Encoder, JsonObject}
+import scala.concurrent.duration.Duration
 import io.circe.derivation._
 import io.circe.syntax._
+import io.circe.{Decoder, Encoder, JsonObject}
 import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
-import scala.concurrent.duration.Duration
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 
 object Role {

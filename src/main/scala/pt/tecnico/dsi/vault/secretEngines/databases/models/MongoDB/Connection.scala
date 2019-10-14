@@ -9,9 +9,8 @@ import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseConnection
 object Connection {
   final val pluginName: String = "mongodb-database-plugin"
 
-  implicit val encoder = {
+  implicit val encoder =
     deriveEncoder[Connection](renaming.snakeCase, None).mapJsonObject(_.add("plugin_name", pluginName.asJson))
-  }
   implicit val decoder = deriveDecoder[Connection](renaming.snakeCase, false, None)
 }
 

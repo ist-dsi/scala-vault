@@ -1,17 +1,16 @@
 package pt.tecnico.dsi.vault.authMethods.approle
 
 import cats.effect.Sync
+import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.traverse._
-import cats.instances.list._
+import io.circe.generic.auto._
+import io.circe.syntax._
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.vault._
-import io.circe.generic.auto._
-import io.circe.syntax._
 import pt.tecnico.dsi.vault.authMethods.approle.models._
-import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 
 class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}

@@ -1,8 +1,8 @@
 package pt.tecnico.dsi.vault.secretEngines.databases.models
 
+import scala.concurrent.duration.FiniteDuration
 import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
 import pt.tecnico.dsi.vault.{encodeFiniteDuration, decoderFiniteDuration}
-import scala.concurrent.duration.FiniteDuration
 
 object StaticRole {
   implicit val encoder = deriveEncoder[StaticRole](renaming.snakeCase, None)

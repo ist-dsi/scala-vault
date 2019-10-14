@@ -1,16 +1,15 @@
 package pt.tecnico.dsi.vault.sys
 
+import scala.concurrent.duration.{Duration, DurationInt}
 import cats.effect.Sync
 import cats.syntax.flatMap._
 import cats.syntax.functor._
+import io.circe.generic.auto._
+import io.circe.syntax._
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import io.circe.syntax._
-import io.circe.generic.auto._
 import pt.tecnico.dsi.vault._
 import pt.tecnico.dsi.vault.sys.models.{Lease, LeaseRenew}
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration.DurationInt
 
 class Leases[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}

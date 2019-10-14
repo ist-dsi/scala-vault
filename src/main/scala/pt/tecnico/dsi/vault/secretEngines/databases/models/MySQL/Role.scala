@@ -1,11 +1,11 @@
 package pt.tecnico.dsi.vault.secretEngines.databases.models.MySQL
 
+import scala.concurrent.duration.Duration
 import cats.data.NonEmptyList
 import io.circe.derivation._
 import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 import pt.tecnico.dsi.vault.secretEngines.databases.models.MySQL.Role._
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
-import scala.concurrent.duration.Duration
 
 object Role {
   implicit val encoder = deriveEncoder[Role](renaming.snakeCase, None)

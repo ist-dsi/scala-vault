@@ -2,10 +2,10 @@ package pt.tecnico.dsi.vault.secretEngines.kv
 
 import cats.effect.Sync
 import io.circe.Encoder
+import io.circe.syntax._
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.vault._
-import io.circe.syntax._
 
 class KeyValueV1[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}

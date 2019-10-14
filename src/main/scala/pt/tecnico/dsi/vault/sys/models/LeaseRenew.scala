@@ -1,8 +1,8 @@
 package pt.tecnico.dsi.vault.sys.models
 
+import scala.concurrent.duration.Duration
 import io.circe.Decoder
 import io.circe.derivation.{deriveDecoder, renaming}
-import scala.concurrent.duration.Duration
 import pt.tecnico.dsi.vault.decoderDuration
 
 object LeaseRenew {

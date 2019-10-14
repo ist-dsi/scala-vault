@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.vault.authMethods.approle.models
 
-import io.circe.{Decoder, Encoder}
 import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
+import io.circe.{Decoder, Encoder}
 import pt.tecnico.dsi.vault.{encodeArrayAsCSV, decodeArrayAsCSV}
 
 object SecretIdProperties {

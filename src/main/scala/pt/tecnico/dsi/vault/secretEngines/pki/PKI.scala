@@ -2,33 +2,29 @@ package pt.tecnico.dsi.vault.secretEngines.pki
 
 import java.math.BigInteger
 import java.security.cert.{X509CRL, X509Certificate}
-
+import scala.concurrent.duration.Duration
+import scala.util.Try
 import cats.effect.Sync
 import cats.instances.list._
+import cats.implicits.{catsStdInstancesForList, catsStdInstancesForTry, toTraverseOps}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.implicits.toTraverseOps
-import cats.implicits.catsStdInstancesForList
-import cats.implicits.catsStdInstancesForTry
 import io.circe.derivation.{deriveEncoder, renaming}
 import io.circe.generic.auto._
 import io.circe.syntax._
 import io.circe.{Decoder, JsonObject}
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.vault.secretEngines.pki.models._
 import pt.tecnico.dsi.vault.secretEngines.pki.PKI._
-import pt.tecnico.dsi.vault.{DSL, encodeArrayAsCSV, encodeDuration, _}
-
-import scala.concurrent.duration.Duration
-import scala.util.Try
+import pt.tecnico.dsi.vault.secretEngines.pki.models._
+import pt.tecnico.dsi.vault._
 
 object PKI {
+  import java.io.ByteArrayInputStream
+  import java.security.cert.{CRLException, CertificateException, CertificateFactory}
+  import java.util.Base64
   import scala.util.Properties
   import scala.util.control.Exception.catching
-  import java.io.ByteArrayInputStream
-  import java.security.cert.{CertificateFactory, CertificateException, CRLException}
-  import java.util.Base64
 
   def pemEncode(certificate: X509Certificate): String = {
     val lineSeparator = Properties.lineSeparator

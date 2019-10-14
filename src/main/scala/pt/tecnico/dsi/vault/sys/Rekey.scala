@@ -1,8 +1,8 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import io.circe.syntax._
 import io.circe.generic.auto._
+import io.circe.syntax._
 import org.http4s.Uri
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault._
