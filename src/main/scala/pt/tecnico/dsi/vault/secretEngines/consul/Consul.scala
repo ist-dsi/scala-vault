@@ -57,9 +57,7 @@ class Consul[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
       } yield response.map(_.data)
     def apply(name: String): F[Role] = get(name).map(_.get)
 
-    def create(name: String, role: Role): F[Unit] = {
-      execute(POST(role.asJson, rolesUri / name, token))
-    }
+    def create(name: String, role: Role): F[Unit] = execute(POST(role.asJson, rolesUri / name, token))
     /**
       * Alternative syntax to create a role:
       * * {{{ client.secretEngines.consul.roles += "a" -> Role(...) }}}

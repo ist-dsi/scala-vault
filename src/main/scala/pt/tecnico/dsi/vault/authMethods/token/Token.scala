@@ -1,6 +1,7 @@
 package pt.tecnico.dsi.vault.authMethods.token
 
 import cats.effect.Sync
+import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.traverse._
@@ -201,4 +202,15 @@ class Token[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
       names.map(delete).sequence
     }
   }
+
+  /**
+    * Iterates through all token accessors, looks up the accessor and only returns the ones containing the root policy.
+    * This is a very heavy operation. It should normally be invoked with a root token. And it is very helpful to clean
+    * dangling root tokens.
+    */
+  def listAccessorsWithRootPolicy: F[List[MToken]] =
+    for {
+      listAccessors <- accessors()
+      listTokens <- listAccessors.traverse(lookupAccessor)
+    } yield listTokens.collect { case t if t.policies.contains("root") => t }
 }

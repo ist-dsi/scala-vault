@@ -1,6 +1,8 @@
 package pt.tecnico.dsi.vault.secretEngines.kv
 
 import cats.effect.Sync
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import io.circe.Encoder
 import io.circe.syntax._
 import org.http4s.client.Client
@@ -24,8 +26,12 @@ class KeyValueV1[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header
     * Retrieves the secret at the specified `path`.
     * @param path the path from which to retrieve the secret.
     */
-  def read(path: String): F[Map[String, String]] = executeWithContextData(GET(uri / path, token))
-  def apply(path: String): F[Map[String, String]] = read(path)
+  def read(path: String): F[Option[Map[String, String]]] =
+    for {
+      request <- GET(uri / path, token)
+      response <- client.expectOption[Context[Map[String, String]]](request)
+    } yield response.map(_.data)
+  def apply(path: String): F[Map[String, String]] = read(path).map(_.get)
 
   /**
     * Stores a secret at the specified location.
