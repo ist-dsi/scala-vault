@@ -65,7 +65,7 @@ class Token[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
     * @return returns information about the client token from the `accessor`.
     */
   def lookupAccessor(accessor: String): F[MToken] =
-    executeWithContextData(POST(Map("accessor" -> accessor).asJson, uri / "lookup", token))
+    executeWithContextData(POST(Map("accessor" -> accessor).asJson, uri / "lookup-accessor", token))
 
   /**
     * Renews a lease associated with a token. This is used to prevent the expiration of a token, and the automatic
