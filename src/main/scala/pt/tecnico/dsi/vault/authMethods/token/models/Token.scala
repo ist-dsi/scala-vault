@@ -10,12 +10,10 @@ object Token {
   implicit val encoder: Encoder[Token] = deriveEncoder(renaming.snakeCase, None)
   implicit val decoder: Decoder[Token] = deriveDecoder(renaming.snakeCase, false, None)
 }
-case class Token(id: String, accessor: String,
-                 creationTime: OffsetDateTime, creationTtl: Duration,
+case class Token(id: String, path: String, accessor: String,
+                 creationTime: Long, creationTtl: Duration,
                  displayName: String, entityId: String,
-                 expireTime: Option[String], explicitMaxTtl: Duration, ttl: Duration,
-                 meta: Option[String],
-                 numUses: Int,
-                 orphan: Boolean, path: String,
-                 policies: List[String], `type`: TokenType)
+                 expireTime: Option[OffsetDateTime], explicitMaxTtl: Duration, ttl: Duration,
+                 renewable: Boolean, numUses: Int, orphan: Boolean,
+                 meta: Map[String, String], policies: List[String], `type`: TokenType)
 

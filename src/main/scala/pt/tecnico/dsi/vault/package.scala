@@ -12,7 +12,7 @@ import org.http4s.client.impl.EmptyRequestGenerator
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 package object vault {
-  implicit def jsonDecoder[F[_]: Sync, A: Decoder]: EntityDecoder[F, A] = circe.jsonOf[F, A]
+  implicit def jsonDecoder[F[_]: Sync, A: Decoder]: EntityDecoder[F, A] = circe.accumulatingJsonOf[F, A]
   val jsonPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
   implicit def jsonEncoder[F[_]: Applicative, A: Encoder]: EntityEncoder[F, A] = circe.jsonEncoderWithPrinterOf[F, A](jsonPrinter)
   // Without this decoding to Unit wont work. This makes the EntityDecoder[F, Unit] defined in EntityDecoder companion object
