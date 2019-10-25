@@ -14,6 +14,6 @@ case class Token(id: String, path: String, accessor: String,
                  creationTime: Long, creationTtl: Duration,
                  displayName: String, entityId: String,
                  expireTime: Option[OffsetDateTime], explicitMaxTtl: Duration, ttl: Duration,
-                 renewable: Boolean, numUses: Int, orphan: Boolean,
-                 meta: Map[String, String], policies: List[String], `type`: TokenType)
+                 numUses: Int, orphan: Boolean,
+                 meta: Option[Map[String, String]], policies: List[String], `type`: TokenType)
 
