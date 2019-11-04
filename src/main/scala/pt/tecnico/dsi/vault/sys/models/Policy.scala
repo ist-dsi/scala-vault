@@ -7,4 +7,4 @@ object Policy {
   implicit val encoder: Encoder[Policy] = deriveEncoder
   implicit val decoder: Decoder[Policy] = deriveDecoder
 }
-case class Policy(name: String, policy: String)
+case class Policy(name: String, rules: String)

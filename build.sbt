@@ -1,6 +1,6 @@
 organization := "pt.tecnico.dsi"
 name := "scala-vault"
-version := "0.4.115-SNAPSHOT"
+//version := "0.4.115-SNAPSHOT"
 
 // ======================================================================================================================
 // ==== Compile Options =================================================================================================
@@ -66,7 +66,7 @@ Test / fork := true
 // ======================================================================================================================
 val latestReleasedVersion = SettingKey[String]("latest released version")
 git.useGitDescribe := true
-latestReleasedVersion := git.gitDescribedVersion.value.getOrElse("0.2.0")
+latestReleasedVersion := git.gitDescribedVersion.value.getOrElse("0.4.115-SNAPSHOT")
 
 autoAPIMappings := true // Tell scaladoc to look for API documentation of managed dependencies in their metadata.
 scalacOptions in (Compile, doc) ++= Seq(
@@ -88,7 +88,7 @@ git.remoteRepo := s"git@github.com:ist-dsi/${name.value}.git"
 // ======================================================================================================================
 // ==== Deployment ======================================================================================================
 // ======================================================================================================================
-publishTo := sonatypePublishTo.value
+publishTo := sonatypePublishToBundle.value
 sonatypeProfileName := organization.value
 
 licenses += "MIT" -> url("http://opensource.org/licenses/MIT")
@@ -97,25 +97,24 @@ scmInfo := Some(ScmInfo(homepage.value.get, git.remoteRepo.value))
 developers += Developer("Lasering", "Simão Martins", "", url("https://github.com/Lasering"))
 
 // Will fail the build/release if updates for the dependencies are found
-dependencyUpdatesFailBuild := true
+//dependencyUpdatesFailBuild := true
 
-releaseCrossBuild := true
+releaseUseGlobalVersion := false
+
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
-
 import ReleaseTransformations._
-import xerial.sbt.Sonatype.SonatypeCommand
 releaseProcess := Seq[ReleaseStep](
   releaseStepTask(dependencyUpdates),
   checkSnapshotDependencies,
   inquireVersions,
   runClean,
-  releaseStepTask(doc),
-  releaseStepTask(test),
+  releaseStepTask(Compile / doc),
+  releaseStepTask(Test / test), // For this to work "docker run --cap-add IPC_LOCK -d --name=dev-vault -p 8200:8200 vault"
   setReleaseVersion,
   tagRelease,
   releaseStepTask(ghpagesPushSite),
   publishArtifacts,
-  releaseStepCommand(SonatypeCommand.sonatypeReleaseAll),
+  releaseStepCommand("sonatypeBundleRelease"),
   pushChanges,
   setNextVersion
 )
