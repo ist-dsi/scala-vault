@@ -88,7 +88,7 @@ git.remoteRepo := s"git@github.com:ist-dsi/${name.value}.git"
 // ======================================================================================================================
 // ==== Deployment ======================================================================================================
 // ======================================================================================================================
-publishTo := sonatypePublishToBundle.value
+publishTo := sonatypePublishTo.value
 sonatypeProfileName := organization.value
 
 licenses += "MIT" -> url("http://opensource.org/licenses/MIT")
@@ -114,7 +114,7 @@ releaseProcess := Seq[ReleaseStep](
   tagRelease,
   releaseStepTask(ghpagesPushSite),
   publishArtifacts,
-  releaseStepCommand("sonatypeBundleRelease"),
+  releaseStepCommand("sonatypeRelease"),
   pushChanges,
   setNextVersion
 )
