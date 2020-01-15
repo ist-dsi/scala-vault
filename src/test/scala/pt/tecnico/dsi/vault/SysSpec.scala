@@ -161,6 +161,7 @@ class SysSpec extends Utils {
       )).map(_ should contain only (()))
     }
     "list policies" in idempotently {
+      //TODO: this test should stand on its own
       client.sys.policy.list().map(_ should contain allOf ("test", "test2", "a", "b"))
     }
     "delete a policy" in idempotently {

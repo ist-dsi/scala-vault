@@ -80,16 +80,6 @@ class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
   // TODO: find a better name for this
   class AppRoleRole(uri: Uri) {
     /**
-      * Issues a Vault token based on the presented credentials.
-      * `roleId` is always required; if `bind_secret_id` is enabled (the default) on the AppRole, `secret_id` is required too.
-      * Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.
-      * @param roleId the role id to use.
-      * @param secretId the secret id to use.
-      */
-    def login(roleId: String, secretId: String): F[Auth] =
-      executeWithContextAuth(POST(Map("role_id" -> roleId, "secret_id" -> secretId).asJson, uri / "login"))
-
-    /**
       * Performs some maintenance tasks to clean up invalid entries that may remain in the token store.
       * Generally, running this is not needed unless upgrade notes or support personnel suggest it.
       * This may perform a lot of I/O to the storage method so should be used sparingly.
@@ -182,4 +172,14 @@ class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
   }
   //TODO: maybe this should return an Option
   def role(id: String): AppRoleRole = new AppRoleRole(uri / "role" / id)
+
+  /**
+    * Issues a Vault token based on the presented credentials.
+    * `roleId` is always required; if `bind_secret_id` is enabled (the default) on the AppRole, `secret_id` is required too.
+    * Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.
+    * @param roleId the role id to use.
+    * @param secretId the secret id to use.
+    */
+  def login(roleId: String, secretId: String): F[Auth] =
+    executeWithContextAuth(POST(Map("role_id" -> roleId, "secret_id" -> secretId).asJson, uri / "login"))
 }

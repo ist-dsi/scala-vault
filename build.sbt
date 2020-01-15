@@ -36,7 +36,7 @@ scalacOptions ++= Seq(
 )
 // These lines ensure that in sbt console or sbt test:console the -Ywarn* and the -Xfatal-warning are not bothersome.
 // https://stackoverflow.com/questions/26940253/in-sbt-how-do-you-override-scalacoptions-for-console-in-all-configurations
-scalacOptions in (Compile, console) ~= (_ filterNot { option =>
+scalacOptions in (Compile, console) ~= (_.filterNot { option =>
   option.startsWith("-Ywarn") || option == "-Xfatal-warnings" || option.startsWith("-W") || option.startsWith("-Xlint")
 })
 scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
@@ -47,13 +47,13 @@ fork := true
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq("blaze-client", "dsl", "circe").map { module =>
-  "org.http4s"      %% s"http4s-$module" % "0.21.0-M4"
+  "org.http4s"      %% s"http4s-$module" % "0.21.0-M6"
 } ++ Seq(
   "io.circe"        %% "circe-derivation"  % "0.12.0-M7",
   "io.circe"        %% "circe-generic-extras"  % "0.12.2",
-  "io.circe"        %% "circe-parser"  % "0.12.2",
+  "io.circe"        %% "circe-parser"  % "0.12.3",
   "ch.qos.logback"  %  "logback-classic" % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"       % "3.0.8" % Test,
+  "org.scalatest"   %% "scalatest"       % "3.1.0" % Test,
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 

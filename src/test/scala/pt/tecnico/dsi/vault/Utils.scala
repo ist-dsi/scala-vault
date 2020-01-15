@@ -6,6 +6,8 @@ import org.http4s.syntax.literals._
 import org.log4s._
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest._
+import org.scalatest.wordspec.AsyncWordSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}

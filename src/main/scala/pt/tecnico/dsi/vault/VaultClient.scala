@@ -5,7 +5,31 @@ import org.http4s._
 import org.http4s.client.Client
 
 //TODO: Some operations don't require a token. So the fact that we are requiring one might be misleading
-//maybe we should extract them to the companion object
+/*object VaultClient {
+  class VaultClientPublicEndpoints[F[_]: Sync](val baseUri: Uri)(implicit client: Client[F]) { self =>
+    val uri = baseUri / "v1"
+
+    object sys {
+      val uri: Uri = self.uri / "sys"
+
+      import pt.tecnico.dsi.vault.sys._
+
+      val init = new Init[F](uri / "init")
+      val health = new Health[F](uri / "health")
+      //val leader = new Leader[F](uri) // One endpoint requires a token, the other does not
+      val seal = new Seal[F](uri)
+      val generateRoot = new GenerateRoot[F](uri / "generate-root")
+      //val keys = new Keys[F](uri) // One endpoint requires a token, the other does not
+      val rekey = new Rekey[F](uri / "rekey")
+    }
+  }
+
+  def apply[F[_]: Sync](baseUri: Uri, token: String)(implicit client: Client[F]): VaultClient[F] =
+    new VaultClient(baseUri, token)
+  def apply[F[_]: Sync](baseUri: Uri)(implicit client: Client[F]): VaultClientPublicEndpoints[F] =
+    new VaultClientPublicEndpoints(baseUri)
+}*/
+
 class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit client: Client[F]) { self =>
   implicit val tokenHeader: Header = Header("X-Vault-Token", token)
 
@@ -37,7 +61,7 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
 
     // The Token auth method is always mounted at this location. And cannot be changed.
     val token: Token[F] = new Token[F](uri / "token")
-    def appRole(at: String): AppRole[F] = new AppRole[F](uri.withPath(uri.path + "/" + at))
+    def appRole(at: String = "approle"): AppRole[F] = new AppRole[F](uri.withPath(uri.path + "/" + at))
   }
 
   object secretEngines {
@@ -46,10 +70,10 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
     import pt.tecnico.dsi.vault.secretEngines.pki.PKI
     import pt.tecnico.dsi.vault.secretEngines.databases._
 
-    def kv(at: String): KeyValueV1[F] = new KeyValueV1[F](uri.withPath(uri.path + "/" + at))
-    def consul(at: String): Consul[F] = new Consul[F](uri.withPath(uri.path + "/" + at))
-    def pki(at: String): PKI[F] = new PKI[F](uri.withPath(uri.path + "/" + at))
-    def mysql(at: String): MySql[F] = new MySql[F](uri.withPath(uri.path + "/" + at))
-    def mongodb(at: String): MongoDB[F] = new MongoDB[F](uri.withPath(uri.path + "/" + at))
+    def kv(at: String = "kv"): KeyValueV1[F] = new KeyValueV1[F](uri.withPath(uri.path + "/" + at))
+    def consul(at: String = "consul"): Consul[F] = new Consul[F](uri.withPath(uri.path + "/" + at))
+    def pki(at: String = "pki"): PKI[F] = new PKI[F](uri.withPath(uri.path + "/" + at))
+    def mysql(at: String = "database"): MySql[F] = new MySql[F](uri.withPath(uri.path + "/" + at))
+    def mongodb(at: String = "database"): MongoDB[F] = new MongoDB[F](uri.withPath(uri.path + "/" + at))
   }
 }
