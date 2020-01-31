@@ -2,13 +2,16 @@ package pt.tecnico.dsi.vault.secretEngines.pki
 
 import java.math.BigInteger
 import java.security.cert.{X509CRL, X509Certificate}
+
 import scala.concurrent.duration.Duration
 import scala.util.Try
 import cats.effect.Sync
 import cats.instances.list._
-import cats.implicits.{catsStdInstancesForList, catsStdInstancesForTry, toTraverseOps}
+import cats.instances.try_._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
+import cats.syntax.foldable._
+import cats.syntax.traverse._
 import io.circe.derivation.{deriveEncoder, renaming}
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -48,7 +51,7 @@ object PKI {
     }
   }
   def parseChain(pem: String): Try[List[X509Certificate]] = {
-    pem.strip.split("(?<=-----END CERTIFICATE-----\n)").toList.traverse(parseCertificate)
+    pem.trim.split("(?<=-----END CERTIFICATE-----\n)").toList.traverse(parseCertificate)
   }
   def parseCRL(pem: String): Try[X509CRL] = {
     val strippedCertificate = pem.trim
@@ -69,7 +72,7 @@ object PKI {
 /**
   * @define sudoRequired This endpoint requires sudo capabilities.
   */
-class PKI[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) { self =>
+class PKI[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -152,10 +155,15 @@ class PKI[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) { sel
   //   · private_key
   //   · private_key_type
   /**
-    * Generates a new self-signed CA certificate and private key. If the path ends with `exported`, the private key will be returned in the response;
-    * if it is `internal` the private key will not be returned and cannot be retrieved later. Distribution points use the values set via config/urls.
+    * Generates a new self-signed CA certificate and private key.
+    * If `type` is `Exported`, the private key will be returned; if it is `Internal` the private key will not be returned
+    * and cannot be retrieved later. Distribution points use the values set via config/urls.
     *
-    * As with other issued certificates, Vault will automatically revoke the generated root at the end of its lease period; the CA certificate will sign its own CRL.
+    * As with other issued certificates, Vault will automatically revoke the generated root at the end of its
+    * lease period; the CA certificate will sign its own CRL.
+    *
+    * As of Vault 0.8.1, if a CA cert/key already exists, this function will not overwrite it; it must be deleted first.
+    * Previous versions of Vault would overwrite the existing cert/key with new values.
     *
     * @param `type` Specifies the type of the intermediate to create. If `Exported`, the private key will be returned in the response;
     *               if `Internal` the private key will not be returned and cannot be retrieved later.
@@ -195,21 +203,6 @@ class PKI[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) { sel
   //   · certificate
   //   · issuing_ca
   //   · serial_number?
-  /**
-    * Uses the configured CA certificate to sign a self-issued certificate (which will usually be a self-signed certificate as well).
-    *
-    * <strong>This is an extremely privileged endpoint.</strong> The given certificate will be signed as-is with only minimal validation
-    * performed (is it a CA pem, and is it actually self-issued). The only values that will be changed will be the authority
-    * key ID, the issuer DN, and, if set, any distribution points.
-    *
-    * This is generally only needed for root certificate rolling in cases where you don't want/can't get access to a CSR (such as if
-    * it's a root stored in Vault where the key is not exposed). If you don't know whether you need this endpoint, you
-    * most likely should be using a different endpoint (such as sign-intermediate).
-    *
-    * $sudoRequired
-    *
-    * @param certificatePem Specifies the PEM-encoded self-issued certificate.
-    */
   def signSelfIssued(certificatePem: String): F[Certificate] =
     executeWithContextData(POST(Map("certificate" -> certificatePem).asJson, uri / "root" / "sign-self-issued", token))
   def signSelfIssued(certificate: X509Certificate): F[Certificate] = signSelfIssued(PKI.pemEncode(certificate))
@@ -376,7 +369,7 @@ class PKI[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) { sel
       *   )
       * }}}
       */
-    def ++=(list: List[(String, Role)]): F[List[Unit]] = list.map(+=).sequence
+    def ++=(list: List[(String, Role)]): F[Unit] = list.map(+=).sequence_
 
     /** Delete the role with the given `name`. */
     def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
@@ -391,7 +384,7 @@ class PKI[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) { sel
       *   client.secretEngines.pki("path").roles --= List("a", "b")
       * }}}
       */
-    def --=(names: List[String]): F[List[Unit]] = names.map(delete).sequence
+    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
   }
 
   // TODO: we could make the result be a dependent type based upon the Type value

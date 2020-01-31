@@ -4,7 +4,7 @@ import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.syntax.traverse._
+import cats.syntax.foldable._
 import io.circe.generic.auto._
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
@@ -45,7 +45,7 @@ class Policy[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
     *   )
     * }}}
     */
-  def ++=(list: List[PolicyModel]): F[List[Unit]] = list.map(create).sequence
+  def ++=(list: List[PolicyModel]): F[Unit] = list.map(create).sequence_
 
   /**
     * Deletes the policy with the given `name`. This will immediately affect all users associated with this policy.
@@ -63,5 +63,5 @@ class Policy[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
     *   client.sys.policy --= List("a", "b")
     * }}}
     */
-  def --=(names: List[String]): F[List[Unit]] = names.map(delete).sequence
+  def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
 }

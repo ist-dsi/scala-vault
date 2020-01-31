@@ -5,8 +5,7 @@ import java.util.concurrent.TimeUnit
 import cats.Applicative
 import cats.effect.Sync
 import io.circe.{Decoder, Encoder, Json, Printer}
-import org.http4s.{EntityDecoder, EntityEncoder, Method}
-import org.http4s.circe
+import org.http4s.{EntityDecoder, EntityEncoder, Method, Uri, circe}
 import org.http4s.client.impl.EmptyRequestGenerator
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -18,6 +17,17 @@ package object vault {
   // Without this decoding to Unit wont work. This makes the EntityDecoder[F, Unit] defined in EntityDecoder companion object
   // have a higher priority than the jsonDecoder defined above. https://github.com/http4s/http4s/issues/2806
   implicit def void[F[_]: Sync]: EntityDecoder[F, Unit] = EntityDecoder.void
+
+  implicit class UriPlus(val uri: Uri) extends AnyVal {
+    def append(pathParts: List[String]): Uri = {
+      val encoded = pathParts.collect{ case s if s.nonEmpty => Uri.pathEncode(s) }.mkString("/")
+      val newPath =
+        if (uri.path.isEmpty || uri.path.last != '/') s"${uri.path}/$encoded"
+        else s"${uri.path}$encoded"
+      uri.withPath(newPath)
+    }
+    def append(path: Uri.Path): Uri = append(path.split('/').toList)
+  }
 
   implicit val encodeFiniteDuration: Encoder[FiniteDuration] = Encoder.encodeString.contramap{ d: FiniteDuration =>
     s"${d.toSeconds.toString}s"

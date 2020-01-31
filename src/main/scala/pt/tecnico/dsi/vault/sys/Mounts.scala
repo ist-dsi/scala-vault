@@ -4,7 +4,7 @@ import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.syntax.traverse._
+import cats.syntax.foldable._
 import io.circe.syntax._
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
@@ -19,28 +19,17 @@ class Mounts[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
   /** Lists all the mounted secrets engines. */
   def list(): F[Map[String, SecretEngine]] = executeWithContextData(GET(uri, token))
 
-  // It would be nice to return the mounted engine directly. Eg:
-  // Instead of the users doing:
-  //    _ <- client.sys.mounts.enable(path, pkiSecretEngine)
-  //    pki = client.secretEngines.pki(path)
-  // The would do
-  //    pki <- client.sys.mounts.enable(path, pkiSecretEngine)
-  // However to make this work we would need path dependent types. And IDEs might not handle them nicely.
-  // We would also need a specific type for each SecretEngine. That class could already set the `type`.
-
   /**
-    * Enables a new secrets engine at the given path.
+    * Enables a new secret engine at the given path.
     * @param path Specifies the path where the secrets engine will be mounted.
     * @param engine the secret engine to enable.
     */
-  def enable(path: String, engine: SecretEngine): F[Unit] = {
-    executeHandlingErrors(POST(engine, uri / path, token)) {
-      case errors if errors.exists(_.contains("path is already in use at")) =>
-        apply(path).flatMap {
-          case options if options == engine.config => implicitly[Sync[F]].unit
-          case _ => tune(path, engine.config)
-        }
-    }
+  def enable(path: String, engine: SecretEngine): F[Unit] = executeHandlingErrors(POST(engine, uri / path, token)) {
+    case errors if errors.exists(_.contains("path is already in use at")) =>
+      apply(path).flatMap {
+        case options if options == engine.config => implicitly[Sync[F]].unit
+        case _ => tune(path, engine.config)
+      }
   }
   /**
     * Alternative syntax to enable a secret engine:
@@ -56,7 +45,15 @@ class Mounts[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
     *   )
     * }}}
     */
-  def ++=(list: List[(String, SecretEngine)]): F[List[Unit]] = list.map(+=).sequence
+  def ++=(list: List[(String, SecretEngine)]): F[Unit] = list.map(+=).sequence_
+
+  /**
+    * Enables a new secret engine at the given path and returns the controller for it.
+    * @param path Specifies the path where the secrets engine will be mounted.
+    * @param engine the secret engine to enable.
+    */
+  def enableAndReturn(path: String, engine: SecretEngine)(implicit vaultClient: VaultClient[F]): F[engine.Out[F]] =
+    enable(path, engine).as(engine.mounted(path))
 
   /**
     * Disables the mount point at `path`.
@@ -74,7 +71,7 @@ class Mounts[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
     *   client.sys.mounts --= List("my-path", "your-path")
     * }}}
     */
-  def --=(paths: List[String]): F[List[Unit]] = paths.map(disable).sequence
+  def --=(paths: List[String]): F[Unit] = paths.map(disable).sequence_
 
   /**
     * Reads the given mount's configuration. Unlike the mounts endpoint, this will return the current time in seconds

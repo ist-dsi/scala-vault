@@ -47,11 +47,11 @@ fork := true
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq("blaze-client", "dsl", "circe").map { module =>
-  "org.http4s"      %% s"http4s-$module" % "0.21.0-M6"
+  "org.http4s"      %% s"http4s-$module" % "0.21.0-RC2"
 } ++ Seq(
   "io.circe"        %% "circe-derivation"  % "0.12.0-M7",
   "io.circe"        %% "circe-generic-extras"  % "0.12.2",
-  "io.circe"        %% "circe-parser"  % "0.12.3",
+  "io.circe"        %% "circe-parser"  % "0.13.0-RC1",
   "ch.qos.logback"  %  "logback-classic" % "1.2.3" % Test,
   "org.scalatest"   %% "scalatest"       % "3.1.0" % Test,
 )

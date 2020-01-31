@@ -30,7 +30,7 @@ object Role {
   * @param tokenType The type of token that should be generated via this role. Can be service, batch, or default to use
   *                  the mount's default (which unless changed will be service tokens).
   */
-case class Role(bindSecretId: Boolean = true, secretIdBoundCidrs: Seq[String] = Seq.empty, tokenBoundCidrs: Seq[String] = Seq.empty,
-                policies: Seq[String] = Seq.empty, secretIdNumUses: Int = 0, secretIdTtl: Duration = Duration.Undefined,
+case class Role(bindSecretId: Boolean = true, secretIdBoundCidrs: List[String] = List.empty, tokenBoundCidrs: List[String] = List.empty,
+                policies: List[String] = List.empty, secretIdNumUses: Int = 0, secretIdTtl: Duration = Duration.Undefined,
                 tokenNumUses: Int = 0, tokenTtl: Duration = Duration.Undefined, tokenMaxTtl: Duration = Duration.Undefined,
                 period: Duration = Duration.Undefined, enableLocalSecretIds: Boolean = false, tokenType: TokenType = Service)

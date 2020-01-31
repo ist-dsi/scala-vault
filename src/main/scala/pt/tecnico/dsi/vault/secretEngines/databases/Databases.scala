@@ -1,9 +1,10 @@
 package pt.tecnico.dsi.vault.secretEngines.databases
 
 import cats.effect.Sync
-import cats.implicits.{catsStdInstancesForList, toTraverseOps}
+import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
+import cats.syntax.foldable._
 import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
@@ -50,7 +51,7 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
       *   )
       * }}}
       */
-    def ++=(list: List[(String, Connection)]): F[List[Unit]] = list.map(+=).sequence
+    def ++=(list: List[(String, Connection)]): F[Unit] = list.map(+=).sequence_
 
     /**
       * Deletes the connection with the given `name`.
@@ -68,7 +69,7 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
       *   client.secretEngines.database("path").connections --= List("a", "b")
       * }}}
       */
-    def --=(names: List[String]): F[List[Unit]] = names.map(delete).sequence
+    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
 
     /**
       * Closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.
@@ -118,7 +119,7 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
       *   )
       * }}}
       */
-    def ++=(list: List[(String, Role)]): F[List[Unit]] = list.map(+=).sequence
+    def ++=(list: List[(String, Role)]): F[Unit] = list.map(+=).sequence_
 
     /** Delete the role with the given `name`. */
     def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
@@ -133,7 +134,7 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
       *   client.secretEngines.database("path").roles --= List("a", "b")
       * }}}
       */
-    def --=(names: List[String]): F[List[Unit]] = names.map(delete).sequence
+    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
   }
 
   /**
@@ -181,7 +182,7 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
       *   )
       * }}}
       */
-    def ++=(list: List[(String, StaticRole)]): F[List[Unit]] = list.map(+=).sequence
+    def ++=(list: List[(String, StaticRole)]): F[Unit] = list.map(+=).sequence_
 
     /** Deletes the static role definition and revokes the database user. */
     def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
@@ -196,7 +197,7 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
       *   client.secretEngines.database("path").staticRoles --= List("a", "b")
       * }}}
       */
-    def --=(names: List[String]): F[List[Unit]] = names.map(delete).sequence
+    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
   }
 
   /**

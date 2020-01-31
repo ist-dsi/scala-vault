@@ -158,7 +158,7 @@ class SysSpec extends Utils {
       (client.sys.policy ++= List(
         Policy("a", """path "a/" { capabilities = ["read"] }"""),
         Policy("b", """path "b/" { capabilities = ["read"] }""")
-      )).map(_ should contain only (()))
+      )).map(_ shouldBe ())
     }
     "list policies" in idempotently {
       //TODO: this test should stand on its own
@@ -181,7 +181,7 @@ class SysSpec extends Utils {
         disables <- client.sys.policy --= policiesToDelete
         policies <- client.sys.policy.list()
       } yield {
-        disables should contain only ()
+        disables shouldBe ()
         policies should contain noElementsOf(policiesToDelete)
       }
     }
@@ -190,33 +190,34 @@ class SysSpec extends Utils {
   "The auth endpoint" should {
     import pt.tecnico.dsi.vault.sys.models.AuthMethod.TuneOptions
     // TODO: maybe change to property based testing. To ensure we cover all the parameters
-    val authMethod = AuthMethod("approle", "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
+    def createAuthMethod(`type`: String) = AuthMethod(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
 
     "mount an authentication method" in idempotently {
-      client.sys.auth.enable("test", authMethod).map(_ shouldBe ())
+      client.sys.auth.enable("test", createAuthMethod("approle")).map(_ shouldBe ())
     }
     "edit an authentication method" in {
+      val method = AuthMethod("approle", "", TuneOptions(defaultLeaseTtl = 1.day))
       for {
-        _ <- client.sys.auth.enable("test2", AuthMethod("approle", "", TuneOptions(defaultLeaseTtl = 1.day))).value(_ shouldBe ())
+        _ <- client.sys.auth.enable("test2", method).value(_ shouldBe ())
         // This is also testing `tuneOptions`
         _ <- client.sys.auth("test2").value(_.defaultLeaseTtl shouldBe 1.day)
         // This is also testing `tune`
-        _ <- (client.sys.auth += "test2" -> authMethod).idempotently(_ shouldBe ())
+        _ <- (client.sys.auth += "test2" -> createAuthMethod("approle")).idempotently(_ shouldBe ())
         result <- client.sys.auth("test2").idempotently(_.defaultLeaseTtl shouldBe 1.hour)
       } yield result
     }
     "mount multiple authentication methods" in idempotently {
       (client.sys.auth ++= List(
-        "ldap" -> authMethod.copy(`type` = "ldap"),
-        "cert" -> authMethod.copy(`type` = "cert")
-      )).map(_ should contain only (()))
+        "ldap" -> createAuthMethod("ldap"),
+        "cert" -> createAuthMethod("cert")
+      )).map(_ shouldBe ())
     }
     "list authentication methods" in idempotently {
       client.sys.auth.list().map { authMethods =>
         authMethods should contain key "ldap/"
         authMethods should contain key "test/"
         authMethods should contain key "token/"
-        authMethods.values.map(_.config) should contain(authMethod.config)
+        authMethods.values.map(_.config) should contain(createAuthMethod("dummy").config)
       }
     }
     "disable an authentication method" in idempotently {
@@ -236,7 +237,7 @@ class SysSpec extends Utils {
         disables <- client.sys.auth --= methodsToDisable
         methods <- client.sys.auth.list()
       } yield {
-        disables should contain only ()
+        disables shouldBe ()
         methods.keys should contain noElementsOf(methodsToDisable.map(_ + "/"))
       }
     }
@@ -245,33 +246,34 @@ class SysSpec extends Utils {
   "The mounts endpoint" should {
     import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions
     // TODO: maybe change to property based testing. To ensure we cover all the parameters
-    val secretEngine = SecretEngine("consul", "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
+    def createSecretEngine(`type`: String) = SecretEngine(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
 
     "mount a secret engine" in idempotently {
-      client.sys.mounts.enable("test", secretEngine).map(_ shouldBe ())
+      client.sys.mounts.enable("test", createSecretEngine("consul")).map(_ shouldBe ())
     }
     "edit a secret engine" in {
+      val engine = SecretEngine("consul", "", TuneOptions(defaultLeaseTtl = 1.day))
       for {
-        _ <- client.sys.mounts.enable("test2", SecretEngine("consul", "", TuneOptions(defaultLeaseTtl = 1.day))).value(_ shouldBe ())
+        _ <- client.sys.mounts.enable("test2", engine).value(_ shouldBe ())
         // This is also testing `tuneOptions`
         _ <- client.sys.mounts("test2").value(_.defaultLeaseTtl shouldBe 1.day)
         // This is also testing `tune`
-        _ <- (client.sys.mounts += "test2" -> secretEngine).idempotently(_ shouldBe ())
+        _ <- (client.sys.mounts += "test2" -> createSecretEngine("consul")).idempotently(_ shouldBe ())
         result <- client.sys.mounts("test2").idempotently(_.defaultLeaseTtl shouldBe 1.hour)
       } yield result
     }
     "mount multiple authentication methods" in idempotently {
       (client.sys.mounts ++= List(
-        "pki" -> secretEngine.copy(`type` = "pki"),
-        "database" -> secretEngine.copy(`type` = "database")
-      )).map(_ should contain only (()))
+        "pki" -> createSecretEngine("pki"),
+        "database" -> createSecretEngine("database")
+      )).map(_ shouldBe ())
     }
     "list authentication methods" in idempotently {
       client.sys.mounts.list().map { secretEngines =>
         secretEngines should contain key "pki/"
         secretEngines should contain key "database/"
         secretEngines should contain key "sys/"
-        secretEngines.values.map(_.config) should contain(secretEngine.config)
+        secretEngines.values.map(_.config) should contain(createSecretEngine("dummy").config)
       }
     }
     "disable a secret engine" in idempotently {
@@ -305,7 +307,7 @@ class SysSpec extends Utils {
         disables <- client.sys.mounts --= enginesToDisable
         engines <- client.sys.mounts.list()
       } yield {
-        disables should contain only ()
+        disables shouldBe ()
         engines.keys should contain noElementsOf(enginesToDisable.map(_ + "/"))
       }
     }

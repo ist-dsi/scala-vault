@@ -4,7 +4,7 @@ import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.syntax.traverse._
+import cats.syntax.foldable._
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.vault._
@@ -22,22 +22,21 @@ final class Auth[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header
   def list(): F[Map[String, AuthMethod]] = executeWithContextData(GET(uri, token))
 
   /**
-    * Enables a new auth method. After enabling, the auth method can be accessed and configured via the auth path specified as part of the URL.
-    * This auth path will be nested under the auth prefix. For example, enable the "foo" auth method will make it accessible at /auth/foo.
+    * Enables a new auth method. After enabling, the auth method can be accessed and configured via the auth path
+    * specified as part of the URL. This auth path will be nested under the `auth` prefix. For example, enable the "foo"
+    * auth method will make it accessible at /auth/foo.
     *
     * $sudoRequired
     *
     * @param path Specifies the path in which to enable the auth method.
     * @param method the authentication method to enable.
     */
-  def enable(path: String, method: AuthMethod): F[Unit] = {
-    executeHandlingErrors(POST(method, uri / path, token)) {
-      case errors if errors.exists(_.contains("path is already in use at")) =>
-        apply(path).flatMap {
-          case config if config == method.config => implicitly[Sync[F]].unit
-          case _ => tune(path, method.config)
-        }
-    }
+  def enable(path: String, method: AuthMethod): F[Unit] = executeHandlingErrors(POST(method, uri / path, token)) {
+    case errors if errors.exists(_.contains("path is already in use at")) =>
+      apply(path).flatMap {
+        case config if config == method.config => implicitly[Sync[F]].unit
+        case _ => tune(path, method.config)
+      }
   }
   /**
     * Alternative syntax to enable an authentication method:
@@ -53,7 +52,19 @@ final class Auth[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header
     *   )
     * }}}
     */
-  def ++=(list: List[(String, AuthMethod)]): F[List[Unit]] = list.map(+=).sequence
+  def ++=(list: List[(String, AuthMethod)]): F[Unit] = list.map(+=).sequence_
+
+  /**
+    * Enables a new auth method and returns the controller for it.
+    *
+    * $sudoRequired
+    *
+    * @param path Specifies the path in which to enable the auth method.
+    * @param method the authentication method to enable.
+    */
+  def enableAndReturn(path: String, method: AuthMethod)(implicit vaultClient: VaultClient[F]): F[method.Out[F]] = {
+    enable(path, method).as(method.mounted(path))
+  }
 
   /**
     * Disables the auth method at the given auth path.
@@ -74,7 +85,7 @@ final class Auth[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header
     *   client.sys.auth --= List("my-path", "your-path")
     * }}}
     */
-  def --=(paths: List[String]): F[List[Unit]] = paths.map(disable).sequence
+  def --=(paths: List[String]): F[Unit] = paths.map(disable).sequence_
 
   /**
     * Reads the given auth path's configuration.

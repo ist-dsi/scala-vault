@@ -4,7 +4,7 @@ import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.syntax.traverse._
+import cats.syntax.foldable._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.client.Client
@@ -56,7 +56,7 @@ class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
       *   )
       * }}}
       */
-    def ++=(list: List[(String, Role)]): F[List[Unit]] = list.map(+=).sequence
+    def ++=(list: List[(String, Role)]): F[Unit] = list.map(+=).sequence_
 
     /**
       * Deletes the specified role.
@@ -74,7 +74,7 @@ class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
       *   client.authMethods.approle("path").roles --= List("a", "b")
       * }}}
       */
-    def --=(names: List[String]): F[List[Unit]] = names.map(delete).sequence
+    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
   }
 
   // TODO: find a better name for this

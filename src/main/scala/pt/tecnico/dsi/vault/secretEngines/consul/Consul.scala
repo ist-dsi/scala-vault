@@ -1,9 +1,10 @@
 package pt.tecnico.dsi.vault.secretEngines.consul
 
 import cats.effect.Sync
+import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.syntax.traverse._
+import cats.syntax.foldable._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.client.Client
@@ -11,7 +12,7 @@ import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.vault._
 import pt.tecnico.dsi.vault.secretEngines.consul.models.Role
 
-class Consul[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
+class Consul[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -72,10 +73,7 @@ class Consul[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
       *   )
       * }}}
       */
-    def ++=(list: List[(String, Role)]): F[List[Unit]] = {
-      import cats.instances.list._
-      list.map(+=).sequence
-    }
+    def ++=(list: List[(String, Role)]): F[Unit] = list.map(+=).sequence_
 
     /**
       * Deletes a Consul role with the given name.
@@ -93,9 +91,6 @@ class Consul[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
       *   client.secretEngines.consul.roles --= List("a", "b")
       * }}}
       */
-    def --=(names: List[String]): F[List[Unit]] = {
-      import cats.instances.list._
-      names.map(delete).sequence
-    }
+    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
   }
 }

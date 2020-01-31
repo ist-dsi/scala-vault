@@ -1,14 +1,14 @@
 language: scala
 
 scala:
-  - 2.12.8
   - 2.13.1
+  - 2.12.8
 
 services: docker
 
 jdk:
-  - openjdk8
   - openjdk11
+  - openjdk8
 
 before_cache:
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete

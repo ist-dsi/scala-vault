@@ -4,6 +4,7 @@ import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
+import cats.syntax.foldable._
 import cats.syntax.traverse._
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -175,10 +176,7 @@ class Token[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
       *   )
       * }}}
       */
-    def ++=(roles: List[Role]): F[List[Unit]] = {
-      import cats.instances.list._
-      roles.map(create).sequence
-    }
+    def ++=(roles: List[Role]): F[Unit] = roles.map(create).sequence_
 
     /**
       * Deletes the token role with `name`.
@@ -197,10 +195,7 @@ class Token[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
       *   client.authMethods.token.roles --= List("a", "b")
       * }}}
       */
-    def --=(names: List[String]): F[List[Unit]] = {
-      import cats.instances.list._
-      names.map(delete).sequence
-    }
+    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
   }
 
   /**

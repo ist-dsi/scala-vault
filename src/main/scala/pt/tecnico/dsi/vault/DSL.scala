@@ -61,7 +61,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param onErrorsPF the `PartialFunction` to apply on a BadRequest.
     * @tparam A the type to decode the response into.
     */
-  def executeHandlingErrors[A: Decoder: EntityDecoderF](request: F[Request[F]])(onErrorsPF: List[String] ?=> F[A]): F[A] =
+  def executeHandlingErrors[A: Decoder: EntityDecoderF](request: F[Request[F]])(onErrorsPF: List[String] ?=> F[A]): F[A] = {
     client.fetch(request) {
       case Successful(response) => response.as[A]
       case failedResponse => failedResponse.status match {
@@ -71,6 +71,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
           F.raiseError(UnexpectedStatus(status))
       }
     }
+  }
 
   def executeOptionHandlingErrors[A: Decoder: EntityDecoderF](request: F[Request[F]])
                                                              (onErrorsPF: List[String] ?=> F[Option[A]]): F[Option[A]] =

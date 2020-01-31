@@ -1,6 +1,7 @@
 package pt.tecnico.dsi.vault
 
 import cats.effect.Sync
+import io.circe.Decoder
 import org.http4s._
 import org.http4s.client.Client
 
@@ -51,6 +52,7 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
     val mounts = new Mounts[F](uri / "mounts")
     val keys = new Keys[F](uri) // One endpoint requires a token, the other does not
     val rekey = new Rekey[F](uri / "rekey") // Does not require a token
+    val pluginCatalog = new PluginCatalog[F](uri / "plugins" / "catalog")
   }
 
   object authMethods {
@@ -61,7 +63,7 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
 
     // The Token auth method is always mounted at this location. And cannot be changed.
     val token: Token[F] = new Token[F](uri / "token")
-    def appRole(at: String = "approle"): AppRole[F] = new AppRole[F](uri.withPath(uri.path + "/" + at))
+    def appRole(at: String = "approle"): AppRole[F] = new AppRole[F](uri append at)
   }
 
   object secretEngines {
@@ -70,10 +72,23 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
     import pt.tecnico.dsi.vault.secretEngines.pki.PKI
     import pt.tecnico.dsi.vault.secretEngines.databases._
 
-    def kv(at: String = "kv"): KeyValueV1[F] = new KeyValueV1[F](uri.withPath(uri.path + "/" + at))
-    def consul(at: String = "consul"): Consul[F] = new Consul[F](uri.withPath(uri.path + "/" + at))
-    def pki(at: String = "pki"): PKI[F] = new PKI[F](uri.withPath(uri.path + "/" + at))
-    def mysql(at: String = "database"): MySql[F] = new MySql[F](uri.withPath(uri.path + "/" + at))
-    def mongodb(at: String = "database"): MongoDB[F] = new MongoDB[F](uri.withPath(uri.path + "/" + at))
+    def kv(at: String = "kv"): KeyValueV1[F] = new KeyValueV1[F](at, uri append at)
+    def consul(at: String = "consul"): Consul[F] = new Consul[F](at, uri append at)
+    def pki(at: String = "pki"): PKI[F] = new PKI[F](at, uri append at)
+    def mysql(at: String = "database"): MySql[F] = new MySql[F](at, uri append at)
+    def mongodb(at: String = "database"): MongoDB[F] = new MongoDB[F](at, uri append at)
   }
+
+  private val dsl = new DSL[F] {}
+  import dsl._
+
+  def write[A: Decoder](path: String, body: A)(implicit aEncoder: EntityEncoder[F, A]): F[Context[A]] =
+    client.expect(PUT(body, uri append path, tokenHeader))
+
+  def read[A: Decoder](path: String)(implicit contextDecoder: EntityDecoder[F, Context[A]]): F[Context[A]] =
+    client.expect(GET(uri append path, tokenHeader))
+
+  def list(path: String): F[List[String]] = executeWithContextKeys(LIST(uri append path))
+
+  def delete(path: String): F[Unit] = execute(DELETE(uri append path))
 }
