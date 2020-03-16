@@ -1,12 +1,11 @@
 package pt.tecnico.dsi.vault.authMethods.approle.models
 
-import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
-import io.circe.{Decoder, Encoder}
-import pt.tecnico.dsi.vault.{encodeArrayAsCSV, decodeArrayAsCSV}
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
+import pt.tecnico.dsi.vault.{decodeArrayAsCSV, encodeArrayAsCSV}
 
 object SecretIdProperties {
-  implicit val encoder: Encoder[SecretIdProperties] = deriveEncoder(renaming.snakeCase, None)
-  implicit val decoder: Decoder[SecretIdProperties] = deriveDecoder(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[SecretIdProperties] = deriveCodec(renaming.snakeCase, false, None)
 }
 case class SecretIdProperties(metadata: String, cidrList: Array[String], tokenBoundCidrs: Array[String])
 

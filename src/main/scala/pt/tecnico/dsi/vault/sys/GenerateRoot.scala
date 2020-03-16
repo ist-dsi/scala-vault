@@ -4,7 +4,7 @@ import cats.effect.Sync
 import io.circe.syntax._
 import org.http4s.Uri
 import org.http4s.client.Client
-import pt.tecnico.dsi.vault._
+import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.RootGenerationProgress
 
 class GenerateRoot[F[_]: Sync](uri: Uri)(implicit client: Client[F]) {

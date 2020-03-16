@@ -1,15 +1,14 @@
 package pt.tecnico.dsi.vault.secretEngines.databases.models.MongoDB
 
 import scala.concurrent.duration.Duration
-import io.circe.derivation._
+import io.circe.{Codec, JsonObject}
+import io.circe.derivation.{deriveCodec, renaming}
 import io.circe.syntax._
-import io.circe.{Decoder, Encoder, JsonObject}
-import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
+import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 
 object Role {
-  implicit val encoder: Encoder.AsObject[Role] = deriveEncoder[Role](renaming.snakeCase, None)
-  implicit val decoder: Decoder[Role] = deriveDecoder[Role](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Role] = deriveCodec(renaming.snakeCase, false, None)
 
   def defaultCreationStatements(database: String = "admin", roles: List[MongoRole]) = JsonObject(
     "db" -> database.asJson,
@@ -30,14 +29,13 @@ object Role {
   *               @see See also [[https://www.vaultproject.io/docs/concepts/tokens.html#the-general-case The TTL General Case]].
   */
 case class Role private (dbName: String, creationStatements: List[String], revocationStatements: List[String],
-                defaultTtl: Duration, maxTtl: Duration) extends BaseRole {
+                         defaultTtl: Duration, maxTtl: Duration) extends BaseRole {
   def this(dbName: String, creationStatements: JsonObject, revocationStatements: List[String] = List.empty, defaultTtl: Duration = Duration.Undefined, maxTtl: Duration = Duration.Undefined) {
     this(dbName, List(creationStatements.asJson.noSpaces), revocationStatements, defaultTtl, maxTtl)
   }
 }
 
 object MongoRole {
-  implicit val encoder: Encoder.AsObject[MongoRole] = deriveEncoder[MongoRole](renaming.snakeCase, None)
-  implicit val decoder: Decoder[MongoRole] = deriveDecoder[MongoRole](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[MongoRole] = deriveCodec(renaming.snakeCase, false, None)
 }
 case class MongoRole(role: String, db: String)

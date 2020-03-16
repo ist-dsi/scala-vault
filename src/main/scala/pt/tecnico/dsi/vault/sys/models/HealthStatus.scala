@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.vault.sys.models
 
 import io.circe.Decoder
-import io.circe.derivation._
+import io.circe.derivation.{deriveDecoder, renaming}
 
 object HealthStatus {
   implicit val decoder: Decoder[HealthStatus] = deriveDecoder(renaming.snakeCase, false, None)

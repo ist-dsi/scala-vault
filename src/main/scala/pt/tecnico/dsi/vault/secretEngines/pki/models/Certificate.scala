@@ -2,8 +2,8 @@ package pt.tecnico.dsi.vault.secretEngines.pki.models
 
 import java.security.cert.X509Certificate
 import io.circe.Decoder
-import io.circe.derivation._
-import pt.tecnico.dsi.vault.secretEngines.pki.PKI._
+import io.circe.derivation.{deriveDecoder, renaming}
+import pt.tecnico.dsi.vault.secretEngines.pki.PKI.{pemEncode, decoderX509Certificate}
 
 object Certificate {
   implicit val decoder: Decoder[Certificate] = deriveDecoder(renaming.snakeCase, false, None)

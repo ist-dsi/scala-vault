@@ -3,7 +3,7 @@ package pt.tecnico.dsi.vault.sys
 import cats.effect.Sync
 import org.http4s.Uri
 import org.http4s.client.Client
-import pt.tecnico.dsi.vault._
+import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{SealStatus, UnsealOptions}
 
 class Seal[F[_]: Sync](uri: Uri)(implicit client: Client[F]) {

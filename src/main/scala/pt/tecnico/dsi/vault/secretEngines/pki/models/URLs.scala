@@ -1,13 +1,13 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
-import io.circe.derivation._
-import org.http4s.circe._
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
 import org.http4s.Uri
-import pt.tecnico.dsi.vault.UriPlus
+import org.http4s.circe.{decodeUri, encodeUri}
+import pt.tecnico.dsi.vault.RichUri
 
 object URLs {
-  implicit val encoder = deriveEncoder[URLs](renaming.snakeCase, None)
-  implicit val decoder = deriveDecoder[URLs](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[URLs] = deriveCodec(renaming.snakeCase, false, None)
 
   def apply(issuingCertificateEndpoint: Uri, crlDistributionPointEndpoint: Uri, ocspServerEndpoint: Uri): URLs =
     URLs(Some(Array(issuingCertificateEndpoint)), Some(Array(crlDistributionPointEndpoint)), Some(Array(ocspServerEndpoint)))

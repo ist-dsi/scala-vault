@@ -3,17 +3,17 @@ package pt.tecnico.dsi.vault.authMethods.token
 import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.flatMap._
-import cats.syntax.functor._
 import cats.syntax.foldable._
+import cats.syntax.functor._
 import cats.syntax.traverse._
-import io.circe.generic.auto._
+import io.circe.Json
 import io.circe.syntax._
-import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.vault._
+import org.http4s.client.Client
+import pt.tecnico.dsi.vault.{Auth, DSL}
 import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token => MToken}
 
-class Token[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
+class Token[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -77,8 +77,8 @@ class Token[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
     * @return the renewed token information.
     */
   def renew(token: String, increment: Option[Int] = None): F[Auth] = {
-    case class Renew(token: String, increment: Option[Int])
-    executeWithContextAuth(POST(Renew(token, increment), uri / "renew", this.token))
+    val body = Json.obj("token" -> token.asJson, "increment" -> increment.asJson)
+    executeWithContextAuth(POST(body, uri / "renew", this.token))
   }
 
   /**
@@ -139,18 +139,14 @@ class Token[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
       * @param name the name of the role to fetch
       * @return if a role named `name` exists a `Some` will be returned with its configuration. `None` otherwise.
       */
-    def get(name: String): F[Option[Role]] =
-      for {
-        request <- GET(rolesUri / name, token)
-        response <- client.expectOption[Context[Role]](request)
-      } yield response.map(_.data)
+    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(rolesUri / name, token))
     /**
       * Fetches the named role configuration.
       *
       * @param name the name of the role to fetch
       * @return
       */
-    def apply(name: String): F[Role] = get(name).map(_.get)
+    def apply(name: String): F[Role] = executeWithContextData(GET(rolesUri / name, token))
 
     /**
       * Creates (or replaces) the named role. Roles enforce specific behavior when creating tokens that allow

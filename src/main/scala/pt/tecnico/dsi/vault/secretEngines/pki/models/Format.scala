@@ -1,16 +1,13 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
-import io.circe.generic.extras.semiauto.{deriveEnumerationDecoder, deriveEnumerationEncoder}
+import enumeratum.{Enum, EnumEntry}
+import pt.tecnico.dsi.vault.CirceLowercaseEnum
 
-object Format {
-  // A little ugly :(
-  implicit val encoder = deriveEnumerationEncoder[Format].mapJson(_.mapString(_.toLowerCase))
-  implicit val decoder = deriveEnumerationDecoder[Format].prepare(_.withFocus(_.mapString { str =>
-    str.split('_').map(_.capitalize).mkString("_")
-  }))
+sealed trait Format extends EnumEntry
+case object Format extends Enum[Format] with CirceLowercaseEnum[Format] {
+  case object Pem extends Format
+  case object Der extends Format
+  case object Pem_Bundle extends Format
+
+  val values = findValues
 }
-
-sealed trait Format
-case object Pem extends Format
-case object Der extends Format
-case object Pem_Bundle extends Format

@@ -1,15 +1,14 @@
 package pt.tecnico.dsi.vault.sys.models
 
 import scala.concurrent.duration.Duration
-import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
-import io.circe.{Decoder, Encoder}
+import io.circe.{Codec, Decoder, Encoder}
+import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.sys.models.AuthMethod.TuneOptions
-import pt.tecnico.dsi.vault.{DefaultService, TokenType, VaultClient, decoderDuration, encodeDuration}
+import pt.tecnico.dsi.vault.{TokenType, VaultClient, decoderDuration, encodeDuration}
 
 object AuthMethod {
   object TuneOptions {
-    implicit val encoder: Encoder[TuneOptions] = deriveEncoder(renaming.snakeCase, None)
-    implicit val decoder: Decoder[TuneOptions] = deriveDecoder(renaming.snakeCase, false, None)
+    implicit val codec: Codec.AsObject[TuneOptions] = deriveCodec(renaming.snakeCase, false, None)
   }
   /**
     * @param defaultLeaseTtl The default lease duration, specified as a string duration like "5s" or "30m".
@@ -24,11 +23,11 @@ object AuthMethod {
   case class TuneOptions(defaultLeaseTtl: Duration, maxLeaseTtl: Duration = Duration.Undefined,
                          auditNonHmacRequestKeys: Option[List[String]] = None, auditNonHmacResponseKeys: Option[List[String]] = None,
                          listingVisibility: Option[String] = None, passthroughRequestHeaders: Option[List[String]] = None,
-                         allowedResponseHeaders: Option[List[String]] = None, tokenType: TokenType = DefaultService)
+                         allowedResponseHeaders: Option[List[String]] = None, tokenType: TokenType = TokenType.DefaultService)
 
-  implicit val encoder: Encoder[AuthMethod] = {
+  implicit val encoder: Encoder.AsObject[AuthMethod] = {
     Encoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap") { auth: AuthMethod =>
-      (auth.`type`, auth.config, auth.config, auth.options, auth.local, auth.sealWrap)
+      (auth.`type`, auth.description, auth.config, auth.options, auth.local, auth.sealWrap)
     }.mapJsonObject { obj =>
       // When tunning (updating) an AuthMethod you can set token_type. However when you are enabling an AuthMethod you cannot.
       // So we simply remove token_type from the encoding of AuthMethod tune configuration.

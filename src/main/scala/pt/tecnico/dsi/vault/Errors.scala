@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.vault
 
 import io.circe.Decoder
-import io.circe.generic.semiauto._
+import io.circe.derivation.deriveDecoder
 
 object Errors {
   implicit val decoder: Decoder[Errors] = deriveDecoder

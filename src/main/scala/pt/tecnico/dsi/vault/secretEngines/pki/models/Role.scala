@@ -1,13 +1,12 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
 import scala.concurrent.duration.Duration
-import io.circe.derivation._
-import pt.tecnico.dsi.vault.secretEngines.pki.models.KeySettings.RSA
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 
 object Role {
-  implicit val encoder = deriveEncoder[Role](renaming.snakeCase, None)
-  implicit val decoder = deriveDecoder[Role](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Role] = deriveCodec(renaming.snakeCase, false, None)
 }
 
 /**
@@ -74,7 +73,7 @@ case class Role(ttl: Duration = Duration.Undefined, maxTtl: Duration = Duration.
                 allowGlobDomains: Boolean = true, allowAnyName: Boolean = false, allowIPSans: Boolean = true,
                 allowedDomains: Seq[String] = Seq.empty, allowedUriSans: Seq[String] = Seq.empty, allowedOtherSans: Seq[String] = Seq.empty,
                 serverFlag: Boolean = true, clientFlag: Boolean = true, codeSigningFlag: Boolean = false, emailProtectionFlag: Boolean = false,
-                keyType: KeySettings.Type = RSA, keyBits: Int = 2048, keyUsage: Seq[String] = Seq("DigitalSignature", "KeyAgreement", "KeyEncipherment"),
+                keyType: KeySettings.Type = KeySettings.Type.RSA, keyBits: Int = 2048, keyUsage: Seq[String] = Seq("DigitalSignature", "KeyAgreement", "KeyEncipherment"),
                 extKeyUsage: Seq[String] = Seq.empty, extKeyUsageOids: String = "",
                 useCsrCommonName: Boolean = true, useCsrSans: Boolean = true, requireCn: Boolean = true, subject: Subject, serialNumber: String = "",
                 generateLease: Boolean = false, noStore: Boolean = false,

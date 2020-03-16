@@ -1,10 +1,10 @@
 package pt.tecnico.dsi.vault.sys.models
 
 import io.circe.Encoder
-import io.circe.derivation._
+import io.circe.derivation.{deriveEncoder, renaming}
 
 object InitOptions {
-  implicit val encoder: Encoder[InitOptions] = deriveEncoder(renaming.snakeCase, None)
+  implicit val encoder: Encoder.AsObject[InitOptions] = deriveEncoder(renaming.snakeCase, None)
 }
 
 /**

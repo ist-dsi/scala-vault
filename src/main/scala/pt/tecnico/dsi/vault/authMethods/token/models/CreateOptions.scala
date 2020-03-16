@@ -1,13 +1,12 @@
 package pt.tecnico.dsi.vault.authMethods.token.models
 
 import scala.concurrent.duration.Duration
-import io.circe.derivation._
-import io.circe.{Decoder, Encoder}
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 
 object CreateOptions {
-  implicit val encoder: Encoder[CreateOptions] = deriveEncoder(renaming.snakeCase, None)
-  implicit val decoder: Decoder[CreateOptions] = deriveDecoder(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[CreateOptions] = deriveCodec(renaming.snakeCase, false, None)
 }
 /**
   * @param displayName The display name of the token.

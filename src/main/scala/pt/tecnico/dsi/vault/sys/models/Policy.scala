@@ -1,10 +1,9 @@
 package pt.tecnico.dsi.vault.sys.models
 
-import io.circe.generic.semiauto._
-import io.circe.{Decoder, Encoder}
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
 
 object Policy {
-  implicit val encoder: Encoder[Policy] = deriveEncoder
-  implicit val decoder: Decoder[Policy] = deriveDecoder
+  implicit val codec: Codec.AsObject[Policy] = deriveCodec(renaming.snakeCase, false, None)
 }
 case class Policy(name: String, rules: String)

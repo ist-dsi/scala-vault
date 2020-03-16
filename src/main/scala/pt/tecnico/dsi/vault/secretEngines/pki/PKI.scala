@@ -1,30 +1,26 @@
 package pt.tecnico.dsi.vault.secretEngines.pki
 
 import java.math.BigInteger
-import java.security.cert.{X509CRL, X509Certificate}
-
+import java.security.cert.{X509Certificate, X509CRL}
 import scala.concurrent.duration.Duration
 import scala.util.Try
 import cats.effect.Sync
 import cats.instances.list._
 import cats.instances.try_._
 import cats.syntax.flatMap._
-import cats.syntax.functor._
 import cats.syntax.foldable._
 import cats.syntax.traverse._
-import io.circe.derivation.{deriveEncoder, renaming}
-import io.circe.generic.auto._
+import io.circe.{Decoder, Json, JsonObject}
 import io.circe.syntax._
-import io.circe.{Decoder, JsonObject}
-import org.http4s.client.Client
 import org.http4s.{Header, Uri}
+import org.http4s.client.Client
+import pt.tecnico.dsi.vault.{encodeDuration, Context, DSL}
 import pt.tecnico.dsi.vault.secretEngines.pki.PKI._
 import pt.tecnico.dsi.vault.secretEngines.pki.models._
-import pt.tecnico.dsi.vault._
 
 object PKI {
   import java.io.ByteArrayInputStream
-  import java.security.cert.{CRLException, CertificateException, CertificateFactory}
+  import java.security.cert.{CertificateException, CertificateFactory, CRLException}
   import java.util.Base64
   import scala.util.Properties
   import scala.util.control.Exception.catching
@@ -234,13 +230,13 @@ class PKI[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F]
     */
   def signVerbatim(csr: String, role: Option[String] = None, keyUsage: Array[String] = Array("DigitalSignature", "KeyAgreement", "KeyEncipherment"),
                    extendedKeyUsage: Array[String] = Array.empty, extendedKeyUsageOIDs: Array[String] = Array.empty,
-                   ttl: Duration = Duration.Undefined, format: Format = Pem): F[Certificate] = {
-    val encoder = deriveEncoder[Options](renaming.snakeCase, None)
-    case class Options(csr: String, role: Option[String], keyUsage: Array[String], extendedKeyUsage: Array[String],
-                       extendedKeyUsageOIDs: Array[String], ttl: Duration, format: Format)
-    val options = Options(csr, role, keyUsage, extendedKeyUsage, extendedKeyUsageOIDs, ttl, format)
+                   ttl: Duration = Duration.Undefined, format: Format = Format.Pem): F[Certificate] = {
+    val body = Json.obj("csr" -> csr.asJson, "role" -> role.asJson, "key_usage" -> keyUsage.asJson,
+      "extended_key_usage" -> extendedKeyUsage.asJson, "extended_key_usage_oids" -> extendedKeyUsageOIDs.asJson,
+      "ttl" -> ttl.asJson, "format" -> format.asJson
+    )
     val path = role.foldLeft(uri / "root" / "sign-verbatim")(_ / _)
-    executeWithContextData(POST(encoder(options), path, token))
+    executeWithContextData(POST(body, path, token))
   }
 
   //</editor-fold>
@@ -275,7 +271,7 @@ class PKI[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F]
     val singles = Iterable(
       "type" -> `type`.asJson,
       "serial_number" -> serialNumber.asJson,
-      "format" -> (Pem: Format).asJson,
+      "format" -> (Format.Pem: Format).asJson,
     )
     val parts = names.asJsonObject.toIterable ++ subject.asJsonObject.toIterable ++ keySettings.asJsonObject.toIterable ++ singles
     executeWithContextData(POST(JsonObject.fromIterable(parts), uri / "intermediate" / "generate" / `type`.toString.toLowerCase, token))
@@ -329,7 +325,7 @@ class PKI[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F]
       "ttl" -> ttl.asJson,
       "permitted_dns_domains" -> permittedDNSDomains.asJson,
       "use_csr_values" -> useCsrValues.asJson,
-      "format" -> (Pem: Format).asJson,
+      "format" -> (Format.Pem: Format).asJson,
       "serial_number" -> serialNumber.asJson,
       "max_path_length" -> maxPathLength.asJson)
     val parts = names.asJsonObject.toIterable ++ subject.asJsonObject.toIterable ++ singles
@@ -346,12 +342,8 @@ class PKI[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F]
     /** List the available roles. */
     def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
-    def apply(name: String): F[Role] = get(name).map(_.get)
-    def get(name: String): F[Option[Role]] =
-      for {
-        request <- GET(uri / name, token)
-        response <- client.expectOption[Context[Role]](request)
-      } yield response.map(_.data)
+    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(uri / name, token))
+    def apply(name: String): F[Role] = executeWithContextData(GET(uri / name, token))
 
     /** Creates or updates a role definition. */
     def create(name: String, role: Role): F[Unit] = execute(POST(role, uri / name, token))
@@ -407,11 +399,11 @@ class PKI[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F]
     *                         The other option is `Pkcs8` which will return the key marshalled as PEM-encoded PKCS8.
     */
   def generateCertificate(role: String, names: Names, ttl: Duration = Duration.Undefined,
-                          privateKeyFormat: KeySettings.Format = KeySettings.Der): F[Certificate] = {
+                          privateKeyFormat: KeySettings.Format = KeySettings.Format.Der): F[Certificate] = {
     val singles = Iterable(
       "ttl" -> ttl.asJson,
       "private_key_format" -> privateKeyFormat.asJson,
-      "format" -> (Pem: Format).asJson,
+      "format" -> (Format.Pem: Format).asJson,
     )
     val body = singles.foldLeft(names.asJsonObject){ case (a, (k, v)) => a.add(k, v)}
     executeWithContextData(POST(body, uri / "issue" / role, token))
@@ -427,7 +419,7 @@ class PKI[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F]
     *            If not provided, the role's ttl value will be used. Note that the role values default to system values if not explicitly set.
     */
   def signCertificate(role: String, csr: String, names: Names, ttl: Duration = Duration.Undefined): F[Certificate] = {
-    val singles = Iterable("csr" -> csr.asJson, "ttl" -> ttl.asJson, "format" -> (Pem: Format).asJson)
+    val singles = Iterable("csr" -> csr.asJson, "ttl" -> ttl.asJson, "format" -> (Format.Pem: Format).asJson)
     val body = singles.foldLeft(names.asJsonObject){ case (a, (k, v)) => a.add(k, v)}
     executeWithContextData(POST(body, uri / "sign" / role, token))
   }
@@ -447,8 +439,8 @@ class PKI[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F]
     *               See {@see PKI.toSerialString}.
     */
   def readCertificate(serial: String): F[Option[X509Certificate]] = {
-    case class Cert(certificate: X509Certificate)
-    executeOptionHandlingErrors[Context[Cert]](GET(uri / "cert" / serial))(PartialFunction.empty).map(_.map(_.data.certificate))
+    implicit val d = Context.decoder[X509Certificate](decoderDownField("certificate"))
+    executeOptionWithContextData[X509Certificate](GET(uri / "cert" / serial))
   }
   /** Retrieves the certificate with the given `serial`. */
   def readCertificate(serial: BigInteger): F[Option[X509Certificate]] = readCertificate(toSerialString(serial))

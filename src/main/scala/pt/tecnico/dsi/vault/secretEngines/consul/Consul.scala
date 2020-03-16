@@ -2,14 +2,11 @@ package pt.tecnico.dsi.vault.secretEngines.consul
 
 import cats.effect.Sync
 import cats.instances.list._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
 import cats.syntax.foldable._
-import io.circe.generic.auto._
 import io.circe.syntax._
-import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.vault._
+import org.http4s.client.Client
+import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.secretEngines.consul.models.Role
 
 class Consul[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
@@ -37,8 +34,8 @@ class Consul[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client
     * @param role the name of an existing role against which to create this Consul credential.
     */
   def generateCredential(role: String): F[String] = {
-    case class CredentialResponse(token: String)
-    executeWithContextData[CredentialResponse](GET(uri / "creds" / role, token)).map(_.token)
+    implicit val d = decoderDownField[String]("token")
+    executeWithContextData(GET(uri / "creds" / role, token))
   }
 
   object roles {
@@ -51,12 +48,8 @@ class Consul[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client
       * Gets the information associated with a Consul role with the given name.
       * @param name the name of the role.
       */
-    def get(name: String): F[Option[Role]] =
-      for {
-        request <- GET(rolesUri / name, token)
-        response <- client.expectOption[Context[Role]](request)
-      } yield response.map(_.data)
-    def apply(name: String): F[Role] = get(name).map(_.get)
+    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(rolesUri / name, token))
+    def apply(name: String): F[Role] = executeWithContextData(GET(rolesUri / name, token))
 
     def create(name: String, role: Role): F[Unit] = execute(POST(role.asJson, rolesUri / name, token))
     /**

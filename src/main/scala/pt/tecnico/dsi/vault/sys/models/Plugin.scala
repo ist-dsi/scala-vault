@@ -1,22 +1,22 @@
 package pt.tecnico.dsi.vault.sys.models
 
-import io.circe.{Decoder, Encoder}
-import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
-import io.circe.generic.extras.semiauto.{deriveEnumerationDecoder, deriveEnumerationEncoder}
+import enumeratum.{Enum, EnumEntry}
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
+import pt.tecnico.dsi.vault.CirceLowercaseEnum
 
 object Plugin {
-  object Type {
-    // A little ugly :(
-    implicit val encoder: Encoder[Type] = deriveEnumerationEncoder[Type].mapJson(_.mapString(_.toLowerCase))
-    implicit val decoder: Decoder[Type] = deriveEnumerationDecoder[Type].prepare(_.withFocus(_.mapString(_.capitalize)))
-  }
-  sealed trait Type
-  case object Auth extends Type
-  case object Database extends Type
-  case object Secret extends Type
 
-  implicit val encoder: Encoder[Plugin] = deriveEncoder(renaming.snakeCase, None)
-  implicit val decoder: Decoder[Plugin] = deriveDecoder(renaming.snakeCase, false, None)
+  sealed trait Type extends EnumEntry
+  case object Type extends Enum[Type] with CirceLowercaseEnum[Type] {
+    case object Auth extends Type
+    case object Database extends Type
+    case object Secret extends Type
+
+    val values = findValues
+  }
+
+  implicit val codec: Codec.AsObject[Plugin] = deriveCodec(renaming.snakeCase, false, None)
 }
 
 /**

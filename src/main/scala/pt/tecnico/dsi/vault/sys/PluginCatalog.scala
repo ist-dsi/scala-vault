@@ -2,16 +2,14 @@ package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
 import cats.instances.list._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
 import cats.syntax.foldable._
-import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.vault._
+import org.http4s.client.Client
+import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.Plugin
 import pt.tecnico.dsi.vault.sys.models.Plugin.Type
 
-class PluginCatalog[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
+class PluginCatalog[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -49,17 +47,13 @@ class PluginCatalog[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Hea
     */
   def ++=(list: List[(Type, Plugin)]): F[Unit] = list.map(+=).sequence_
 
-  def apply(`type`: Type, name: String): F[Plugin] = get(`type`, name).map(_.get)
   /**
     * @param name the name of the plugin to retrieve.
     * @param `type` the type of this plugin.
     * @return returns the configuration data for the plugin with the given name.
     */
-  def get(`type`: Type, name: String): F[Option[Plugin]] =
-    for {
-      request <- GET(uri / `type`.toString.toLowerCase / name, token)
-      response <- client.expectOption[Context[Plugin]](request)
-    } yield response.map(_.data)
+  def get(`type`: Type, name: String): F[Option[Plugin]] = executeOptionWithContextData(GET(uri / `type`.toString.toLowerCase / name, token))
+  def apply(`type`: Type, name: String): F[Plugin] = executeWithContextData(GET(uri / `type`.toString.toLowerCase / name, token))
 
   /**
     * Removes the plugin with the given name.

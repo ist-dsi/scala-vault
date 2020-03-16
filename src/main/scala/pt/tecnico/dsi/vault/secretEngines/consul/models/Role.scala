@@ -1,13 +1,18 @@
 package pt.tecnico.dsi.vault.secretEngines.consul.models
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
 import scala.concurrent.duration.Duration
-import io.circe.derivation._
 import io.circe.{Decoder, Encoder}
+import io.circe.derivation.{deriveEncoder, deriveDecoder, renaming}
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 
 object Role {
-  implicit val encoder: Encoder[Role] = deriveEncoder(renaming.snakeCase, None)
-  implicit val decoder: Decoder[Role] = deriveDecoder(renaming.snakeCase, false, None)
+  def base64encode(string: String): String = Base64.getEncoder.encodeToString(string.getBytes(StandardCharsets.UTF_8))
+  def base64decode(string: String): String = new String(Base64.getDecoder.decode(string), StandardCharsets.UTF_8)
+
+  implicit val encoder: Encoder[Role] = deriveEncoder[Role](renaming.snakeCase, None).contramap[Role](r => r.copy(policy = base64encode(r.policy)))
+  implicit val decoder: Decoder[Role] = deriveDecoder[Role](renaming.snakeCase, false, None).map(r => r.copy(policy = base64decode(r.policy)))
 }
 
 /**
@@ -17,4 +22,4 @@ object Role {
   * @param maxTtl Specifies the max TTL for this role. If not provided, the default Vault Max TTL is used.
   * @param tokenType Specifies the type of token to create when using this role.
   */
-case class Role(policy: Policy, ttl: Duration = Duration.Undefined, maxTtl: Duration = Duration.Undefined, tokenType: TokenType = Client)
+case class Role(policy: String, ttl: Duration = Duration.Undefined, maxTtl: Duration = Duration.Undefined, tokenType: TokenType = TokenType.Client)

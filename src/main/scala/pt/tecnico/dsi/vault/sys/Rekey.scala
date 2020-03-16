@@ -1,11 +1,11 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import io.circe.generic.auto._
+import io.circe.Json
 import io.circe.syntax._
 import org.http4s.Uri
 import org.http4s.client.Client
-import pt.tecnico.dsi.vault._
+import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{BackupKeys, RekeyProgress, RekeyVerificationProgress}
 
 class Rekey[F[_]: Sync](uri: Uri)(implicit client: Client[F]) { self =>
@@ -38,8 +38,14 @@ class Rekey[F[_]: Sync](uri: Uri)(implicit client: Client[F]) { self =>
     * @return the configuration and progress of the current rekey attempt.
     */
   def start(shares: Int, threshold: Int, pgpKeys: Option[List[String]] = None, backup: Boolean = false, requireVerification: Boolean = false): F[RekeyProgress] = {
-    case class StartSettings(secretShares: Int, secretThreshold: Int, pgpKeys: Option[List[String]], backup: Boolean, requireVerification: Boolean)
-    execute(PUT(StartSettings(shares, threshold, pgpKeys, backup, requireVerification).asJson, uri / "init"))
+    val body = Json.obj(
+      "secret_shares" -> shares.asJson,
+      "secret_threshold" -> threshold.asJson,
+      "pgp_keys" -> pgpKeys.asJson,
+      "backup" -> backup.asJson,
+      "require_verification" -> requireVerification.asJson
+    )
+    execute(PUT(body, uri / "init"))
   }
 
   /**

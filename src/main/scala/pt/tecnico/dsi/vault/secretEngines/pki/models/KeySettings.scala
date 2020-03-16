@@ -1,28 +1,29 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
-import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
-import io.circe.generic.extras.semiauto.{deriveEnumerationDecoder, deriveEnumerationEncoder}
-import io.circe.{Decoder, Encoder}
+import enumeratum.{Enum, EnumEntry}
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
+import pt.tecnico.dsi.vault.CirceLowercaseEnum
+import pt.tecnico.dsi.vault.secretEngines.pki.models.KeySettings.{Format, Type}
 
 object KeySettings {
-  implicit val encoder = deriveEncoder[KeySettings](renaming.snakeCase, None)
-  implicit val decoder = deriveDecoder[KeySettings](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[KeySettings] = deriveCodec(renaming.snakeCase, false, None)
 
-  object Type {
-    implicit val encoder: Encoder[Type] = deriveEnumerationEncoder[Type].mapJson(_.mapString(_.toLowerCase))
-    implicit val decoder: Decoder[Type] = deriveEnumerationDecoder[Type].prepare(_.withFocus(_.mapString(_.toUpperCase)))
-  }
-  sealed trait Type
-  case object RSA extends Type
-  case object EC extends Type
+  sealed trait Type extends EnumEntry
+  case object Type extends Enum[Type] with CirceLowercaseEnum[Type] {
+    case object RSA extends Type
+    case object EC extends Type
 
-  object Format {
-    implicit val encoder: Encoder[Format] = deriveEnumerationEncoder[Format].mapJson(_.mapString(_.toLowerCase))
-    implicit val decoder: Decoder[Format] = deriveEnumerationDecoder[Format].prepare(_.withFocus(_.mapString(_.capitalize)))
+    val values = findValues
   }
-  sealed trait Format
-  case object Der extends Format
-  case object Pkcs8 extends Format
+
+  sealed trait Format extends EnumEntry
+  case object Format extends Enum[Format] with CirceLowercaseEnum[Format] {
+    case object Der extends Format
+    case object Pkcs8 extends Format
+
+    val values = findValues
+  }
 }
 
-case class KeySettings(keyType: KeySettings.Type = KeySettings.RSA, keyBits: Int = 2048, privateKeyFormat: KeySettings.Format = KeySettings.Der)
+case class KeySettings(keyType: KeySettings.Type = Type.RSA, keyBits: Int = 2048, privateKeyFormat: KeySettings.Format = Format.Der)

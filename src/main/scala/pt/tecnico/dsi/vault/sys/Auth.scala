@@ -3,18 +3,18 @@ package pt.tecnico.dsi.vault.sys
 import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.flatMap._
-import cats.syntax.functor._
 import cats.syntax.foldable._
-import org.http4s.client.Client
+import cats.syntax.functor._
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.vault._
+import org.http4s.client.Client
+import pt.tecnico.dsi.vault.{DSL, VaultClient}
 import pt.tecnico.dsi.vault.sys.models.AuthMethod
 import pt.tecnico.dsi.vault.sys.models.AuthMethod.TuneOptions
 
 /**
   * @define sudoRequired <b>sudo required</b> – This endpoint requires sudo capability in addition to any path-specific capabilities.
   */
-final class Auth[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
+final class Auth[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -94,12 +94,8 @@ final class Auth[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header
     *
     * @param path Specifies the path in which to tune.
     */
-  def tuneOptions(path: String): F[Option[TuneOptions]] =
-    for {
-      request <- GET(uri / path / "tune", token)
-      response <- client.expectOption[Context[TuneOptions]](request)
-    } yield response.map(_.data)
-  def apply(path: String): F[TuneOptions] = tuneOptions(path).map(_.get)
+  def tuneOptions(path: String): F[Option[TuneOptions]] = executeOptionWithContextData(GET(uri / path / "tune", token))
+  def apply(path: String): F[TuneOptions] = executeWithContextData(GET(uri / path / "tune", token))
 
   /**
     * Tune configuration parameters for a given auth path.

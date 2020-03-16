@@ -1,13 +1,12 @@
 package pt.tecnico.dsi.vault.authMethods.approle.models
 
 import scala.concurrent.duration.Duration
-import io.circe.derivation._
-import io.circe.{Decoder, Encoder}
-import pt.tecnico.dsi.vault.{Service, TokenType, decoderDuration, encodeDuration}
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
+import pt.tecnico.dsi.vault.{TokenType, decoderDuration, encodeDuration}
 
 object Role {
-  implicit val encoder: Encoder[Role] = deriveEncoder(renaming.snakeCase, None)
-  implicit val decoder: Decoder[Role] = deriveDecoder(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Role] = deriveCodec(renaming.snakeCase, false, None)
 }
 
 /**
@@ -33,4 +32,4 @@ object Role {
 case class Role(bindSecretId: Boolean = true, secretIdBoundCidrs: List[String] = List.empty, tokenBoundCidrs: List[String] = List.empty,
                 policies: List[String] = List.empty, secretIdNumUses: Int = 0, secretIdTtl: Duration = Duration.Undefined,
                 tokenNumUses: Int = 0, tokenTtl: Duration = Duration.Undefined, tokenMaxTtl: Duration = Duration.Undefined,
-                period: Duration = Duration.Undefined, enableLocalSecretIds: Boolean = false, tokenType: TokenType = Service)
+                period: Duration = Duration.Undefined, enableLocalSecretIds: Boolean = false, tokenType: TokenType = TokenType.Service)

@@ -2,14 +2,14 @@ package pt.tecnico.dsi.vault.secretEngines.databases.models.MySQL
 
 import scala.concurrent.duration.Duration
 import cats.data.NonEmptyList
-import io.circe.derivation._
+import io.circe.derivation.{deriveCodec, renaming}
+import io.circe.Codec
+import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 import pt.tecnico.dsi.vault.secretEngines.databases.models.MySQL.Role._
-import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 
 object Role {
-  implicit val encoder = deriveEncoder[Role](renaming.snakeCase, None)
-  implicit val decoder = deriveDecoder[Role](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Role] = deriveCodec(renaming.snakeCase, false, None)
 
   def defaultCreationStatements(permissions: NonEmptyList[String] = NonEmptyList.one("ALL"), privLevel: String = "*.*", host: String = "%") = List(
     s"CREATE USER '{{name}}'@'$host' IDENTIFIED BY '{{password}}';",

@@ -1,8 +1,9 @@
 package pt.tecnico.dsi.vault.secretEngines.databases.models
 
-import io.circe.derivation._
+import io.circe.derivation.{deriveDecoder, renaming}
+import io.circe.Decoder
 
 object Credential {
-  implicit val decoder = deriveDecoder[Credential](renaming.snakeCase, false, None)
+  implicit val decoder: Decoder[Credential] = deriveDecoder[Credential](renaming.snakeCase, false, None)
 }
 case class Credential(username: String, password: String)

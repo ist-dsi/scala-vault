@@ -1,11 +1,11 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
-import io.circe.derivation._
-import pt.tecnico.dsi.vault.{encodeArrayAsCSV, decodeArrayAsCSV}
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
+import pt.tecnico.dsi.vault.{decodeArrayAsCSV, encodeArrayAsCSV}
 
 object Subject {
-  implicit val encoder = deriveEncoder[Subject](renaming.snakeCase, None)
-  implicit val decoder = deriveDecoder[Subject](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Subject] = deriveCodec(renaming.snakeCase, false, None)
 
   // These default values are sneaky. They only work because encodeArrayAsCSV(Array.empty) === encodeArrayAsCSV(Array(""))
   /*def apply(ou: String = "", organization: String = "", country: String = "", locality: String = "",

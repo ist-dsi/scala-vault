@@ -1,8 +1,8 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import org.http4s.client.Client
 import org.http4s.{Header, Uri}
+import org.http4s.client.Client
 import pt.tecnico.dsi.vault._
 import pt.tecnico.dsi.vault.sys.models.LeaderStatus
 

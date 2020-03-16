@@ -1,9 +1,9 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.vault._
+import org.http4s.client.Client
+import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.KeyStatus
 
 class Keys[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {

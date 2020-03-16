@@ -2,13 +2,11 @@ package pt.tecnico.dsi.vault.secretEngines.databases
 
 import cats.effect.Sync
 import cats.instances.list._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
 import cats.syntax.foldable._
 import io.circe.{Decoder, Encoder}
-import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.vault._
+import org.http4s.client.Client
+import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.secretEngines.databases.models._
 
 abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : Decoder, Role <: BaseRole : Encoder : Decoder]
@@ -22,13 +20,9 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
     /** @return all available connections. */
     def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
-    def apply(name: String): F[Connection] = get(name).map(_.get)
     /** @return the connection associated with `name`. */
-    def get(name: String): F[Option[Connection]] =
-      for {
-        request <- GET(uri / name, token)
-        response <- client.expectOption[Connection](request)
-      } yield response
+    def get(name: String): F[Option[Connection]] = executeOptionWithContextData(GET(uri / name, token))
+    def apply(name: String): F[Connection] = executeWithContextData(GET(uri / name, token))
 
     /**
       * Configures the connection string used to communicate with the desired database.
@@ -92,13 +86,9 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
     /** List the available roles. */
     def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
-    def apply(name: String): F[Role] = get(name).map(_.get)
+    def apply(name: String): F[Role] = executeWithContextData(GET(uri / name, token))
     /** @return the role associated with `name`. */
-    def get(name: String): F[Option[Role]] =
-      for {
-        request <- GET(uri / name, token)
-        response <- client.expectOption[Context[Role]](request)
-      } yield response.map(_.data)
+    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(uri / name, token))
 
     /**
       * Creates or updates a role definition.
@@ -152,13 +142,9 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
     /** List the available roles. */
     def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
-    def apply(name: String): F[StaticRole] = get(name).map(_.get)
     /** @return the role associated with `name`. */
-    def get(name: String): F[Option[StaticRole]] =
-      for {
-        request <- GET(uri / name, token)
-        response <- client.expectOption[Context[StaticRole]](request)
-      } yield response.map(_.data)
+    def get(name: String): F[Option[StaticRole]] = executeOptionWithContextData(GET(uri / name, token))
+    def apply(name: String): F[StaticRole] = executeWithContextData(GET(uri / name, token))
 
     /**
       * Creates or updates a role definition.

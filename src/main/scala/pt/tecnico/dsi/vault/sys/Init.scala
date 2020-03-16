@@ -1,11 +1,9 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import cats.syntax.functor._
-import io.circe.generic.auto._
 import org.http4s.Uri
 import org.http4s.client.Client
-import pt.tecnico.dsi.vault._
+import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{InitOptions, InitResult}
 
 class Init[F[_]: Sync](uri: Uri)(implicit client: Client[F]) {
@@ -14,8 +12,8 @@ class Init[F[_]: Sync](uri: Uri)(implicit client: Client[F]) {
 
   /** @return the initialization status of Vault. */
   def initialized(): F[Boolean] = {
-    case class Status(initialized: Boolean)
-    execute[Status](GET(uri)).map(_.initialized)
+    implicit val d = decoderDownField[Boolean]("initialized")
+    execute(GET(uri))
   }
 
   /**

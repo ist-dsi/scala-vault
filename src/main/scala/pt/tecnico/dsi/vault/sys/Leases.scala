@@ -1,17 +1,15 @@
 package pt.tecnico.dsi.vault.sys
 
-import scala.concurrent.duration.{Duration, DurationInt}
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import cats.effect.Sync
-import cats.syntax.flatMap._
-import cats.syntax.functor._
-import io.circe.generic.auto._
+import io.circe.Json
 import io.circe.syntax._
-import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.vault._
+import org.http4s.client.Client
+import pt.tecnico.dsi.vault.{DSL, RichUri}
 import pt.tecnico.dsi.vault.sys.models.{Lease, LeaseRenew}
 
-class Leases[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
+class Leases[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -21,18 +19,15 @@ class Leases[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
     * @param prefix the prefix for which to list leases.
     */
   def list(prefix: String): F[List[String]] =
-    executeWithContextKeys(LIST(uri.withPath(uri.path + "/lookup/" + prefix), token))
+    executeWithContextKeys(LIST(uri append s"lookup/$prefix", token))
 
-  def apply(name: String): F[Lease] = get(name).map(_.get)
+  def apply(name: String): F[Lease] = executeWithContextData(PUT(Map("lease_id" -> name).asJson, uri / "lookup", token))
   /**
     * @param id the id of the lease.
     * @return the metadata associated with the lease with `id`. If no lease with that `id` exists a None will be returned.
     */
   def get(id: String): F[Option[Lease]] =
-    for {
-      request <- PUT(Map("lease_id" -> id).asJson, uri / "lookup", token)
-      response <- client.expectOption[Context[Lease]](request)
-    } yield response.map(_.data)
+    executeOptionWithContextData(PUT(Map("lease_id" -> id).asJson, uri / "lookup", token))
 
   /**
     * Renews a lease, requesting to extend the lease.
@@ -41,9 +36,10 @@ class Leases[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
     * @param increment Specifies the requested amount of time to extend the lease.
     * @return
     */
-  def renew(id: String, increment: Duration = 0.second): F[LeaseRenew] = {
-    case class Renew(lease_id: String, increment: Int)
-    execute(PUT(Renew(id, increment.toSeconds.toInt).asJson, uri / "renew", token))
+  def renew(id: String, increment: FiniteDuration = 0.second): F[LeaseRenew] = {
+    //Unfortunately we cannot use increment.asJson directly because this endpoint is expecting an Int
+    val body = Json.obj("lease_id" -> id.asJson, "increment" -> increment.toSeconds.toInt.asJson)
+    execute(PUT(body, uri / "renew", token))
   }
 
   /**

@@ -1,8 +1,5 @@
 package pt.tecnico.dsi.vault
 
-import pt.tecnico.dsi.vault.authMethods.token.models.CreateOptions
-import pt.tecnico.dsi.vault.sys.models.{AuthMethod, Policy, SecretEngine}
-
 import scala.concurrent.duration.DurationInt
 
 class SysSpec extends Utils {
@@ -97,6 +94,7 @@ class SysSpec extends Utils {
   }
 
   "The leases endpoint" should {
+    import pt.tecnico.dsi.vault.authMethods.token.models.CreateOptions
     // Unfortunately we first need to create a token in order to have leases
     client.authMethods.token.create(CreateOptions(ttl = 5.minute, explicitMaxTtl = 20.minutes)).unsafeRunSync()
     val prefix = "auth/token/create"
@@ -142,6 +140,8 @@ class SysSpec extends Utils {
   }
 
   "The policy endpoint" should {
+    import pt.tecnico.dsi.vault.sys.models.Policy
+
     "create a policy" in idempotently {
       client.sys.policy.create(Policy("test", """path "*" { capabilities = ["read"] }""")).map(_ shouldBe ())
     }
@@ -188,6 +188,7 @@ class SysSpec extends Utils {
   }
 
   "The auth endpoint" should {
+    import pt.tecnico.dsi.vault.sys.models.AuthMethod
     import pt.tecnico.dsi.vault.sys.models.AuthMethod.TuneOptions
     // TODO: maybe change to property based testing. To ensure we cover all the parameters
     def createAuthMethod(`type`: String) = AuthMethod(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
@@ -244,6 +245,7 @@ class SysSpec extends Utils {
   }
 
   "The mounts endpoint" should {
+    import pt.tecnico.dsi.vault.sys.models.SecretEngine
     import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions
     // TODO: maybe change to property based testing. To ensure we cover all the parameters
     def createSecretEngine(`type`: String) = SecretEngine(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
@@ -290,6 +292,7 @@ class SysSpec extends Utils {
     "remount a secret engine" in {
       // The second remount is just so we can re-run the tests
       val io = for {
+        _ <- client.sys.mounts.enable("secret", createSecretEngine("kv"))
         firstRemount <- client.sys.mounts.remount("secret", "new-secret")
         read <- client.sys.mounts.list()
         secondRemount <- client.sys.mounts.remount("new-secret", "secret")

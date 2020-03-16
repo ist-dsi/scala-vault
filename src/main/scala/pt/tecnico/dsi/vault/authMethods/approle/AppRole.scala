@@ -2,17 +2,15 @@ package pt.tecnico.dsi.vault.authMethods.approle
 
 import cats.effect.Sync
 import cats.instances.list._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
 import cats.syntax.foldable._
-import io.circe.generic.auto._
+import cats.syntax.functor._
 import io.circe.syntax._
-import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.vault._
+import org.http4s.client.Client
+import pt.tecnico.dsi.vault.{Auth, DSL}
 import pt.tecnico.dsi.vault.authMethods.approle.models._
 
-class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
+class AppRole[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -26,12 +24,8 @@ class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
       * Reads the properties of the specified role.
       * @param name the name of the role to read.
       */
-    def get(name: String): F[Option[Role]] =
-      for {
-        request <- GET(rolesUri / name, token)
-        response <- client.expectOption[Context[Role]](request)
-      } yield response.map(_.data)
-    def apply(name: String): F[Role] = get(name).map(_.get)
+    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(rolesUri / name, token))
+    def apply(name: String): F[Role] = executeWithContextData(GET(rolesUri / name, token))
 
     /**
       * Creates a new AppRole or updates an existing AppRole.
@@ -116,7 +110,7 @@ class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
         * @param properties the secret id properties to use while generating the new secret id.
         */
       def generate(properties: SecretIdProperties): F[SecretIdResponse] = {
-        executeWithContextData[SecretIdResponse](POST(properties.asJson, secretUri, token))
+        executeWithContextData[SecretIdResponse](POST.apply(properties.asJson, secretUri, token))
       }
 
       /**
@@ -125,7 +119,7 @@ class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
         * @param properties the secret id properties to use while generating the new secret id.
         */
       def createCustom(secretId: String, properties: SecretIdProperties): F[SecretIdResponse] = {
-        val body = properties.asJsonObject.add("secret_id", secretId.asJson)
+        val body = SecretIdProperties.codec(properties).mapObject(_.add("secret_id", secretId.asJson))
         executeWithContextData[SecretIdResponse](POST(body, secretUri, token))
       }
 
@@ -135,11 +129,9 @@ class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
         * @param secretId the secret id to read the properties from.
         */
       def get(secretId: String): F[Option[SecretIdProperties]] =
-        for {
-          request <- POST(Map("secret_id" -> secretId).asJson, secretUri / "lookup", token)
-          response <- client.expectOption[Context[SecretIdProperties]](request)
-        } yield response.map(_.data)
-      def apply(secretId: String): F[SecretIdProperties] = get(secretId).map(_.get)
+        executeOptionWithContextData(POST(Map("secret_id" -> secretId).asJson, secretUri / "lookup", token))
+      def apply(secretId: String): F[SecretIdProperties] =
+        executeWithContextData(POST(Map("secret_id" -> secretId).asJson, secretUri / "lookup", token))
 
       /**
         * Destroy an secret ID.
@@ -158,10 +150,8 @@ class AppRole[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
         * @param accessor the secret id accessor to read the properties from.
         */
       def getUsingAccessor(accessor: String): F[Option[SecretIdProperties]] =
-        for {
-          request <- POST(Map("secret_id_accessor" -> accessor).asJson, uri / "secret-id-accessor" / "lookup", token)
-          response <- client.expectOption[Context[SecretIdProperties]](request)
-        } yield response.map(_.data)
+        executeOptionWithContextData(POST(Map("secret_id_accessor" -> accessor).asJson, uri / "secret-id-accessor" / "lookup", token))
+
       /**
         * Destroy an secret ID using its accessor.
         * @param accessor the secret id accessor to use to destroy the corresponding secret id.

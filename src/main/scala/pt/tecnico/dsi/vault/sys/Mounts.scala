@@ -3,16 +3,16 @@ package pt.tecnico.dsi.vault.sys
 import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.flatMap._
-import cats.syntax.functor._
 import cats.syntax.foldable._
+import cats.syntax.functor._
 import io.circe.syntax._
-import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.vault._
+import org.http4s.client.Client
+import pt.tecnico.dsi.vault.{DSL, VaultClient}
 import pt.tecnico.dsi.vault.sys.models.SecretEngine
 import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions
 
-class Mounts[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
+class Mounts[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -79,12 +79,8 @@ class Mounts[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
     * @param path Specifies the path for the secrets engine.
     * @return
     */
-  def tuneOptions(path: String): F[Option[TuneOptions]] =
-    for {
-      request <- GET(uri / path / "tune", token)
-      response <- client.expectOption[Context[TuneOptions]](request)
-    } yield response.map(_.data)
-  def apply(path: String): F[TuneOptions] = tuneOptions(path).map(_.get)
+  def tuneOptions(path: String): F[Option[TuneOptions]] = executeOptionWithContextData(GET(uri / path / "tune", token))
+  def apply(path: String): F[TuneOptions] = executeWithContextData(GET(uri / path / "tune", token))
 
   /**
     * Tunes configuration parameters for a given mount point.

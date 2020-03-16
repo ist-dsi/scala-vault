@@ -1,16 +1,14 @@
 package pt.tecnico.dsi.vault.sys.models
 
-import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
-import io.circe.{Decoder, Encoder}
+import scala.concurrent.duration.Duration
+import io.circe.{Codec, Decoder, Encoder}
+import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions
 import pt.tecnico.dsi.vault.{VaultClient, decoderDuration, encodeDuration}
 
-import scala.concurrent.duration.Duration
-
 object SecretEngine {
   object TuneOptions {
-    implicit val encoder: Encoder[TuneOptions] = deriveEncoder(renaming.snakeCase, None)
-    implicit val decoder: Decoder[TuneOptions] = deriveDecoder(renaming.snakeCase, false, None)
+    implicit val codec: Codec.AsObject[TuneOptions] = deriveCodec(renaming.snakeCase, false, None)
   }
 
   /**
@@ -29,9 +27,9 @@ object SecretEngine {
                          listingVisibility: Option[String] = None, passthroughRequestHeaders: Option[List[String]] = None,
                          allowedResponseHeaders: Option[List[String]] = None, options: Option[Map[String, String]] = None)
 
-  implicit val encoder: Encoder[SecretEngine] =
+  implicit val encoder: Encoder.AsObject[SecretEngine] =
     Encoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap") { engine =>
-      (engine.`type`, engine.config, engine.config, engine.options, engine.local, engine.sealWrap)
+      (engine.`type`, engine.description, engine.config, engine.options, engine.local, engine.sealWrap)
     }
   implicit val decoder: Decoder[SecretEngine] = Decoder.forProduct6[SecretEngine, String, String, TuneOptions, Option[Map[String, String]], Boolean, Boolean](
     "type", "description", "config", "options", "local", "seal_wrap")(SecretEngine.apply)

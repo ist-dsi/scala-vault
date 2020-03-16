@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.vault
 
 import io.circe.Decoder
-import io.circe.derivation._
+import io.circe.derivation.{deriveDecoder, renaming}
 
 object Auth {
   implicit val decoder: Decoder[Auth] = deriveDecoder(renaming.snakeCase, false, None)

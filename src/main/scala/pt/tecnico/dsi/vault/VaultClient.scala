@@ -46,13 +46,13 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
     val leader = new Leader[F](uri) // One endpoint requires a token, the other does not
     val seal = new Seal[F](uri) // Does not require a token
     val generateRoot = new GenerateRoot[F](uri / "generate-root") // Does not require a token
-    val leases = new Leases[F](uri / "leases")
-    val policy = new Policy[F](uri / "policy")
-    val auth = new Auth[F](uri / "auth")
-    val mounts = new Mounts[F](uri / "mounts")
+    val leases = new Leases[F]("sys/leases", uri / "leases")
+    val policy = new Policy[F]("sys/policy", uri / "policy")
+    val auth = new Auth[F]("sys/auth", uri / "auth")
+    val mounts = new Mounts[F]("sys/mounts", uri / "mounts")
     val keys = new Keys[F](uri) // One endpoint requires a token, the other does not
     val rekey = new Rekey[F](uri / "rekey") // Does not require a token
-    val pluginCatalog = new PluginCatalog[F](uri / "plugins" / "catalog")
+    val pluginCatalog = new PluginCatalog[F]("sys/plugins/catalog", uri / "plugins" / "catalog")
   }
 
   object authMethods {
@@ -62,8 +62,8 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
     import pt.tecnico.dsi.vault.authMethods.token.Token
 
     // The Token auth method is always mounted at this location. And cannot be changed.
-    val token: Token[F] = new Token[F](uri / "token")
-    def appRole(at: String = "approle"): AppRole[F] = new AppRole[F](uri append at)
+    val token: Token[F] = new Token[F]("auth/token", uri / "token")
+    def appRole(at: String = "approle"): AppRole[F] = new AppRole[F](s"auth/$at", uri append at)
   }
 
   object secretEngines {

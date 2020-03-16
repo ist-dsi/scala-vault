@@ -1,11 +1,11 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
-import io.circe.derivation._
-import pt.tecnico.dsi.vault.{encodeArrayAsCSV, decodeArrayAsCSV}
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
+import pt.tecnico.dsi.vault.{decodeArrayAsCSV, encodeArrayAsCSV}
 
 object Names {
-  implicit val encoder = deriveEncoder[Names](renaming.snakeCase, None)
-  implicit val decoder = deriveDecoder[Names](renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Names] = deriveCodec(renaming.snakeCase, false, None)
 }
 
 /**
