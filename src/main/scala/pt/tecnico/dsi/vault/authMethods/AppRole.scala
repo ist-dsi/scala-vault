@@ -8,6 +8,5 @@ final case class AppRole(description: String, config: TuneOptions, options: Opti
                          local: Boolean = false, sealWrap: Boolean = false) extends AuthMethod {
   val `type` = "approle"
   type Out[T[_]] = approle.AppRole[T]
-  override def mounted[F[_]](path: String)(implicit vaultClient: VaultClient[F]): Out[F] =
-    vaultClient.authMethods.appRole(path)
+  override def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = vaultClient.authMethods.appRole(path)
 }

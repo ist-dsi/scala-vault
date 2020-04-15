@@ -12,7 +12,7 @@ import pt.tecnico.dsi.vault.{DSL, VaultClient}
 import pt.tecnico.dsi.vault.sys.models.SecretEngine
 import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions
 
-class Mounts[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
+class Mounts[F[_]: Sync](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -52,8 +52,8 @@ class Mounts[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client
     * @param path Specifies the path where the secrets engine will be mounted.
     * @param engine the secret engine to enable.
     */
-  def enableAndReturn(path: String, engine: SecretEngine)(implicit vaultClient: VaultClient[F]): F[engine.Out[F]] =
-    enable(path, engine).as(engine.mounted(path))
+  def enableAndReturn(path: String, engine: SecretEngine): F[engine.Out[F]] =
+    enable(path, engine).as(engine.mounted(vaultClient, path))
 
   /**
     * Disables the mount point at `path`.

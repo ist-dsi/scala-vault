@@ -1,17 +1,12 @@
 package pt.tecnico.dsi.vault.secretEngines.databases.models.MongoDB
 
-import io.circe.{Decoder, Encoder}
-import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
-import io.circe.syntax._
-import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseConnection
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
+import pt.tecnico.dsi.vault.secretEngines.databases.models.{BaseConnection, BaseConnectionObject}
 
-// TODO: find a better way to implement the plugin name field.
-
-object Connection {
-  final val pluginName: String = "mongodb-database-plugin"
-
-  implicit val encoder: Encoder.AsObject[Connection] = deriveEncoder(renaming.snakeCase, None).mapJsonObject(_.add("plugin_name", pluginName.asJson))
-  implicit val decoder: Decoder[Connection] = deriveDecoder(renaming.snakeCase, false, None)
+object Connection extends BaseConnectionObject[Connection] {
+  override val pluginName: String = "mongodb-database-plugin"
+  override protected val derivedCodec: Codec.AsObject[Connection] = deriveCodec(renaming.snakeCase, false, None)
 }
 
 case class Connection(connectionUrl: String, username: String, password: String, writeConcern: WriteConcern,

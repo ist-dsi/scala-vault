@@ -66,7 +66,7 @@ object AuthMethod {
       override val sealWrap: Boolean = _sealWrap
 
       override type Out[_[_]] = Nothing
-      def mounted[F[_]](path: String)(implicit vaultClient: VaultClient[F]): Out[F] = ???
+      def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = ???
     }
   }
 }
@@ -89,5 +89,5 @@ trait AuthMethod {
   val sealWrap: Boolean
 
   type Out[T[_]]
-  def mounted[F[_]](path: String)(implicit vaultClient: VaultClient[F]): Out[F]
+  def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F]
 }

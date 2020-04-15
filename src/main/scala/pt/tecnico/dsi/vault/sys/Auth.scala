@@ -14,7 +14,7 @@ import pt.tecnico.dsi.vault.sys.models.AuthMethod.TuneOptions
 /**
   * @define sudoRequired <b>sudo required</b> – This endpoint requires sudo capability in addition to any path-specific capabilities.
   */
-final class Auth[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
+final class Auth[F[_]: Sync](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit client: Client[F], token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -62,8 +62,8 @@ final class Auth[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Cl
     * @param path Specifies the path in which to enable the auth method.
     * @param method the authentication method to enable.
     */
-  def enableAndReturn(path: String, method: AuthMethod)(implicit vaultClient: VaultClient[F]): F[method.Out[F]] = {
-    enable(path, method).as(method.mounted(path))
+  def enableAndReturn(path: String, method: AuthMethod): F[method.Out[F]] = {
+    enable(path, method).as(method.mounted(vaultClient, path))
   }
 
   /**

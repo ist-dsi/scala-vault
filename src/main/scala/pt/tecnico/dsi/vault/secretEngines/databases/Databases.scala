@@ -3,15 +3,15 @@ package pt.tecnico.dsi.vault.secretEngines.databases
 import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.foldable._
-import io.circe.{Decoder, Encoder}
+import io.circe.Codec
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.secretEngines.databases.models._
 
-abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : Decoder, Role <: BaseRole : Encoder : Decoder]
-                        (uri: Uri)(implicit client: Client[F], token: Header) { self =>
-  private val dsl = new DSL[F] {}
+abstract class Databases[F[_], Connection <: BaseConnection : Codec, Role <: BaseRole : Codec]
+                        (val uri: Uri)(implicit protected val client: Client[F], protected val token: Header, protected val F: Sync[F]) { self =>
+  protected val dsl: DSL[F] = new DSL[F] {}
   import dsl._
 
   object connections {
@@ -72,14 +72,6 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
     def reset(name: String): F[Unit] = execute(POST(self.uri / "reset" / name))
   }
 
-  /**
-    * Rotates the root superuser credentials stored for the database connection.
-    * This user must have permissions to update its own password.
-    *
-    * @param connection the name of the connection to rotate.
-    */
-  def rotateRootCredentials(connection: String): F[Unit] = execute(POST(uri / "rotate-root" / connection, token))
-
   object roles {
     val uri: Uri = self.uri / "roles"
 
@@ -134,71 +126,4 @@ abstract class Databases[F[_]: Sync, Connection <: BaseConnection : Encoder : De
     * @param role the name of the role to create credentials against.
     */
   def generateCredentials(role: String): F[Credential] = executeWithContextData[Credential](GET(uri / "creds" / role, token))
-
-  // TODO: do we also need to abstract the StaticRole to a type parameter?
-  object staticRoles {
-    val uri: Uri = self.uri / "static-roles"
-
-    /** List the available roles. */
-    def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
-
-    /** @return the role associated with `name`. */
-    def get(name: String): F[Option[StaticRole]] = executeOptionWithContextData(GET(uri / name, token))
-    def apply(name: String): F[StaticRole] = executeWithContextData(GET(uri / name, token))
-
-    /**
-      * Creates or updates a role definition.
-      *
-      * Static Roles are a 1-to-1 mapping of a Vault Role to a user in a database which are automatically rotated based
-      * on the configured rotationPeriod. Not all databases support Static Roles, please see the database-specific documentation.
-      *
-      * @note This endpoint distinguishes between create and update ACL capabilities. */
-    def create(name: String, role: StaticRole): F[Unit] = execute(POST(role, uri / name, token))
-    /**
-      * Alternative syntax to create a role:
-      * * {{{ client.secretEngines.database("path").staticRoles += "a" -> Role(...) }}}
-      */
-    def +=(tuple: (String, StaticRole)): F[Unit] = create(tuple._1, tuple._2)
-    /**
-      * Allows creating multiple roles in one go:
-      * {{{
-      *   client.secretEngines.database("path").staticRoles ++= List(
-      *     "a" -> Role(...),
-      *     "b" -> Role(...),
-      *   )
-      * }}}
-      */
-    def ++=(list: List[(String, StaticRole)]): F[Unit] = list.map(+=).sequence_
-
-    /** Deletes the static role definition and revokes the database user. */
-    def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
-    /**
-      * Alternative syntax to delete a role:
-      * * {{{ client.secretEngines.database("path").staticRoles -= "a" }}}
-      */
-    def -=(name: String): F[Unit] = delete(name)
-    /**
-      * Allows deleting multiple roles in one go:
-      * {{{
-      *   client.secretEngines.database("path").staticRoles --= List("a", "b")
-      * }}}
-      */
-    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
-  }
-
-  /**
-    * @return the current credentials based on the named static role.
-    *
-    * @param staticRole the name of the static role to get credentials for.
-    */
-  def getStaticCredentials(staticRole: String): F[StaticCredential] = executeWithContextData[StaticCredential](GET(uri / "static-creds" / staticRole, token))
-
-  /**
-    * Rotate the Static Role credentials stored for a given role name. While Static Roles are rotated automatically by
-    * Vault at configured rotation periods, users can use this endpoint to manually trigger a rotation to change the
-    * stored password and reset the TTL of the Static Role's password.
-    *
-    * @param staticRole the name of the connection to rotate.
-    */
-  def rotateStaticRootCredentials(staticRole: String): F[Unit] = execute(POST(uri / "rotate-role" / staticRole, token))
 }

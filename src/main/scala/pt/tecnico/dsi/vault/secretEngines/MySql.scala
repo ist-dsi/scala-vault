@@ -8,6 +8,5 @@ final case class MySql(description: String, config: TuneOptions, options: Option
                        local: Boolean = false, sealWrap: Boolean = false) extends SecretEngine {
   val `type` = "database"
   type Out[T[_]] = databases.MySql[T]
-  override def mounted[F[_]](path: String)(implicit vaultClient: VaultClient[F]): Out[F] =
-    vaultClient.secretEngines.mysql(path)
+  override def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = vaultClient.secretEngines.mysql(path)
 }

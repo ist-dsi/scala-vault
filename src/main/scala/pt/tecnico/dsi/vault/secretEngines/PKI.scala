@@ -9,7 +9,7 @@ final case class PKI(description: String, config: TuneOptions, options: Option[M
                      setURLsFromClientURI: Boolean = true, local: Boolean = false, sealWrap: Boolean = false) extends SecretEngine {
   val `type` = "pki"
   type Out[T[_]] = pki.PKI[T]
-  override def mounted[F[_]](path: String)(implicit vaultClient: VaultClient[F]): Out[F] = {
+  override def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = {
     val pki = vaultClient.secretEngines.pki(path)
     if (setURLsFromClientURI) pki.setURLs(URLs.vaultDefaultsFor(vaultClient.baseUri, path))
     pki

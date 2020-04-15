@@ -8,6 +8,5 @@ final case class Consul(description: String, config: TuneOptions, options: Optio
                         local: Boolean = false, sealWrap: Boolean = false) extends SecretEngine {
   val `type` = "consul"
   type Out[T[_]] = consul.Consul[T]
-  override def mounted[F[_]](path: String)(implicit vaultClient: VaultClient[F]): Out[F] =
-    vaultClient.secretEngines.consul(path)
+  override def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = vaultClient.secretEngines.consul(path)
 }

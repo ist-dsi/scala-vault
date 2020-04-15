@@ -6,12 +6,12 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
 import io.circe.{Decoder, Encoder, Printer}
-import org.http4s.Status.{BadRequest, Gone, NotFound, Successful}
+import org.http4s.Status.{BadRequest, ClientError, Gone, NotFound, Successful, ServerError}
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.impl.EmptyRequestGenerator
 import org.http4s.client.{Client, UnexpectedStatus}
 import org.http4s.dsl.impl.Methods
-import org.http4s.{EntityDecoder, EntityEncoder, Method, Request, circe}
+import org.http4s.{circe, EntityDecoder, EntityEncoder, Method, Request}
 
 abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sClientDsl[F] with Methods {
   val jsonPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
@@ -54,7 +54,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     execute[Context[Keys]](request).map(_.data.keys)
 
   /**
-    * Executes a request for an endpoint which returns `Context[A]` but we are only interested in the `Auth`.
+    * Executes a request for an endpoint which returns `Context[_]` but we are only interested in the `Auth`.
     * @param request the request for the endpoint
     */
   def executeWithContextAuth(request: F[Request[F]]): F[Auth] = execute[Context[Option[Unit]]](request).map(_.auth.get) // TODO: how to not use .get?
@@ -79,10 +79,10 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
   //TODO: refactor these two methods
 
   /**
-    * Execute the given `request`. On any success (2XX) decode the body to an `A`.
+    * Execute the given `request`. On a successful response decode the body to an `A`.
     * If a `BadRequest` is returned its body will be decoded to a `List[String]` and
     * the `onErrorPF` will be invoked. Allowing to recover for some errors.
-    * Any other type of HTTP error (4XX and 5XX) will raise error with `UnexpectedStatus`.
+    * Client or server errors will raise error with `UnexpectedStatus`.
     * @param request the request to execute.
     * @param onErrorsPF the `PartialFunction` to apply on a BadRequest.
     * @tparam A the type to decode the response into.
@@ -91,7 +91,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     client.fetch(request) {
       case Successful(response) => response.as[A]
       case BadRequest(response) => response.as[Errors].flatMap(errors => onErrorsPF.applyOrElse(errors.errors, raise))
-      case response => F.raiseError(UnexpectedStatus(response.status))
+      case response @ (ClientError(_) | ServerError(_)) => F.raiseError(UnexpectedStatus(response.status))
     }
 
   def executeOptionHandlingErrors[A: Decoder: EntityDecoderF](request: F[Request[F]])(onErrorsPF: List[String] ?=> F[Option[A]]): F[Option[A]] =
@@ -99,7 +99,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
       case Successful(response) => response.as[A].map(_.some)
       case BadRequest(response) => response.as[Errors].flatMap(errors => onErrorsPF.applyOrElse(errors.errors, raise))
       case NotFound(_) | Gone(_) => Option.empty[A].pure[F]
-      case response => F.raiseError(UnexpectedStatus(response.status))
+      case response @ (ClientError(_) | ServerError(_)) => F.raiseError(UnexpectedStatus(response.status))
     }
 
   private def raise[A](errors: List[String]): F[A] = F.raiseError(ErroredRequest(errors))

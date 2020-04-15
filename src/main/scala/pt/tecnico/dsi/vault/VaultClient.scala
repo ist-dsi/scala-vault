@@ -48,8 +48,8 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
     val generateRoot = new GenerateRoot[F](uri / "generate-root") // Does not require a token
     val leases = new Leases[F]("sys/leases", uri / "leases")
     val policy = new Policy[F]("sys/policy", uri / "policy")
-    val auth = new Auth[F]("sys/auth", uri / "auth")
-    val mounts = new Mounts[F]("sys/mounts", uri / "mounts")
+    val auth = new Auth[F]("sys/auth", uri / "auth", self)
+    val mounts = new Mounts[F]("sys/mounts", uri / "mounts", self)
     val keys = new Keys[F](uri) // One endpoint requires a token, the other does not
     val rekey = new Rekey[F](uri / "rekey") // Does not require a token
     val pluginCatalog = new PluginCatalog[F]("sys/plugins/catalog", uri / "plugins" / "catalog")
@@ -77,6 +77,7 @@ class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit clie
     def pki(at: String = "pki"): PKI[F] = new PKI[F](at, uri append at)
     def mysql(at: String = "database"): MySql[F] = new MySql[F](at, uri append at)
     def mongodb(at: String = "database"): MongoDB[F] = new MongoDB[F](at, uri append at)
+    def elasticsearch(at: String = "database"): Elasticsearch[F] = new Elasticsearch[F](at, uri append at)
   }
 
   private val dsl = new DSL[F] {}

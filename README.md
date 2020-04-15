@@ -12,16 +12,27 @@ Currently supported endpoints:
   
 - Auth Methods:
   - Token
+  - AppRole
 - Secret Engines:
+  - KeyValue version 1
+  - PKI
   - Consul
-- Secret Backend:
+  - Elasticsearch
+  - MongoDB
+  - MySQL
+- Sys:
   - Init
   - Health
-  - Seal/Unseal/Seal status
-  - Leader/Step down
+  - Leader (status and step down)
+  - Seal (status, seal, and unseal)
   - Generate Root
   - Leases
   - Policy
+  - Auth mounts
+  - Mounts
+  - Keys (rotate and key status)
+  - Rekey
+  - Plugin Catalog
 
 [Latest scaladoc documentation](https://ist-dsi.github.io/scala-vault/latest/api/pt/tecnico/dsi/scala-vault/index.html)
 
