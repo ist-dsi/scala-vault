@@ -15,4 +15,3 @@ case class Token(id: String, path: String, accessor: String,
                  expireTime: Option[OffsetDateTime], explicitMaxTtl: Duration, ttl: Duration,
                  numUses: Int, orphan: Boolean,
                  meta: Option[Map[String, String]], policies: List[String], `type`: TokenType)
-

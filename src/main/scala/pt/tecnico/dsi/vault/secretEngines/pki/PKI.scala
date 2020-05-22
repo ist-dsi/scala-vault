@@ -5,10 +5,10 @@ import java.security.cert.{X509Certificate, X509CRL}
 import scala.concurrent.duration.Duration
 import scala.util.Try
 import cats.effect.Sync
-import cats.instances.list._
-import cats.instances.try_._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
+import cats.instances.try_._
+import cats.instances.list._
 import cats.syntax.traverse._
 import io.circe.{Decoder, Json, JsonObject}
 import io.circe.syntax._
@@ -68,7 +68,7 @@ object PKI {
 /**
   * @define sudoRequired This endpoint requires sudo capabilities.
   */
-class PKI[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) { self =>
+final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -337,6 +337,7 @@ class PKI[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F]
   //<editor-fold desc="Roles/Certificate">
 
   object roles {
+    val path: String = s"${self.path}/roles"
     val uri: Uri = self.uri / "roles"
 
     /** List the available roles. */

@@ -6,7 +6,7 @@ import org.http4s.client.Client
 import pt.tecnico.dsi.vault._
 import pt.tecnico.dsi.vault.sys.models.LeaderStatus
 
-class Leader[F[_]: Sync](uri: Uri)(implicit client: Client[F], token: Header) {
+final class Leader[F[_]: Sync: Client](uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 

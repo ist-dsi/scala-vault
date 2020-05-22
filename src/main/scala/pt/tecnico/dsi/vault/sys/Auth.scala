@@ -14,7 +14,7 @@ import pt.tecnico.dsi.vault.sys.models.AuthMethod.TuneOptions
 /**
   * @define sudoRequired <b>sudo required</b> – This endpoint requires sudo capability in addition to any path-specific capabilities.
   */
-final class Auth[F[_]: Sync](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit client: Client[F], token: Header) {
+final class Auth[F[_]: Sync: Client](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 

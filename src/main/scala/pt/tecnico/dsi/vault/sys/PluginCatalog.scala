@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.Plugin
 import pt.tecnico.dsi.vault.sys.models.Plugin.Type
 
-class PluginCatalog[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
+class PluginCatalog[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 

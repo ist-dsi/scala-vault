@@ -12,7 +12,7 @@ import pt.tecnico.dsi.vault.{DSL, VaultClient}
 import pt.tecnico.dsi.vault.sys.models.SecretEngine
 import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions
 
-class Mounts[F[_]: Sync](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit client: Client[F], token: Header) {
+final class Mounts[F[_]: Sync: Client](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -94,9 +94,6 @@ class Mounts[F[_]: Sync](val path: String, val uri: Uri, vaultClient: VaultClien
     * @param from Specifies the previous mount point.
     * @param to Specifies the new destination mount point.
     */
-  def remount(from: String, to: String): F[Unit] = {
-    val body = Map("from" -> from, "to" -> to)
-    // TODO: find a better way to compute the uri
-    execute(POST(body.asJson, uri.withPath("/v1/sys/remount"), token))
-  }
+  def remount(from: String, to: String): F[Unit] =
+    execute(POST(Map("from" -> from, "to" -> to).asJson, vaultClient.sys.uri / "remount", token))
 }

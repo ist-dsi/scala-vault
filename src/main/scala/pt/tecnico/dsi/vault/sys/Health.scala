@@ -6,7 +6,7 @@ import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.HealthStatus
 
-class Health[F[_]: Sync](uri: Uri)(implicit client: Client[F]) {
+final class Health[F[_]: Sync: Client](val path: String, val uri: Uri) {
   private val dsl = new DSL[F] {}
   import dsl._
 

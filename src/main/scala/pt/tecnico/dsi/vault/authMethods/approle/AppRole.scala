@@ -1,31 +1,32 @@
 package pt.tecnico.dsi.vault.authMethods.approle
 
 import cats.effect.Sync
-import cats.instances.list._
 import cats.syntax.foldable._
 import cats.syntax.functor._
+import cats.instances.list._
 import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.{Auth, DSL}
 import pt.tecnico.dsi.vault.authMethods.approle.models._
 
-class AppRole[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
+final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 
   object roles {
-    private val rolesUri = uri / "role"
+    val path: String = s"${self.path}/roles"
+    val uri: Uri = self.uri / "roles"
 
     /** List the existing roles. */
-    def list(): F[List[String]] = executeWithContextKeys(LIST(rolesUri, token))
+    def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
     /**
       * Reads the properties of the specified role.
       * @param name the name of the role to read.
       */
-    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(rolesUri / name, token))
-    def apply(name: String): F[Role] = executeWithContextData(GET(rolesUri / name, token))
+    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(uri / name, token))
+    def apply(name: String): F[Role] = executeWithContextData(GET(uri / name, token))
 
     /**
       * Creates a new AppRole or updates an existing AppRole.
@@ -35,7 +36,7 @@ class AppRole[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Clien
       * @param name the name of the new role.
       * @param role the role to create.
       */
-    def create(name: String, role: Role): F[Unit] = execute(POST(role.asJson, rolesUri / name, token))
+    def create(name: String, role: Role): F[Unit] = execute(POST(role.asJson, uri / name, token))
     /**
       * Alternative syntax to create a role:
       * * {{{ client.authMethods.approle("path").roles += "a" -> Role(...) }}}
@@ -56,7 +57,7 @@ class AppRole[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Clien
       * Deletes the specified role.
       * @param name the name of the role to delete.
       */
-    def delete(name: String): F[Unit] = execute(DELETE(rolesUri / name, token))
+    def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
     /**
       * Alternative syntax to delete a role:
       * {{{ client.authMethods.approle("path").roles -= "role-name" }}}
@@ -72,7 +73,9 @@ class AppRole[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Clien
   }
 
   // TODO: find a better name for this
-  class AppRoleRole(uri: Uri) {
+  final class AppRoleRole(val id: String) { innerSelf =>
+    val path: String = s"${self.path}/role/$id"
+    val uri: Uri = self.uri / "role" / id
     /**
       * Performs some maintenance tasks to clean up invalid entries that may remain in the token store.
       * Generally, running this is not needed unless upgrade notes or support personnel suggest it.
@@ -80,26 +83,28 @@ class AppRole[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Clien
       */
     val tidy: F[Unit] = execute(POST(uri / "tidy" / "secret-id", token))
 
-    val roleId = new {
-      private val roleUri = uri / "role-id"
+    object roleId {
+      val path: String = s"${innerSelf.path}/role-id"
+      val uri: Uri = innerSelf.uri / "role-id"
 
       /** @return the RoleID of this AppRole role. */
-      def apply(): F[String] = executeWithContextData[RoleId](GET(roleUri, token)).map(_.roleId)
+      def apply(): F[String] = executeWithContextData[RoleId](GET(uri, token)).map(_.roleId)
 
       /**
         * Updates the RoleID of this AppRole role to a custom value.
         * @param newRoleId the new RoleID.
         */
-      def update(newRoleId: String): F[Unit] = execute(POST(RoleId(newRoleId).asJson, roleUri, token))
+      def update(newRoleId: String): F[Unit] = execute(POST(RoleId(newRoleId).asJson, uri, token))
     }
-    val secretId = new {
-      private val secretUri = uri / "secret-id"
+    object secretId {
+      val path: String = s"${innerSelf.path}/secret-id"
+      val uri: Uri = innerSelf.uri / "secret-id"
 
       /**
         * Lists the accessors of all the SecretIDs issued against this AppRole role.
         * This includes the accessors for "custom" SecretIDs as well.
         */
-      def listAccessors(): F[List[String]] = executeWithContextKeys(LIST(secretUri, token))
+      def listAccessors(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
       /**
         * Generates and issues a new SecretID on an existing AppRole.
@@ -110,7 +115,7 @@ class AppRole[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Clien
         * @param properties the secret id properties to use while generating the new secret id.
         */
       def generate(properties: SecretIdProperties): F[SecretIdResponse] = {
-        executeWithContextData[SecretIdResponse](POST.apply(properties.asJson, secretUri, token))
+        executeWithContextData[SecretIdResponse](POST.apply(properties.asJson, uri, token))
       }
 
       /**
@@ -120,7 +125,7 @@ class AppRole[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Clien
         */
       def createCustom(secretId: String, properties: SecretIdProperties): F[SecretIdResponse] = {
         val body = SecretIdProperties.codec(properties).mapObject(_.add("secret_id", secretId.asJson))
-        executeWithContextData[SecretIdResponse](POST(body, secretUri, token))
+        executeWithContextData[SecretIdResponse](POST(body, uri, token))
       }
 
       /**
@@ -129,15 +134,15 @@ class AppRole[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Clien
         * @param secretId the secret id to read the properties from.
         */
       def get(secretId: String): F[Option[SecretIdProperties]] =
-        executeOptionWithContextData(POST(Map("secret_id" -> secretId).asJson, secretUri / "lookup", token))
+        executeOptionWithContextData(POST(Map("secret_id" -> secretId).asJson, uri / "lookup", token))
       def apply(secretId: String): F[SecretIdProperties] =
-        executeWithContextData(POST(Map("secret_id" -> secretId).asJson, secretUri / "lookup", token))
+        executeWithContextData(POST(Map("secret_id" -> secretId).asJson, uri / "lookup", token))
 
       /**
         * Destroy an secret ID.
         * @param secretId the secret id to destroy.
         */
-      def delete(secretId: String): F[Unit] = execute(POST(Map("secret_id" -> secretId).asJson, secretUri / "destroy", token))
+      def delete(secretId: String): F[Unit] = execute(POST(Map("secret_id" -> secretId).asJson, uri / "destroy", token))
       /**
         * Alternative syntax to delete a secret id:
         * {{{ client.auth.approle.role("my-role") -= "secret-id" }}}
@@ -161,7 +166,7 @@ class AppRole[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Clien
     }
   }
   //TODO: maybe this should return an Option
-  def role(id: String): AppRoleRole = new AppRoleRole(uri / "role" / id)
+  def role(id: String): AppRoleRole = new AppRoleRole(id)
 
   /**
     * Issues a Vault token based on the presented credentials.

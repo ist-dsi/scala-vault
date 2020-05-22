@@ -40,7 +40,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param request the request for the endpoint
     * @tparam Data the type we are interested in.
     */
-  def executeWithContextData[Data: Decoder](request: F[Request[F]])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Data] =
+  def executeWithContextData[Data : Decoder](request: F[Request[F]])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Data] =
     execute[Context[Data]](request).map(_.data)
 
   def executeOptionWithContextData[Data: Decoder](request: F[Request[F]])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Option[Data]] =

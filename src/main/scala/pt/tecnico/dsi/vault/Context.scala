@@ -1,10 +1,11 @@
 package pt.tecnico.dsi.vault
 
-import io.circe.Decoder
+import io.circe.{Decoder, Json}
 import io.circe.derivation.{deriveDecoder, renaming}
 
 object Context {
   implicit def decoder[Data: Decoder]: Decoder[Context[Data]] = deriveDecoder(renaming.snakeCase, false, None)
 }
-case class Context[Data](requestId: String, leaseId: String, renewable: Boolean, leaseDuration: Int, data: Data,
-                         wrapInfo: Option[String] = None, warnings: Option[List[String]] = None, auth: Option[Auth] = None)
+case class Context[Data](renewable: Boolean, leaseId: String, leaseDuration: Int, data: Data,
+                         auth: Option[Auth] = None, metadata: Option[Json],
+                         warnings: Option[List[String]] = None, wrapInfo: Option[String] = None)

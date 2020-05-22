@@ -1,5 +1,6 @@
 package pt.tecnico.dsi.vault.authMethods.token
 
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.flatMap._
@@ -13,7 +14,7 @@ import org.http4s.client.Client
 import pt.tecnico.dsi.vault.{Auth, DSL}
 import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token => MToken}
 
-class Token[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
+final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -51,6 +52,7 @@ class Token[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[
     */
   def createRole(role: String, options: CreateOptions): F[Auth] = executeWithContextAuth(POST(options, uri / "create" / role, token))
 
+
   /** @param token the token for which to retrieve information.
     * @return returns information about the `token`.
     */
@@ -67,6 +69,7 @@ class Token[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[
     */
   def lookupAccessor(accessor: String): F[MToken] =
     executeWithContextData(POST(Map("accessor" -> accessor).asJson, uri / "lookup-accessor", token))
+
 
   /**
     * Renews a lease associated with a token. This is used to prevent the expiration of a token, and the automatic
@@ -90,6 +93,19 @@ class Token[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[
     */
   def renewSelf(increment: Option[Int] = None): F[Auth] =
     executeWithContextAuth(POST(Map("increment" -> increment).asJson, uri / "renew-self", token))
+
+  /**
+    * Renews a lease associated with a token using its accessor. This is used to prevent the expiration of a token, and the automatic revocation of it.
+    * Token renewal is possible only if there is a lease associated with it.
+    * @param accessor Accessor associated with the token to renew.
+    * @param increment An optional requested lease increment can be provided.
+    * @return returns information about the client token from the `accessor`.
+    */
+  def renewAccessor(accessor: String, increment: Option[FiniteDuration]): F[Auth] = {
+    import pt.tecnico.dsi.vault.encodeFiniteDuration
+    executeWithContextData(POST(Map("accessor" -> accessor.asJson, "increment" -> increment.asJson).asJson, uri / "renew-accessor", token))
+  }
+
 
   /**
     * Revokes a token and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.
@@ -121,7 +137,8 @@ class Token[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[
     execute(POST(Map("token" -> token).asJson, uri / "revoke-orphan", this.token))
 
   object roles {
-    private val rolesUri = uri / "roles"
+    val path: String = s"${self.path}/roles"
+    val uri: Uri = self.uri / "roles"
 
     /**
       * @return a list with the names of the available token roles. To get the `TokenRoles` you can do:
@@ -131,7 +148,7 @@ class Token[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[
       *            roles.list().flatMap(_.map(roles.apply).sequence)
       *         }}}
       */
-    def list(): F[List[String]] = executeWithContextKeys(LIST(rolesUri, token))
+    def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
     /**
       * Fetches the named role configuration.
@@ -139,14 +156,14 @@ class Token[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[
       * @param name the name of the role to fetch
       * @return if a role named `name` exists a `Some` will be returned with its configuration. `None` otherwise.
       */
-    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(rolesUri / name, token))
+    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(uri / name, token))
     /**
       * Fetches the named role configuration.
       *
       * @param name the name of the role to fetch
       * @return
       */
-    def apply(name: String): F[Role] = executeWithContextData(GET(rolesUri / name, token))
+    def apply(name: String): F[Role] = executeWithContextData(GET(uri / name, token))
 
     /**
       * Creates (or replaces) the named role. Roles enforce specific behavior when creating tokens that allow
@@ -157,29 +174,29 @@ class Token[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[
       *
       * @param role the role to create/update.
       */
-    def create(role: Role): F[Unit] = execute(POST(role, rolesUri / role.name, token))
+    def create(name: String, role: Role): F[Unit] = execute(POST(role, uri / name, token))
     /**
       * Alternative syntax to create a role:
-      * * {{{ client.authMethods.token.roles += Role(...) }}}
+      * * {{{ client.authMethods.token.roles += "a" -> Role(...) }}}
       */
-    def +=(role: Role): F[Unit] = create(role)
+    def +=(tuple: (String, Role)): F[Unit] = create(tuple._1, tuple._2)
     /**
       * Allows creating multiple roles in one go:
       * {{{
       *   client.authMethods.token.roles ++= List(
-      *     Role(...),
-      *     Role(...),
+      *     "a" -> Role(...),
+      *     "b" -> Role(...),
       *   )
       * }}}
       */
-    def ++=(roles: List[Role]): F[Unit] = roles.map(create).sequence_
+    def ++=(roles: List[(String, Role)]): F[Unit] = roles.map(+=).sequence_
 
     /**
       * Deletes the token role with `name`.
       *
       * @param name the name of the token role to delete.
       */
-    def delete(name: String): F[Unit] = execute(DELETE(rolesUri / name, token))
+    def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
     /**
       * Alternative syntax to delete a role:
       * * {{{ client.authMethods.token.roles -= "my-role" }}}

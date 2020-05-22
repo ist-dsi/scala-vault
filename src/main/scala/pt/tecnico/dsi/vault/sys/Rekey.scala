@@ -8,7 +8,7 @@ import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{BackupKeys, RekeyProgress, RekeyVerificationProgress}
 
-class Rekey[F[_]: Sync](uri: Uri)(implicit client: Client[F]) { self =>
+final class Rekey[F[_]: Sync: Client](uri: Uri) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -70,8 +70,9 @@ class Rekey[F[_]: Sync](uri: Uri)(implicit client: Client[F]) { self =>
   def put(key: String, nonce: String): F[RekeyProgress] =
     execute(PUT(Map("key" -> key, "nonce" -> nonce).asJson, uri / "update"))
 
-  object backupKey {
-    val uri: Uri = self.uri / "backup"
+  final object backupKey {
+    val path: String = "backup"
+    val uri: Uri = self.uri / path
 
     /** @return the backup copy of PGP-encrypted unseal keys. The returned value is the nonce of the rekey operation and
       *          a map of PGP key fingerprint to hex-encoded PGP-encrypted key. */
@@ -80,8 +81,9 @@ class Rekey[F[_]: Sync](uri: Uri)(implicit client: Client[F]) { self =>
     def delete(): F[Unit] = execute(DELETE(uri))
   }
 
-  object verify {
-    val uri = self.uri / "verify"
+  final object verify {
+    val path: String = "verify"
+    val uri: Uri = self.uri / path
 
     /** @return the configuration and progress of the current rekey verification attempt. */
     def progress(): F[RekeyVerificationProgress] = execute(GET(uri))

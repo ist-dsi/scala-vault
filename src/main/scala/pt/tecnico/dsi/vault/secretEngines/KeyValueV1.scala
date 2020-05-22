@@ -9,5 +9,5 @@ final case class KeyValueV1(description: String, config: TuneOptions, _options: 
   val `type` = "kv"
   override val options: Option[Map[String, String]] = _options.map(_ + ("version" -> "1"))
   type Out[T[_]] = kv.KeyValueV1[T]
-  override def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = vaultClient.secretEngines.kv(path)
+  override def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = vaultClient.secretEngines.keyValueV1(path)
 }

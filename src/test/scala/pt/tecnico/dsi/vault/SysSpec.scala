@@ -143,21 +143,21 @@ class SysSpec extends Utils {
     import pt.tecnico.dsi.vault.sys.models.Policy
 
     "create a policy" in idempotently {
-      client.sys.policy.create(Policy("test", """path "*" { capabilities = ["read"] }""")).map(_ shouldBe ())
+      client.sys.policy.create("test", Policy("""path "*" { capabilities = ["read"] }""")).map(_ shouldBe ())
     }
     "edit a policy" in {
       for {
-        _ <- client.sys.policy.create(Policy("test2", """path "*" { capabilities = ["read", "delete"] }""")).value(_ shouldBe ())
+        _ <- client.sys.policy.create("test2", Policy("""path "*" { capabilities = ["read", "delete"] }""")).value(_ shouldBe ())
         // This is also testing `get`
         _ <- client.sys.policy("test2").value(_.rules should include ("delete"))
-        _ <- (client.sys.policy += Policy("test2", """path "*" { capabilities = ["read"] }""")).idempotently(_ shouldBe ())
+        _ <- (client.sys.policy += "test2" -> Policy("""path "*" { capabilities = ["read"] }""")).idempotently(_ shouldBe ())
         result <- client.sys.policy("test2").idempotently(_.rules should not contain "delete")
       } yield result
     }
     "create multiple policies" in idempotently {
       (client.sys.policy ++= List(
-        Policy("a", """path "a/" { capabilities = ["read"] }"""),
-        Policy("b", """path "b/" { capabilities = ["read"] }""")
+        "a" -> Policy("""path "a/" { capabilities = ["read"] }"""),
+        "b" -> Policy("""path "b/" { capabilities = ["read"] }""")
       )).map(_ shouldBe ())
     }
     "list policies" in idempotently {

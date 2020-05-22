@@ -6,7 +6,7 @@ import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{InitOptions, InitResult}
 
-class Init[F[_]: Sync](uri: Uri)(implicit client: Client[F]) {
+final class Init[F[_]: Sync: Client](val path: String, val uri: Uri) {
   private val dsl = new DSL[F] {}
   import dsl._
 

@@ -9,13 +9,14 @@ import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.secretEngines.databases.models._
 
-abstract class Databases[F[_], Connection <: BaseConnection : Codec, Role <: BaseRole : Codec]
-                        (val uri: Uri)(implicit protected val client: Client[F], protected val token: Header, protected val F: Sync[F]) { self =>
+abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Role <: BaseRole : Codec]
+                        (val path: String, val uri: Uri)(implicit protected val token: Header, protected val F: Sync[F]) { self =>
   protected val dsl: DSL[F] = new DSL[F] {}
   import dsl._
 
   object connections {
-    val uri: Uri = self.uri / "config"
+    val path: String = "config"
+    val uri: Uri = self.uri / path
 
     /** @return all available connections. */
     def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
@@ -73,6 +74,7 @@ abstract class Databases[F[_], Connection <: BaseConnection : Codec, Role <: Bas
   }
 
   object roles {
+    val path: String = s"${self.path}/roles"
     val uri: Uri = self.uri / "roles"
 
     /** List the available roles. */

@@ -6,7 +6,7 @@ import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{SealStatus, UnsealOptions}
 
-class Seal[F[_]: Sync](uri: Uri)(implicit client: Client[F]) {
+final class Seal[F[_]: Sync: Client](uri: Uri) {
   private val dsl = new DSL[F] {}
   import dsl._
 

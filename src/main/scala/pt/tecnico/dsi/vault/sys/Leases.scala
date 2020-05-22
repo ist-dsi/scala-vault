@@ -6,12 +6,14 @@ import io.circe.Json
 import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
-import pt.tecnico.dsi.vault.{DSL, RichUri}
+import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{Lease, LeaseRenew}
 
-class Leases[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
+final class Leases[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
+
+  private def literalAppendToPath(uri: Uri, prefix: String): Uri = uri.withPath(s"${uri.path}/$prefix")
 
   /**
     * This endpoint returns a list of lease ids. This endpoint requires 'sudo' capability.
@@ -19,7 +21,7 @@ class Leases[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client
     * @param prefix the prefix for which to list leases.
     */
   def list(prefix: String): F[List[String]] =
-    executeWithContextKeys(LIST(uri append s"lookup/$prefix", token))
+    executeWithContextKeys(LIST(literalAppendToPath(uri / "lookup", prefix), token))
 
   def apply(name: String): F[Lease] = executeWithContextData(PUT(Map("lease_id" -> name).asJson, uri / "lookup", token))
   /**
@@ -61,7 +63,7 @@ class Leases[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client
     *
     * @param prefix the prefix to revoke.
     */
-  def revokeForce(prefix: String): F[Unit] = execute(PUT(uri / "revoke-force" / prefix, token))
+  def revokeForce(prefix: String): F[Unit] = execute(PUT(literalAppendToPath(uri / "revoke-force", prefix), token))
 
   /**
     * This endpoint revokes all secrets (via a lease ID prefix) or tokens (via the tokens' path property) generated
@@ -70,5 +72,5 @@ class Leases[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client
     *
     * @param prefix the prefix to revoke.
     */
-  def revokePrefix(prefix: String): F[Unit] = execute(PUT(uri / "revoke-prefix" / prefix, token))
+  def revokePrefix(prefix: String): F[Unit] = execute(PUT(literalAppendToPath(uri / "revoke-prefix", prefix), token))
 }

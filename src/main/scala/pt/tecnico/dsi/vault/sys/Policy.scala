@@ -3,12 +3,13 @@ package pt.tecnico.dsi.vault.sys
 import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.foldable._
+import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{Policy => PolicyModel}
 
-class Policy[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
+final class Policy[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -23,22 +24,25 @@ class Policy[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client
   def get(name: String): F[Option[PolicyModel]] = executeOption(GET(uri / name, token))
 
   /** Adds a new or updates an existing policy. Once a policy is updated, it takes effect immediately to all associated users. */
-  def create(policy: PolicyModel): F[Unit] = execute(PUT(policy, uri / policy.name, token))
+  def create(name: String, policy: PolicyModel): F[Unit] = {
+    // This endpoint is inconsistent with the read policy endpoint
+    execute(PUT(Map("policy" -> policy.rules).asJson, uri / name, token))
+  }
   /**
     * Alternative syntax to create a policy:
-    * {{{ client.sys.policy += Policy(...) }}}
+    * {{{ client.sys.policy += "a" -> Policy(...) }}}
     */
-  def +=(policy: PolicyModel): F[Unit] = create(policy)
+  def +=(tuple: (String, PolicyModel)): F[Unit] = create(tuple._1, tuple._2)
   /**
     * Allows creating multiple policies in one go:
     * {{{
     *   client.sys.policy ++= List(
-    *     Policy(...),
-    *     Policy(...),
+    *     "a" -> Policy(...),
+    *     "b" -> Policy(...),
     *   )
     * }}}
     */
-  def ++=(list: List[PolicyModel]): F[Unit] = list.map(create).sequence_
+  def ++=(list: List[(String, PolicyModel)]): F[Unit] = list.map(+=).sequence_
 
   /**
     * Deletes the policy with the given `name`. This will immediately affect all users associated with this policy.

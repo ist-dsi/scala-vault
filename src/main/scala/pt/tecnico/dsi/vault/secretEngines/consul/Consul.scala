@@ -9,7 +9,7 @@ import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.secretEngines.consul.models.Role
 
-class Consul[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client[F], token: Header) {
+final class Consul[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -19,7 +19,7 @@ class Consul[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client
     * @param uri the address of the Consul instance.
     * @param token the Consul ACL token to use. This must be a management type token.
     */
-  def configureAccess(uri: Uri, token: String): F[Unit] = {
+  def configure(uri: Uri, token: String): F[Unit] = {
     import org.http4s.Uri.Scheme
     val data = Map(
       "address" -> s"${uri.host}:${uri.port}",
@@ -39,19 +39,20 @@ class Consul[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client
   }
 
   object roles {
-    private val rolesUri = uri / "roles"
+    val path: String = s"${self.path}/roles"
+    val uri: Uri = self.uri / "roles"
 
     /** Lists all existing roles in the secrets engine. */
-    def list(): F[List[String]] = executeWithContextKeys(LIST(rolesUri, token))
+    def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
     /**
       * Gets the information associated with a Consul role with the given name.
       * @param name the name of the role.
       */
-    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(rolesUri / name, token))
-    def apply(name: String): F[Role] = executeWithContextData(GET(rolesUri / name, token))
+    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(uri / name, token))
+    def apply(name: String): F[Role] = executeWithContextData(GET(uri / name, token))
 
-    def create(name: String, role: Role): F[Unit] = execute(POST(role.asJson, rolesUri / name, token))
+    def create(name: String, role: Role): F[Unit] = execute(POST(role.asJson, uri / name, token))
     /**
       * Alternative syntax to create a role:
       * * {{{ client.secretEngines.consul.roles += "a" -> Role(...) }}}
@@ -72,7 +73,7 @@ class Consul[F[_]: Sync](val path: String, val uri: Uri)(implicit client: Client
       * Deletes a Consul role with the given name.
       * @param name the role to delete
       */
-    def delete(name: String): F[Unit] = execute(DELETE(rolesUri / name, token))
+    def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
     /**
       * Alternative syntax to delete a role:
       * {{{ client.secretEngines.consul.roles -= "role-name" }}}

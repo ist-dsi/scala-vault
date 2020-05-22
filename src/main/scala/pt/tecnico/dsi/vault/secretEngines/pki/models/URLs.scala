@@ -4,7 +4,6 @@ import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
 import org.http4s.Uri
 import org.http4s.circe.{decodeUri, encodeUri}
-import pt.tecnico.dsi.vault.RichUri
 
 object URLs {
   implicit val codec: Codec.AsObject[URLs] = deriveCodec(renaming.snakeCase, false, None)
@@ -19,7 +18,7 @@ object URLs {
     * @param pkiPath the path where the PKI is mounted in Vault.
     */
   def vaultDefaultsFor(vaultFrontendAddress: Uri, pkiPath: String): URLs = {
-    def baseUri(extra: String) = Some(Array(vaultFrontendAddress append s"$pkiPath/$extra"))
+    def baseUri(extra: String) = Some(Array(vaultFrontendAddress.withPath(s"${vaultFrontendAddress.path}/$pkiPath/$extra")))
     URLs(baseUri("ca"), baseUri("crl"), None)
   }
 }

@@ -6,4 +6,4 @@ import io.circe.derivation.{deriveCodec, renaming}
 object Policy {
   implicit val codec: Codec.AsObject[Policy] = deriveCodec(renaming.snakeCase, false, None)
 }
-case class Policy(name: String, rules: String)
+case class Policy(rules: String)
