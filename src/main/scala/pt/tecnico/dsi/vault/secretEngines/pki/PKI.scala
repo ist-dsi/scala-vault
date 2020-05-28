@@ -5,10 +5,9 @@ import java.security.cert.{X509Certificate, X509CRL}
 import scala.concurrent.duration.Duration
 import scala.util.Try
 import cats.effect.Sync
-import cats.syntax.flatMap._
-import cats.syntax.foldable._
-import cats.instances.try_._
 import cats.instances.list._
+import cats.instances.try_._
+import cats.syntax.flatMap._
 import cats.syntax.traverse._
 import io.circe.{Decoder, Json, JsonObject}
 import io.circe.syntax._

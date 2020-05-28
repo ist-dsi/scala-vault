@@ -25,10 +25,10 @@ object Role {
     override def apply(c: HCursor): Result[Role] =
       for {
         dbName <- c.get[String]("db_name")
-        creationStatementsJson <- decodeTo[JsonObject](c, "creation_statements")
-        revocationStatementsJson <- decodeTo[JsonObject](c, "revocation_statements")
         defaultTtl <- c.get[Duration]("default_ttl")
         maxTtl <- c.get[Duration]("max_ttl")
+        creationStatementsJson <- decodeTo[JsonObject](c, "creation_statements")
+        revocationStatementsJson <- decodeTo[JsonObject](c, "revocation_statements")
       } yield Role(dbName, creationStatementsJson, revocationStatementsJson, defaultTtl, maxTtl)
   }
   implicit val codec: Codec[Role] = Codec.from(decoder, encoder)
