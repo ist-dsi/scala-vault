@@ -12,7 +12,7 @@ object Role {
   def base64decode(string: String): String = new String(Base64.getDecoder.decode(string), StandardCharsets.UTF_8)
 
   implicit val encoder: Encoder[Role] = deriveEncoder[Role](renaming.snakeCase, None).contramap[Role](r => r.copy(policy = base64encode(r.policy)))
-  implicit val decoder: Decoder[Role] = deriveDecoder[Role](renaming.snakeCase, false, None).map(r => r.copy(policy = base64decode(r.policy)))
+  implicit val decoder: Decoder[Role] = deriveDecoder[Role](renaming.snakeCase, true, None).map(r => r.copy(policy = base64decode(r.policy)))
 }
 
 /**

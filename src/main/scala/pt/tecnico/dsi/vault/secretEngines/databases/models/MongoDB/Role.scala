@@ -10,7 +10,7 @@ import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 
 object MongoRole {
-  implicit val codec: Codec.AsObject[MongoRole] = deriveCodec(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[MongoRole] = deriveCodec(renaming.snakeCase, true, None)
 }
 case class MongoRole(role: String, db: String)
 

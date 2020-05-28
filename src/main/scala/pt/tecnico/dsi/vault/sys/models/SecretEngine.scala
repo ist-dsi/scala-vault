@@ -8,7 +8,7 @@ import pt.tecnico.dsi.vault.{VaultClient, decoderDuration, encodeDuration}
 
 object SecretEngine {
   object TuneOptions {
-    implicit val codec: Codec.AsObject[TuneOptions] = deriveCodec(renaming.snakeCase, false, None)
+    implicit val codec: Codec.AsObject[TuneOptions] = deriveCodec(renaming.snakeCase, true, None)
   }
 
   /**

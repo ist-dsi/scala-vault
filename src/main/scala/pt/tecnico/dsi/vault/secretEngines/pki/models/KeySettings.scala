@@ -7,7 +7,7 @@ import pt.tecnico.dsi.vault.CirceLowercaseEnum
 import pt.tecnico.dsi.vault.secretEngines.pki.models.KeySettings.{Format, Type}
 
 object KeySettings {
-  implicit val codec: Codec.AsObject[KeySettings] = deriveCodec(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[KeySettings] = deriveCodec(renaming.snakeCase, true, None)
 
   sealed trait Type extends EnumEntry
   case object Type extends Enum[Type] with CirceLowercaseEnum[Type] {

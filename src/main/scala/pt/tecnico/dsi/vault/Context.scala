@@ -4,7 +4,7 @@ import io.circe.{Decoder, Json}
 import io.circe.derivation.{deriveDecoder, renaming}
 
 object Context {
-  implicit def decoder[Data: Decoder]: Decoder[Context[Data]] = deriveDecoder(renaming.snakeCase, false, None)
+  implicit def decoder[Data: Decoder]: Decoder[Context[Data]] = deriveDecoder(renaming.snakeCase, true, None)
 }
 case class Context[Data](renewable: Boolean, leaseId: String, leaseDuration: Int, data: Data,
                          auth: Option[Auth] = None, metadata: Option[Json],

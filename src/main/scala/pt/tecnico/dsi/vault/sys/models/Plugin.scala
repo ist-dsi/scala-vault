@@ -16,7 +16,7 @@ object Plugin {
     val values = findValues
   }
 
-  implicit val codec: Codec.AsObject[Plugin] = deriveCodec(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Plugin] = deriveCodec(renaming.snakeCase, true, None)
 }
 
 /**

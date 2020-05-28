@@ -6,7 +6,7 @@ import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.{decoderFiniteDuration, encodeFiniteDuration}
 
 object Configuration {
-  implicit val codec: Codec.AsObject[Configuration] = deriveCodec(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Configuration] = deriveCodec(renaming.snakeCase, true, None)
 }
 /**
   * @param maxVersions The number of versions to keep per key. This value applies to all keys, but a key's metadata setting can overwrite this value.

@@ -8,7 +8,7 @@ import pt.tecnico.dsi.vault.{TokenType, VaultClient, decoderDuration, encodeDura
 
 object AuthMethod {
   object TuneOptions {
-    implicit val codec: Codec.AsObject[TuneOptions] = deriveCodec(renaming.snakeCase, false, None)
+    implicit val codec: Codec.AsObject[TuneOptions] = deriveCodec(renaming.snakeCase, true, None)
   }
   /**
     * @param defaultLeaseTtl The default lease duration, specified as a string duration like "5s" or "30m".

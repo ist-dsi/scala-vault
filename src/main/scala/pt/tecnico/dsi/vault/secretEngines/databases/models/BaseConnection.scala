@@ -7,7 +7,7 @@ trait BaseConnectionObject[C <: BaseConnection] {
   val pluginName: String
 
   protected val derivedCodec: Codec.AsObject[C]
-  implicit val codec: Codec.AsObject[C] = Codec.AsObject.from(derivedCodec, derivedCodec.mapJsonObject(_.add("plugin_name", pluginName.asJson)))
+  implicit lazy val codec: Codec.AsObject[C] = Codec.AsObject.from(derivedCodec, derivedCodec.mapJsonObject(_.add("plugin_name", pluginName.asJson)))
 }
 
 trait BaseConnection {

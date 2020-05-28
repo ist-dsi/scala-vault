@@ -6,7 +6,7 @@ import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.{TokenType, decoderDuration, encodeDuration}
 
 object Role {
-  implicit val codec: Codec.AsObject[Role] = deriveCodec(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Role] = deriveCodec(renaming.snakeCase, true, None)
 }
 /**
   * @param allowedPolicies    If set, tokens can be created with any subset of the policies in this list, rather than the

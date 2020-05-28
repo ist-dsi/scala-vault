@@ -5,7 +5,7 @@ import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.{decodeArrayAsCSV, encodeArrayAsCSV}
 
 object Subject {
-  implicit val codec: Codec.AsObject[Subject] = deriveCodec(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Subject] = deriveCodec(renaming.snakeCase, true, None)
 
   // These default values are sneaky. They only work because encodeArrayAsCSV(Array.empty) === encodeArrayAsCSV(Array(""))
   /*def apply(ou: String = "", organization: String = "", country: String = "", locality: String = "",

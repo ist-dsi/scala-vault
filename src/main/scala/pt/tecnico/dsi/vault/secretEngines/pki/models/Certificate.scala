@@ -6,7 +6,7 @@ import io.circe.derivation.{deriveDecoder, renaming}
 import pt.tecnico.dsi.vault.secretEngines.pki.PKI.{pemEncode, decoderX509Certificate}
 
 object Certificate {
-  implicit val decoder: Decoder[Certificate] = deriveDecoder(renaming.snakeCase, false, None)
+  implicit val decoder: Decoder[Certificate] = deriveDecoder(renaming.snakeCase, true, None)
 }
 //TODO: change this to multiple classes. Select over them using path dependent types.
 case class Certificate(serialNumber: String, certificate: X509Certificate, issuingCa: X509Certificate, caChain: Option[Array[X509Certificate]] = None,

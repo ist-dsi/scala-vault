@@ -6,7 +6,7 @@ import pt.tecnico.dsi.vault.secretEngines.databases.models.{BaseConnection, Base
 
 object Connection extends BaseConnectionObject[Connection] {
   override val pluginName: String = "mongodb-database-plugin"
-  override protected val derivedCodec: Codec.AsObject[Connection] = deriveCodec(renaming.snakeCase, false, None)
+  override protected val derivedCodec: Codec.AsObject[Connection] = deriveCodec(renaming.snakeCase, true, None)
 }
 
 case class Connection(connectionUrl: String, username: String, password: String, writeConcern: WriteConcern,
