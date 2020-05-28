@@ -37,7 +37,7 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   val rootToken = dockerLogLines.collect{ case RootTokenRegex(token) => token }.last
   logger.info(s"Unseal Key: $unsealKey\nRoot Token: $rootToken")
   // By default the vault container listens in 0.0.0.0:8200
-  val client = new VaultClient[IO](uri"http://[::1]:8200", rootToken)
+  val client = new VaultClient[IO](uri"http://localhost:8200", rootToken)
 
   /*import java.security.SecureRandom
     import java.security.cert.X509Certificate

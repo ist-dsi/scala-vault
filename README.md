@@ -1,5 +1,5 @@
 # scala-vault [![license](http://img.shields.io/:license-MIT-blue.svg)](LICENSE)
-[![Scaladoc](http://javadoc-badge.appspot.com/pt.tecnico.dsi/scala-vault_2.12.svg?label=scaladoc&style=plastic&maxAge=604800)](https://ist-dsi.github.io/scala-vault/latest/api/pt/tecnico/dsi/scala-vault/index.html)
+[![Scaladoc](http://javadoc-badge.appspot.com/pt.tecnico.dsi/scala-vault_2.13.svg?label=scaladoc&style=plastic&maxAge=604800)](https://ist-dsi.github.io/scala-vault/api/latest/pt/tecnico/dsi/vault/index.html)
 [![Latest version](https://index.scala-lang.org/ist-dsi/scala-vault/scala-vault/latest.svg)](https://index.scala-lang.org/ist-dsi/scala-vault/scala-vault)
 
 [![Build Status](https://travis-ci.org/ist-dsi/scala-vault.svg?branch=master&style=plastic&maxAge=604800)](https://travis-ci.org/ist-dsi/scala-vault)
