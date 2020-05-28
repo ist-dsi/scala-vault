@@ -14,7 +14,7 @@ import io.circe.{Decoder, Json, JsonObject}
 import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
-import pt.tecnico.dsi.vault.{encodeDuration, Context, DSL}
+import pt.tecnico.dsi.vault.{encodeDuration, Context, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.secretEngines.pki.PKI._
 import pt.tecnico.dsi.vault.secretEngines.pki.models._
 
@@ -31,8 +31,6 @@ object PKI {
     val encodedCertText = new String(encoder.encode(certificate.getEncoded))
     "-----BEGIN CERTIFICATE-----" + lineSeparator + encodedCertText + lineSeparator + "-----END CERTIFICATE-----"
   }
-  // TODO: make this in a pure functional way
-  // def randomSerial(): String = Random.nextBytes(16).map{ i => f"$i%02x" }.mkString(":")
   def toSerialString(serial: BigInteger): String = serial.toByteArray.map(i => f"$i%02x").mkString("-")
 
   val x509CertificateFactory: CertificateFactory = CertificateFactory.getInstance("X.509")
@@ -142,7 +140,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
 
   //<editor-fold desc="Root">
 
-  // TODO: we could make the result be a dependent type based upon the Type value
+  // We could make the result be a dependent type based upon the Type value
   // Devolve com Context:
   //   · certificate
   //   · issuing_ca
@@ -179,7 +177,6 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
   def generateRoot(`type`: Type, names: Names, subject: Subject, ttl: Duration = Duration.Undefined,
                    permittedDNSDomains: Array[String] = Array.empty, keySettings: KeySettings = KeySettings(),
                    serialNumber: Option[String] = None, maxPathLength: Integer = -1): F[Certificate] = {
-    // TODO: find a better way to merge the objects
     val singles = Iterable(
       "ttl" -> ttl.asJson,
       "permitted_dns_domains" -> permittedDNSDomains.asJson,
@@ -194,7 +191,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
     * $sudoRequired */
   def deleteRoot(): F[Unit] = execute(DELETE(uri / "root", token))
 
-  // TODO: we could make the result be a dependent type based upon the Type value
+  // We could make the result be a dependent type based upon the Type value
   // Devolve com Context:
   //   · certificate
   //   · issuing_ca
@@ -203,7 +200,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
     executeWithContextData(POST(Map("certificate" -> certificatePem).asJson, uri / "root" / "sign-self-issued", token))
   def signSelfIssued(certificate: X509Certificate): F[Certificate] = signSelfIssued(PKI.pemEncode(certificate))
 
-  // TODO: we could make the result be a dependent type based upon the Type value
+  // We could make the result be a dependent type based upon the Type value
   // Devolve com Context:
   //   · certificate
   //   · issuing_ca
@@ -243,7 +240,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
 
   //<editor-fold desc="Intermediate">
 
-  // TODO: we could make the result be a dependent type based upon the Type value
+  // We could make the result be a dependent type based upon the Type value
   // Devolve com Context:
   //   · csr
   //  Se type = Exported
@@ -267,7 +264,6 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
     */
   def generateIntermediate(`type`: Type, names: Names, subject: Subject = Subject(),
                            keySettings: KeySettings = KeySettings(), serialNumber: Option[String] = None): F[CSR] = {
-    // TODO: find a better way to merge the objects
     val singles = Iterable(
       "type" -> `type`.asJson,
       "serial_number" -> serialNumber.asJson,
@@ -287,7 +283,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
     execute(POST(Map("certificate" -> certificatePEM).asJson, uri / "intermediate" / "set-signed", token))
   def setSignedIntermediate(certificate: X509Certificate): F[Unit] = setSignedIntermediate(PKI.pemEncode(certificate))
 
-  // TODO: we could make the result be a dependent type based upon the Type value
+  // We could make the result be a dependent type based upon the Type value
   // Devolve com Context:
   //   · certificate
   //   · issuing_ca
@@ -319,7 +315,6 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
   def signIntermediate(csr: String, names: Names, subject: Subject = Subject(), ttl: Duration = Duration.Undefined,
                        permittedDNSDomains: Array[String] = Array.empty, useCsrValues: Boolean = false,
                        serialNumber: Option[String] = None, maxPathLength: Integer = -1): F[Certificate] = {
-    // TODO: find a better way to merge the objects
     val singles = Iterable(
       "csr" -> csr.asJson,
       "ttl" -> ttl.asJson,
@@ -336,51 +331,9 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
 
   //<editor-fold desc="Roles/Certificate">
 
-  object roles {
-    val path: String = s"${self.path}/roles"
-    val uri: Uri = self.uri / "roles"
+  object roles extends RolesCRUD[F, Role](path, uri)
 
-    /** List the available roles. */
-    def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
-
-    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(uri / name, token))
-    def apply(name: String): F[Role] = executeWithContextData(GET(uri / name, token))
-
-    /** Creates or updates a role definition. */
-    def create(name: String, role: Role): F[Unit] = execute(POST(role, uri / name, token))
-    /**
-      * Alternative syntax to create a role:
-      * * {{{ client.secretEngines.pki("path").roles += "a" -> Role(...) }}}
-      */
-    def +=(tuple: (String, Role)): F[Unit] = create(tuple._1, tuple._2)
-    /**
-      * Allows creating multiple roles in one go:
-      * {{{
-      *   client.secretEngines.pki("path").roles ++= List(
-      *     "a" -> Role(...),
-      *     "b" -> Role(...),
-      *   )
-      * }}}
-      */
-    def ++=(list: List[(String, Role)]): F[Unit] = list.map(+=).sequence_
-
-    /** Delete the role with the given `name`. */
-    def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
-    /**
-      * Alternative syntax to delete a role:
-      * * {{{ client.secretEngines.pki("path").roles -= "a" }}}
-      */
-    def -=(name: String): F[Unit] = delete(name)
-    /**
-      * Allows deleting multiple roles in one go:
-      * {{{
-      *   client.secretEngines.pki("path").roles --= List("a", "b")
-      * }}}
-      */
-    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
-  }
-
-  // TODO: we could make the result be a dependent type based upon the Type value
+  // We could make the result be a dependent type based upon the Type value
   // Devolve com Context:
   //   · certificate
   //   · issuing_ca

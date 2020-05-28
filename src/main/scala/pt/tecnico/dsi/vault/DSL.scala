@@ -57,11 +57,14 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * Executes a request for an endpoint which returns `Context[_]` but we are only interested in the `Auth`.
     * @param request the request for the endpoint
     */
-  def executeWithContextAuth(request: F[Request[F]]): F[Auth] = execute[Context[Option[Unit]]](request).map(_.auth.get) // TODO: how to not use .get?
+  def executeWithContextAuth(request: F[Request[F]]): F[Auth] = execute[Context[Option[Unit]]](request).flatMap { context =>
+    F.fromOption(context.auth, new Throwable("Was expecting response to contain \"auth\" field."))
+  }
 
   /**
     * Executes a request, handling any `BadRequest` returned by Vault by decoding it to `Errors` and then raising an
     * error in F.
+ *
     * @param request the request to execute.
     * @tparam A the type to which the response will be decoded to.
     */
@@ -76,7 +79,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
 
   type ?=>[T, R] = PartialFunction[T, R]
 
-  //TODO: refactor these two methods
+  // Is it possible to refactor these two methods?
 
   /**
     * Execute the given `request`. On a successful response decode the body to an `A`.

@@ -6,7 +6,7 @@ import cats.syntax.foldable._
 import io.circe.Codec
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
-import pt.tecnico.dsi.vault.DSL
+import pt.tecnico.dsi.vault.{DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.secretEngines.databases.models._
 
 abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Role <: BaseRole : Codec]
@@ -73,53 +73,7 @@ abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Rol
     def reset(name: String): F[Unit] = execute(POST(self.uri / "reset" / name))
   }
 
-  object roles {
-    val path: String = s"${self.path}/roles"
-    val uri: Uri = self.uri / "roles"
-
-    /** List the available roles. */
-    def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
-
-    def apply(name: String): F[Role] = executeWithContextData(GET(uri / name, token))
-    /** @return the role associated with `name`. */
-    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(uri / name, token))
-
-    /**
-      * Creates or updates a role definition.
-      *
-      * @note This endpoint distinguishes between create and update ACL capabilities. */
-    def create(name: String, role: Role): F[Unit] = execute(POST(role, uri / name, token))
-    /**
-      * Alternative syntax to create a role:
-      * * {{{ client.secretEngines.database("path").roles += "a" -> Role(...) }}}
-      */
-    def +=(tuple: (String, Role)): F[Unit] = create(tuple._1, tuple._2)
-    /**
-      * Allows creating multiple roles in one go:
-      * {{{
-      *   client.secretEngines.database("path").roles ++= List(
-      *     "a" -> Role(...),
-      *     "b" -> Role(...),
-      *   )
-      * }}}
-      */
-    def ++=(list: List[(String, Role)]): F[Unit] = list.map(+=).sequence_
-
-    /** Delete the role with the given `name`. */
-    def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
-    /**
-      * Alternative syntax to delete a role:
-      * * {{{ client.secretEngines.database("path").roles -= "a" }}}
-      */
-    def -=(name: String): F[Unit] = delete(name)
-    /**
-      * Allows deleting multiple roles in one go:
-      * {{{
-      *   client.secretEngines.database("path").roles --= List("a", "b")
-      * }}}
-      */
-    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
-  }
+  object roles extends RolesCRUD[F, Role](path, uri)
 
   /**
     * Rotates the root superuser credentials stored for the database connection.

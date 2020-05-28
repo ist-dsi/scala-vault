@@ -8,7 +8,10 @@ import pt.tecnico.dsi.vault.secretEngines.pki.PKI.{pemEncode, decoderX509Certifi
 object Certificate {
   implicit val decoder: Decoder[Certificate] = deriveDecoder(renaming.snakeCase, true, None)
 }
-//TODO: change this to multiple classes. Select over them using path dependent types.
+// Is it worth changing this to multiple classes, and select over them using path dependent types.
+// When generating a Certificate with Type = Exported we know for sure the private key exists.
+// When signing an intermediate certificate when for sure a caChain exists.
+
 case class Certificate(serialNumber: String, certificate: X509Certificate, issuingCa: X509Certificate, caChain: Option[Array[X509Certificate]] = None,
                        privateKey: Option[String] = None, privateKeyType: Option[KeySettings.Type] = None) {
   val certificatePem: String = pemEncode(certificate)

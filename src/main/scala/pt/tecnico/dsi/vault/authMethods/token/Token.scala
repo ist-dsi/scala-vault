@@ -11,7 +11,7 @@ import io.circe.Json
 import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
-import pt.tecnico.dsi.vault.{Auth, DSL}
+import pt.tecnico.dsi.vault.{Auth, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token => MToken}
 
 final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
@@ -136,35 +136,7 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
   def revokeTokenAndOrphanChildren(token: String): F[Unit] =
     execute(POST(Map("token" -> token).asJson, uri / "revoke-orphan", this.token))
 
-  object roles {
-    val path: String = s"${self.path}/roles"
-    val uri: Uri = self.uri / "roles"
-
-    /**
-      * @return a list with the names of the available token roles. To get the `TokenRoles` you can do:
-      *         {{{
-      *            import cats.implicits._
-      *            val roles = client.authMethods.token.roles
-      *            roles.list().flatMap(_.map(roles.apply).sequence)
-      *         }}}
-      */
-    def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
-
-    /**
-      * Fetches the named role configuration.
-      *
-      * @param name the name of the role to fetch
-      * @return if a role named `name` exists a `Some` will be returned with its configuration. `None` otherwise.
-      */
-    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(uri / name, token))
-    /**
-      * Fetches the named role configuration.
-      *
-      * @param name the name of the role to fetch
-      * @return
-      */
-    def apply(name: String): F[Role] = executeWithContextData(GET(uri / name, token))
-
+  object roles extends RolesCRUD[F, Role](path, uri) {
     /**
       * Creates (or replaces) the named role. Roles enforce specific behavior when creating tokens that allow
       * token functionality that is otherwise not available or would require sudo/root privileges to access.
@@ -174,41 +146,7 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
       *
       * @param role the role to create/update.
       */
-    def create(name: String, role: Role): F[Unit] = execute(POST(role, uri / name, token))
-    /**
-      * Alternative syntax to create a role:
-      * * {{{ client.authMethods.token.roles += "a" -> Role(...) }}}
-      */
-    def +=(tuple: (String, Role)): F[Unit] = create(tuple._1, tuple._2)
-    /**
-      * Allows creating multiple roles in one go:
-      * {{{
-      *   client.authMethods.token.roles ++= List(
-      *     "a" -> Role(...),
-      *     "b" -> Role(...),
-      *   )
-      * }}}
-      */
-    def ++=(roles: List[(String, Role)]): F[Unit] = roles.map(+=).sequence_
-
-    /**
-      * Deletes the token role with `name`.
-      *
-      * @param name the name of the token role to delete.
-      */
-    def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
-    /**
-      * Alternative syntax to delete a role:
-      * * {{{ client.authMethods.token.roles -= "my-role" }}}
-      */
-    def -=(name: String): F[Unit] = delete(name)
-    /**
-      * Allows deleting multiple roles in one go:
-      * {{{
-      *   client.authMethods.token.roles --= List("a", "b")
-      * }}}
-      */
-    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
+    override def create(name: String, role: Role): F[Unit] = super.create(name, role)
   }
 
   /**

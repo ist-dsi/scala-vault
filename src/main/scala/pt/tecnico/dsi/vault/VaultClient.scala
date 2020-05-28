@@ -5,7 +5,8 @@ import io.circe.Decoder
 import org.http4s._
 import org.http4s.client.Client
 
-//TODO: Some operations don't require a token. So the fact that we are requiring one might be misleading
+// Some operations don't require a token. So the fact that we are requiring one might be misleading.
+// We could implement something like this:
 /*object VaultClient {
   class VaultClientPublicEndpoints[F[_]: Sync](val baseUri: Uri)(implicit client: Client[F]) { self =>
     val uri = baseUri / "v1"
@@ -30,6 +31,7 @@ import org.http4s.client.Client
   def apply[F[_]: Sync](baseUri: Uri)(implicit client: Client[F]): VaultClientPublicEndpoints[F] =
     new VaultClientPublicEndpoints(baseUri)
 }*/
+// But is it worth the extra complexity?
 
 final class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit client: Client[F]) { self =>
   implicit val tokenHeader: Header = Header("X-Vault-Token", token)

@@ -7,7 +7,7 @@ class SysSpec extends Utils {
     "return the initialization status" in idempotently {
       client.sys.init.initialized().map(_ shouldBe true)
     }
-    // TODO: test initialize, but how? The vault docker initializes it by default
+    // We cannot test initialize because the vault docker comes already initialized.
   }
 
   "The health endpoint" should {
@@ -190,7 +190,6 @@ class SysSpec extends Utils {
   "The auth endpoint" should {
     import pt.tecnico.dsi.vault.sys.models.AuthMethod
     import pt.tecnico.dsi.vault.sys.models.AuthMethod.TuneOptions
-    // TODO: maybe change to property based testing. To ensure we cover all the parameters
     def createAuthMethod(`type`: String) = AuthMethod(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
 
     "mount an authentication method" in idempotently {
@@ -247,7 +246,6 @@ class SysSpec extends Utils {
   "The mounts endpoint" should {
     import pt.tecnico.dsi.vault.sys.models.SecretEngine
     import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions
-    // TODO: maybe change to property based testing. To ensure we cover all the parameters
     def createSecretEngine(`type`: String) = SecretEngine(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
 
     "mount a secret engine" in idempotently {

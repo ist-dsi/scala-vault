@@ -7,27 +7,14 @@ import cats.instances.list._
 import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
-import pt.tecnico.dsi.vault.{Auth, DSL}
+import pt.tecnico.dsi.vault.{Auth, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.authMethods.approle.models._
 
 final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 
-  object roles {
-    val path: String = s"${self.path}/roles"
-    val uri: Uri = self.uri / "roles"
-
-    /** List the existing roles. */
-    def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
-
-    /**
-      * Reads the properties of the specified role.
-      * @param name the name of the role to read.
-      */
-    def get(name: String): F[Option[Role]] = executeOptionWithContextData(GET(uri / name, token))
-    def apply(name: String): F[Role] = executeWithContextData(GET(uri / name, token))
-
+  object roles extends RolesCRUD[F, Role](path, uri) {
     /**
       * Creates a new AppRole or updates an existing AppRole.
       * This endpoint supports both `create` and `update` capabilities.
@@ -36,43 +23,10 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
       * @param name the name of the new role.
       * @param role the role to create.
       */
-    def create(name: String, role: Role): F[Unit] = execute(POST(role.asJson, uri / name, token))
-    /**
-      * Alternative syntax to create a role:
-      * * {{{ client.authMethods.approle("path").roles += "a" -> Role(...) }}}
-      */
-    def +=(tuple: (String, Role)): F[Unit] = create(tuple._1, tuple._2)
-    /**
-      * Allows creating multiple roles in one go:
-      * {{{
-      *   client.authMethods.approle("path").roles ++= List(
-      *     "a" -> Role(...),
-      *     "b" -> Role(...),
-      *   )
-      * }}}
-      */
-    def ++=(list: List[(String, Role)]): F[Unit] = list.map(+=).sequence_
-
-    /**
-      * Deletes the specified role.
-      * @param name the name of the role to delete.
-      */
-    def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
-    /**
-      * Alternative syntax to delete a role:
-      * {{{ client.authMethods.approle("path").roles -= "role-name" }}}
-      */
-    def -=(name: String): F[Unit] = delete(name)
-    /**
-      * Allows deleting multiple roles in one go:
-      * {{{
-      *   client.authMethods.approle("path").roles --= List("a", "b")
-      * }}}
-      */
-    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
+    override def create(name: String, role: Role): F[Unit] = super.create(name, role)
   }
 
-  // TODO: find a better name for this
+  def role(id: String): AppRoleRole = new AppRoleRole(id)
   final class AppRoleRole(val id: String) { innerSelf =>
     val path: String = s"${self.path}/role/$id"
     val uri: Uri = self.uri / "role" / id
@@ -165,8 +119,6 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
         execute(POST(Map("secret_id_accessor" -> accessor).asJson, uri / "secret-id-accessor" / "destroy", token))
     }
   }
-  //TODO: maybe this should return an Option
-  def role(id: String): AppRoleRole = new AppRoleRole(id)
 
   /**
     * Issues a Vault token based on the presented credentials.
