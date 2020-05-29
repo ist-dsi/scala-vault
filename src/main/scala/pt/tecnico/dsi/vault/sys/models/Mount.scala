@@ -4,7 +4,7 @@ import io.circe.{Decoder, Encoder}
 import pt.tecnico.dsi.vault.VaultClient
 
 object Mount {
-  private[models] def encoder: Encoder.AsObject[Mount] =
+  def encoder: Encoder.AsObject[Mount] =
     Encoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap") { engine: Mount =>
       (engine.`type`, engine.description, engine.config, engine.options, engine.local, engine.sealWrap)
     }.mapJsonObject { obj =>
@@ -13,7 +13,7 @@ object Mount {
       val jsonObject = obj.filterKeys(_ == "config").mapValues(_.mapObject(_.remove("token_type")))
       obj.add("config", jsonObject.values.head)
     }
-  private[models] def decoder[T <: Mount](
+  def decoder[T <: Mount](
     f: (String, String, TuneOptions, Option[Map[String, String]], Boolean, Boolean) => T): Decoder[T] =
     Decoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap")(f)
 }
