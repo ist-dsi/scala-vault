@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.vault.sys.models
 
 import scala.concurrent.duration.Duration
-import io.circe.{Decoder, Encoder}
+import io.circe.Codec
 import pt.tecnico.dsi.vault.VaultClient
 
 object SecretEngine {
@@ -28,8 +28,9 @@ object SecretEngine {
                          listingVisibility: Option[String] = None, passthroughRequestHeaders: Option[List[String]] = None,
                          allowedResponseHeaders: Option[List[String]] = None, options: Option[Map[String, String]] = None)
 
-  implicit val encoder: Encoder.AsObject[SecretEngine] = Mount.encoder[TuneOptions].contramapObject[SecretEngine](identity)
-  implicit val decoder: Decoder[SecretEngine] = Mount.decoder(apply)
+  implicit val codec: Codec.AsObject[SecretEngine] = Codec.AsObject.from(
+    Mount.decoder(apply),
+    Mount.encoder[TuneOptions].contramapObject[SecretEngine](identity))
 
   /**
     * Creates a new Secret Engine using the provided settings. This secret engine will throw a NotImplementedError

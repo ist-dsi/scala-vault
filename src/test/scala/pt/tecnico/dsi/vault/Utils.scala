@@ -22,7 +22,6 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   val (httpClient, finalizer) = BlazeClientBuilder[IO](global)
     .withResponseHeaderTimeout(10.seconds)
     .withCheckEndpointAuthentication(false)
-    //.withSslContext(TrustingSslContext)
     .resource.allocated.unsafeRunSync()
   override protected def afterAll(): Unit = finalizer.unsafeRunSync()
 
@@ -37,21 +36,6 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   logger.info(s"Unseal Key: $unsealKey\nRoot Token: $rootToken")
   // By default the vault container listens in 0.0.0.0:8200
   val client = new VaultClient[IO](uri"http://localhost:8200", rootToken)
-
-  /*import java.security.SecureRandom
-    import java.security.cert.X509Certificate
-    import javax.net.ssl.{SSLContext, X509TrustManager}
-    import pt.tecnico.dsi.vault.Test.TrustingSslContext
-    lazy val TrustingSslContext: SSLContext = {
-    val trustManager = new X509TrustManager {
-      def getAcceptedIssuers(): Array[X509Certificate] = Array.empty
-      def checkClientTrusted(certs: Array[X509Certificate], authType: String): Unit = {}
-      def checkServerTrusted(certs: Array[X509Certificate], authType: String): Unit = {}
-    }
-    val sslContext = SSLContext.getInstance("TLS")
-    sslContext.init(null, Array(trustManager), new SecureRandom)
-    sslContext
-  }*/
 
   implicit class RichIO[T](io: IO[T]) {
     def value(test: T => Assertion): Future[Assertion] = io.map(test).unsafeToFuture()

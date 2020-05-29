@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.vault.sys.models
 
 import scala.concurrent.duration.Duration
-import io.circe.{Decoder, Encoder}
+import io.circe.Codec
 import pt.tecnico.dsi.vault.{TokenType, VaultClient}
 
 object AuthMethod {
@@ -26,13 +26,15 @@ object AuthMethod {
                          listingVisibility: Option[String] = None, passthroughRequestHeaders: Option[List[String]] = None,
                          allowedResponseHeaders: Option[List[String]] = None, tokenType: TokenType = TokenType.DefaultService)
 
-  implicit val encoder: Encoder.AsObject[AuthMethod] = Mount.encoder[TuneOptions].contramapObject[AuthMethod](identity).mapJsonObject { obj =>
-    // When tunning (updating) an AuthMethod you can set token_type, however when you are enabling an AuthMethod you cannot.
-    // So we simply remove token_type from the encoding of AuthMethod tune configuration.
-    val jsonObject = obj.filterKeys(_ == "config").mapValues(_.mapObject(_.remove("token_type")))
-    obj.add("config", jsonObject.values.head)
-  }
-  implicit val decoder: Decoder[AuthMethod] = Mount.decoder(apply)
+  implicit val codec: Codec.AsObject[AuthMethod] = Codec.AsObject.from(
+    Mount.decoder(apply),
+    Mount.encoder[TuneOptions].contramapObject[AuthMethod](identity).mapJsonObject { obj =>
+      // When tunning (updating) an AuthMethod you can set token_type, however when you are enabling an AuthMethod you cannot.
+      // So we simply remove token_type from the encoding of AuthMethod tune configuration.
+      val jsonObject = obj.filterKeys(_ == "config").mapValues(_.mapObject(_.remove("token_type")))
+      obj.add("config", jsonObject.values.head)
+    }
+  )
 
   /**
     * Creates a new Authentication Method using the provided settings. This authentication method will throw a
