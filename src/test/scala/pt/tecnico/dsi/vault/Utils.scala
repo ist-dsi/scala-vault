@@ -8,15 +8,14 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest._
 import org.scalatest.wordspec.AsyncWordSpec
 import org.scalatest.matchers.should.Matchers
-
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration.DurationInt
 import scala.sys.process._
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
   val logger: Logger = getLogger
-  implicit override def executionContext = ExecutionContext.global
+  implicit override def executionContext: ExecutionContextExecutor = ExecutionContext.global
   implicit val timer: Timer[IO] = IO.timer(executionContext)
   implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
 

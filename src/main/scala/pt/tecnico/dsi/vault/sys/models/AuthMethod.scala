@@ -2,7 +2,7 @@ package pt.tecnico.dsi.vault.sys.models
 
 import scala.concurrent.duration.Duration
 import io.circe.{Decoder, Encoder}
-import pt.tecnico.dsi.vault.TokenType
+import pt.tecnico.dsi.vault.{TokenType, VaultClient}
 
 object AuthMethod {
   object TuneOptions {
@@ -32,7 +32,7 @@ object AuthMethod {
     val jsonObject = obj.filterKeys(_ == "config").mapValues(_.mapObject(_.remove("token_type")))
     obj.add("config", jsonObject.values.head)
   }
-  implicit val decoder: Decoder[AuthMethod] = Mount.decoder[TuneOptions]().map(_.asInstanceOf[AuthMethod])
+  implicit val decoder: Decoder[AuthMethod] = Mount.decoder(apply)
 
   /**
     * Creates a new Authentication Method using the provided settings. This authentication method will throw a
@@ -49,8 +49,21 @@ object AuthMethod {
     *                 by the seal's encryption capability.
     */
   def apply(`type`: String, description: String, config: TuneOptions, options: Option[Map[String, String]] = None,
-            local: Boolean = false, sealWrap: Boolean = false): AuthMethod =
-    Mount(`type`, description, config, options, local, sealWrap).asInstanceOf[AuthMethod]
+            local: Boolean = false, sealWrap: Boolean = false): AuthMethod = {
+    // Bulk rename to ensure the apply argument names are the clean ones
+    val (_type, _description, _config, _options, _local, _sealWrap) = (`type`, description, config, options, local, sealWrap)
+    new AuthMethod {
+      override val `type`: String = _type
+      override val description: String = _description
+      override val config: TuneOptions = _config
+      override val options: Option[Map[String, String]] = _options
+      override val local: Boolean = _local
+      override val sealWrap: Boolean = _sealWrap
+
+      override type Out[_[_]] = Nothing
+      def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = ???
+    }
+  }
 }
 
 trait AuthMethod extends Mount[AuthMethod.TuneOptions]

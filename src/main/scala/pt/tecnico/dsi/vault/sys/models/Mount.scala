@@ -8,25 +8,9 @@ object Mount {
     Encoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap") { engine =>
       (engine.`type`, engine.description, engine.config, engine.options, engine.local, engine.sealWrap)
     }
-  private[models] def decoder[TuneOptions: Decoder](): Decoder[Mount[TuneOptions]] = Decoder.forProduct6(
-    "type", "description", "config", "options", "local", "seal_wrap")(apply[TuneOptions])
-
-  private[models] def apply[TuneOptions](`type`: String, description: String, config: TuneOptions, options: Option[Map[String, String]] = None,
-                                         local: Boolean = false, sealWrap: Boolean = false): Mount[TuneOptions] = {
-    // Bulk rename to ensure the apply argument names are the clean ones
-    val (_type, _description, _config, _options, _local, _sealWrap) = (`type`, description, config, options, local, sealWrap)
-    new Mount[TuneOptions] {
-      override val `type`: String = _type
-      override val description: String = _description
-      override val config: TuneOptions = _config
-      override val options: Option[Map[String, String]] = _options
-      override val local: Boolean = _local
-      override val sealWrap: Boolean = _sealWrap
-
-      override type Out[_[_]] = Nothing
-      def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = ???
-    }
-  }
+  private[models] def decoder[TuneOptions: Decoder, T <: Mount[TuneOptions]](
+    f: (String, String, TuneOptions, Option[Map[String, String]], Boolean, Boolean) => T): Decoder[T] =
+    Decoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap")(f)
 }
 
 trait Mount[TuneOptions] {

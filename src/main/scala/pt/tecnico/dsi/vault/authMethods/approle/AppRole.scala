@@ -11,17 +11,7 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
   private val dsl = new DSL[F] {}
   import dsl._
 
-  object roles extends RolesCRUD[F, Role](path, uri) {
-    /**
-      * Creates a new AppRole or updates an existing AppRole.
-      * This endpoint supports both `create` and `update` capabilities.
-      * There can be one or more constraints enabled on the role.
-      * It is required to have at least one of them enabled while creating or updating a role.
-      * @param name the name of the new role.
-      * @param role the role to create.
-      */
-    override def create(name: String, role: Role): F[Unit] = super.create(name, role)
-  }
+  object roles extends RolesCRUD[F, Role](path, uri)
 
   def role(id: String): AppRoleRole = new AppRoleRole(id)
   final class AppRoleRole(val id: String) { innerSelf =>
@@ -95,11 +85,6 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
         * @param secretId the secret id to destroy.
         */
       def delete(secretId: String): F[Unit] = execute(POST(Map("secret_id" -> secretId), uri / "destroy", token))
-      /**
-        * Alternative syntax to delete a secret id:
-        * {{{ client.auth.approle.role("my-role") -= "secret-id" }}}
-        */
-      def -=(secretId: String): F[Unit] = delete(secretId)
 
       /**
         * Reads out the properties of a SecretID from its accessor.

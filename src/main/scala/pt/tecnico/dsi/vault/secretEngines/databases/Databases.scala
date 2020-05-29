@@ -21,6 +21,7 @@ abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Rol
 
     /** @return the connection associated with `name`. */
     def get(name: String): F[Option[Connection]] = executeOptionWithContextData(GET(uri / name, token))
+    /** @return the connection associated with `name`. */
     def apply(name: String): F[Connection] = executeWithContextData(GET(uri / name, token))
 
     /**

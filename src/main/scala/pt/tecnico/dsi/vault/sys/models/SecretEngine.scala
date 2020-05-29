@@ -2,6 +2,7 @@ package pt.tecnico.dsi.vault.sys.models
 
 import scala.concurrent.duration.Duration
 import io.circe.{Decoder, Encoder}
+import pt.tecnico.dsi.vault.VaultClient
 
 object SecretEngine {
   object TuneOptions {
@@ -28,7 +29,7 @@ object SecretEngine {
                          allowedResponseHeaders: Option[List[String]] = None, options: Option[Map[String, String]] = None)
 
   implicit val encoder: Encoder.AsObject[SecretEngine] = Mount.encoder[TuneOptions].contramapObject[SecretEngine](identity)
-  implicit val decoder: Decoder[SecretEngine] = Mount.decoder[TuneOptions]().map(_.asInstanceOf[SecretEngine])
+  implicit val decoder: Decoder[SecretEngine] = Mount.decoder(apply)
 
   /**
     * Creates a new Secret Engine using the provided settings. This secret engine will throw a NotImplementedError
@@ -44,8 +45,21 @@ object SecretEngine {
     *                 by the seal's encryption capability.
     */
   def apply(`type`: String, description: String, config: TuneOptions, options: Option[Map[String, String]] = None,
-            local: Boolean = false, sealWrap: Boolean = false): SecretEngine =
-    Mount(`type`, description, config, options, local, sealWrap).asInstanceOf[SecretEngine]
+            local: Boolean = false, sealWrap: Boolean = false): SecretEngine = {
+    // Bulk rename to ensure the apply argument names are the clean ones
+    val (_type, _description, _config, _options, _local, _sealWrap) = (`type`, description, config, options, local, sealWrap)
+    new SecretEngine {
+      override val `type`: String = _type
+      override val description: String = _description
+      override val config: TuneOptions = _config
+      override val options: Option[Map[String, String]] = _options
+      override val local: Boolean = _local
+      override val sealWrap: Boolean = _sealWrap
+
+      override type Out[_[_]] = Nothing
+      def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = ???
+    }
+  }
 }
 
 trait SecretEngine extends Mount[SecretEngine.TuneOptions]

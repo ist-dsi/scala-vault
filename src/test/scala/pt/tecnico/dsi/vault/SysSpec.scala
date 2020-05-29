@@ -155,7 +155,7 @@ class SysSpec extends Utils {
     }
     "list policies" in idempotently {
       //TODO: this test should stand on its own
-      client.sys.policy.list().map(_ should contain allOf ("test", "test2", "a", "b"))
+      client.sys.policy.list().map(_ should contain allOf ("test", "test2"))
     }
     "delete a policy" in idempotently {
       for {
@@ -171,23 +171,20 @@ class SysSpec extends Utils {
   "The auth endpoint" should {
     import pt.tecnico.dsi.vault.sys.models.AuthMethod
     import pt.tecnico.dsi.vault.sys.models.AuthMethod.TuneOptions
-    def createAuthMethod(`type`: String) = AuthMethod(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
+    def createAuthMethod(`type`: String): AuthMethod = AuthMethod(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
 
     "mount an authentication method" in idempotently {
       client.sys.auth.enable("test", createAuthMethod("approle")).map(_ shouldBe ())
     }
     "edit an authentication method" in {
-      val method = AuthMethod("approle", "", TuneOptions(defaultLeaseTtl = 1.day))
+      val method = AuthMethod("approle", "description", TuneOptions(defaultLeaseTtl = 1.day))
       for {
         _ <- client.sys.auth.enable("test2", method).value(_ shouldBe ())
-        // This is also testing `tuneOptions`
-        _ <- client.sys.auth("test2").value(_.defaultLeaseTtl shouldBe 1.day)
-        result <- client.sys.auth("test2").idempotently(_.defaultLeaseTtl shouldBe 1.hour)
+        result <- client.sys.auth("test2").idempotently(_.defaultLeaseTtl shouldBe 1.day)
       } yield result
     }
     "list authentication methods" in idempotently {
       client.sys.auth.list().map { authMethods =>
-        authMethods should contain key "ldap/"
         authMethods should contain key "test/"
         authMethods should contain key "token/"
         authMethods.values.map(_.config) should contain(createAuthMethod("dummy").config)
@@ -207,7 +204,7 @@ class SysSpec extends Utils {
   "The mounts endpoint" should {
     import pt.tecnico.dsi.vault.sys.models.SecretEngine
     import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions
-    def createSecretEngine(`type`: String) = SecretEngine(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
+    def createSecretEngine(`type`: String): SecretEngine = SecretEngine(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
 
     "mount a secret engine" in idempotently {
       client.sys.mounts.enable("test", createSecretEngine("consul")).map(_ shouldBe ())
@@ -216,16 +213,13 @@ class SysSpec extends Utils {
       val engine = SecretEngine("consul", "", TuneOptions(defaultLeaseTtl = 1.day))
       for {
         _ <- client.sys.mounts.enable("test2", engine).value(_ shouldBe ())
-        // This is also testing `tuneOptions`
-        _ <- client.sys.mounts("test2").value(_.defaultLeaseTtl shouldBe 1.day)
-        result <- client.sys.mounts("test2").idempotently(_.defaultLeaseTtl shouldBe 1.hour)
+        result <- client.sys.mounts("test2").idempotently(_.defaultLeaseTtl shouldBe 1.day)
       } yield result
     }
     "list authentication methods" in idempotently {
       client.sys.mounts.list().map { secretEngines =>
-        secretEngines should contain key "pki/"
-        secretEngines should contain key "database/"
-        secretEngines should contain key "sys/"
+        secretEngines should contain key "test/"
+        secretEngines should contain key "test2/"
         secretEngines.values.map(_.config) should contain(createSecretEngine("dummy").config)
       }
     }
