@@ -43,10 +43,10 @@ libraryDependencies ++= Seq("blaze-client", "dsl", "circe").map { module =>
   "org.http4s"      %% s"http4s-$module" % "0.21.4"
 } ++ Seq(
   "io.circe"        %% "circe-derivation" % "0.13.0-M4",
-  "io.circe"        %% "circe-parser"     % "0.13.0", // Just used in WriteConcern
-  "com.beachape"    %% "enumeratum-circe" % "1.5.23",
+  "io.circe"        %% "circe-parser"     % "0.13.0", // Just used in Databases
+  "com.beachape"    %% "enumeratum-circe" % "1.6.1",
   "ch.qos.logback"  %  "logback-classic"  % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"        % "3.1.1" % Test,
+  "org.scalatest"   %% "scalatest"        % "3.1.2" % Test,
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
