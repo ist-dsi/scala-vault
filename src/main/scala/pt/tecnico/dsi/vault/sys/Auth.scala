@@ -11,7 +11,7 @@ import pt.tecnico.dsi.vault.sys.models.AuthMethod
   * However the same functionality can be achieved without sudo via the Mounts service.
   */
 final class Auth[F[_]: Sync: Client](path: String, uri: Uri, vaultClient: VaultClient[F])(implicit token: Header)
-  extends MountService[F, AuthMethod.TuneOptions, AuthMethod](path, uri, vaultClient) {
+  extends MountService[F, AuthMethod](path, uri, vaultClient) {
   /** @inheritdoc */
   override def remount(from: String, to: String): F[Unit] = super.remount(s"auth/$from", s"auth/$to")
 }

@@ -7,10 +7,9 @@ import io.circe.Codec
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.{DSL, VaultClient}
-import pt.tecnico.dsi.vault.sys.models.Mount
+import pt.tecnico.dsi.vault.sys.models.{Mount, TuneOptions}
 
-abstract class MountService[F[_]: Sync: Client, TuneOptions: Codec, T <: Mount[TuneOptions]: Codec]
-  (val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header) {
+abstract class MountService[F[_]: Sync: Client, T <: Mount: Codec](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 

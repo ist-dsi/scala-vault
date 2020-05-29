@@ -1,6 +1,7 @@
 package pt.tecnico.dsi.vault
 
 import scala.concurrent.duration.DurationInt
+import pt.tecnico.dsi.vault.sys.models.{AuthMethod, SecretEngine, TuneOptions}
 
 class SysSpec extends Utils {
   "The init endpoint" should {
@@ -169,8 +170,6 @@ class SysSpec extends Utils {
   }
 
   "The auth endpoint" should {
-    import pt.tecnico.dsi.vault.sys.models.AuthMethod
-    import pt.tecnico.dsi.vault.sys.models.AuthMethod.TuneOptions
     def createAuthMethod(`type`: String): AuthMethod = AuthMethod(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
 
     "mount an authentication method" in idempotently {
@@ -202,8 +201,6 @@ class SysSpec extends Utils {
   }
 
   "The mounts endpoint" should {
-    import pt.tecnico.dsi.vault.sys.models.SecretEngine
-    import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions
     def createSecretEngine(`type`: String): SecretEngine = SecretEngine(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
 
     "mount a secret engine" in idempotently {

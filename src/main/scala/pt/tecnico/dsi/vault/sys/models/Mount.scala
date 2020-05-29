@@ -4,16 +4,21 @@ import io.circe.{Decoder, Encoder}
 import pt.tecnico.dsi.vault.VaultClient
 
 object Mount {
-  private[models] def encoder[TuneOptions: Encoder]: Encoder.AsObject[Mount[TuneOptions]] =
-    Encoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap") { engine =>
+  private[models] def encoder: Encoder.AsObject[Mount] =
+    Encoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap") { engine: Mount =>
       (engine.`type`, engine.description, engine.config, engine.options, engine.local, engine.sealWrap)
+    }.mapJsonObject { obj =>
+      // When tunning (updating) a Mount you can set token_type, however when you are enabling it you cannot.
+      // So we simply remove token_type from the encoded json.
+      val jsonObject = obj.filterKeys(_ == "config").mapValues(_.mapObject(_.remove("token_type")))
+      obj.add("config", jsonObject.values.head)
     }
-  private[models] def decoder[TuneOptions: Decoder, T <: Mount[TuneOptions]](
+  private[models] def decoder[T <: Mount](
     f: (String, String, TuneOptions, Option[Map[String, String]], Boolean, Boolean) => T): Decoder[T] =
     Decoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap")(f)
 }
 
-trait Mount[TuneOptions] {
+trait Mount {
   /** Specifies the type of this mount, such as "approle" (authentication method) or "pki" (secret engine). */
   val `type`: String
   /** Specifies a human-friendly description of this mount. */

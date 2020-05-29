@@ -8,4 +8,4 @@ import pt.tecnico.dsi.vault.sys.models.SecretEngine
 
 /** Handles mounting secret engines. For auth methods look at Auth. */
 final class Mounts[F[_]: Sync: Client](path: String, uri: Uri, vaultClient: VaultClient[F])(implicit token: Header)
-  extends MountService[F, SecretEngine.TuneOptions, SecretEngine](path, uri, vaultClient)
+  extends MountService[F, SecretEngine](path, uri, vaultClient)
