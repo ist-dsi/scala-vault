@@ -3,13 +3,14 @@ package pt.tecnico.dsi.vault.sys
 import cats.effect.Sync
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.{DSL, VaultClient}
 import pt.tecnico.dsi.vault.sys.models.SecretEngine
 import pt.tecnico.dsi.vault.sys.models.SecretEngine.TuneOptions
 
+/**
+ */
 final class Mounts[F[_]: Sync: Client](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
@@ -35,8 +36,7 @@ final class Mounts[F[_]: Sync: Client](val path: String, val uri: Uri, vaultClie
     * @param path Specifies the path where the secrets engine will be mounted.
     * @param engine the secret engine to enable.
     */
-  def enableAndReturn(path: String, engine: SecretEngine): F[engine.Out[F]] =
-    enable(path, engine).as(engine.mounted(vaultClient, path))
+  def enableAndReturn(path: String, engine: SecretEngine): F[engine.Out[F]] = enable(path, engine).as(engine.mounted(vaultClient, path))
 
   /**
     * Disables the mount point at `path`.
@@ -60,11 +60,11 @@ final class Mounts[F[_]: Sync: Client](val path: String, val uri: Uri, vaultClie
     */
   def tune(path: String, options: TuneOptions): F[Unit] = execute(POST(options, uri / path / "tune", token))
 
+
   /**
     * Moves an already-mounted backend to a new mount point.
     * @param from Specifies the previous mount point.
     * @param to Specifies the new destination mount point.
     */
-  def remount(from: String, to: String): F[Unit] =
-    execute(POST(Map("from" -> from, "to" -> to).asJson, vaultClient.sys.uri / "remount", token))
+  def remount(from: String, to: String): F[Unit] = execute(POST(Map("from" -> from, "to" -> to), vaultClient.sys.uri / "remount", token))
 }

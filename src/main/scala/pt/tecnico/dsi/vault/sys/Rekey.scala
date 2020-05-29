@@ -1,8 +1,6 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import io.circe.Json
-import io.circe.syntax._
 import org.http4s.Uri
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
@@ -38,7 +36,8 @@ final class Rekey[F[_]: Sync: Client](uri: Uri) { self =>
     * @return the configuration and progress of the current rekey attempt.
     */
   def start(shares: Int, threshold: Int, pgpKeys: Option[List[String]] = None, backup: Boolean = false, requireVerification: Boolean = false): F[RekeyProgress] = {
-    val body = Json.obj(
+    import io.circe.syntax._
+    val body = Map(
       "secret_shares" -> shares.asJson,
       "secret_threshold" -> threshold.asJson,
       "pgp_keys" -> pgpKeys.asJson,
@@ -67,8 +66,7 @@ final class Rekey[F[_]: Sync: Client](uri: Uri) { self =>
     * @param key Specifies a single master key share.
     * @param nonce Specifies the nonce of the attempt.
     */
-  def put(key: String, nonce: String): F[RekeyProgress] =
-    execute(PUT(Map("key" -> key, "nonce" -> nonce).asJson, uri / "update"))
+  def put(key: String, nonce: String): F[RekeyProgress] = execute(PUT(Map("key" -> key, "nonce" -> nonce), uri / "update"))
 
   final object backupKey {
     val path: String = "backup"
@@ -101,7 +99,6 @@ final class Rekey[F[_]: Sync: Client](uri: Uri) { self =>
       * @param key a single master share key from the new set of shares.
       * @param nonce the nonce of the rekey verification operation.
       */
-    def put(key: String, nonce: String): F[RekeyVerificationProgress] =
-      execute(PUT(Map("key" -> key, "nonce" -> nonce).asJson, uri))
+    def put(key: String, nonce: String): F[RekeyVerificationProgress] = execute(PUT(Map("key" -> key, "nonce" -> nonce), uri))
   }
 }

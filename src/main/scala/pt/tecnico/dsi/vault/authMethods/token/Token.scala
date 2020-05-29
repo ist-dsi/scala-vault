@@ -1,14 +1,13 @@
 package pt.tecnico.dsi.vault.authMethods.token
 
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration.FiniteDuration
 import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.flatMap._
-import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.traverse._
-import io.circe.Json
 import io.circe.syntax._
+import io.circe.Json
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.{Auth, DSL, RolesCRUD}
@@ -56,20 +55,21 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
   /** @param token the token for which to retrieve information.
     * @return returns information about the `token`.
     */
-  def lookup(token: String): F[MToken] =
-    executeWithContextData(POST(Map("token" -> token).asJson, uri / "lookup", this.token))
+  def lookup(token: String): F[MToken] = executeWithContextData(POST(Map("token" -> token), uri / "lookup", this.token))
 
   /** @return returns information about the current client token.
     */
-  def lookupSelf(): F[MToken] =
-    executeWithContextData(POST(uri / "lookup-self", token))
+  def lookupSelf(): F[MToken] = executeWithContextData(POST(uri / "lookup-self", token))
 
   /** @param accessor the token accessor for which to retrieve the information.
     * @return returns information about the client token from the `accessor`.
     */
-  def lookupAccessor(accessor: String): F[MToken] =
-    executeWithContextData(POST(Map("accessor" -> accessor).asJson, uri / "lookup-accessor", token))
+  def lookupAccessor(accessor: String): F[MToken] = executeWithContextData(POST(Map("accessor" -> accessor), uri / "lookup-accessor", token))
 
+
+
+  //Unfortunately the endpoints using this are expecting an Int, so we cannot use increment.asJson
+  private def incrementToJson(increment: Option[FiniteDuration]): Json = increment.map(_.toSeconds.toInt).asJson
 
   /**
     * Renews a lease associated with a token. This is used to prevent the expiration of a token, and the automatic
@@ -79,8 +79,8 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
     * @param increment An optional requested lease increment can be provided. This increment may be ignored.
     * @return the renewed token information.
     */
-  def renew(token: String, increment: Option[Int] = None): F[Auth] = {
-    val body = Json.obj("token" -> token.asJson, "increment" -> increment.asJson)
+  def renew(token: String, increment: Option[FiniteDuration] = None): F[Auth] = {
+    val body = Map("token" -> token.asJson, "increment" -> incrementToJson(increment))
     executeWithContextAuth(POST(body, uri / "renew", this.token))
   }
 
@@ -91,8 +91,7 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
     * @param increment An optional requested lease increment can be provided. This increment may be ignored.
     * @return the renewed token information.
     */
-  def renewSelf(increment: Option[Int] = None): F[Auth] =
-    executeWithContextAuth(POST(Map("increment" -> increment).asJson, uri / "renew-self", token))
+  def renewSelf(increment: Option[FiniteDuration] = None): F[Auth] = executeWithContextAuth(POST(Map("increment" -> incrementToJson(increment)), uri / "renew-self", token))
 
   /**
     * Renews a lease associated with a token using its accessor. This is used to prevent the expiration of a token, and the automatic revocation of it.
@@ -102,8 +101,8 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
     * @return returns information about the client token from the `accessor`.
     */
   def renewAccessor(accessor: String, increment: Option[FiniteDuration]): F[Auth] = {
-    import pt.tecnico.dsi.vault.encodeFiniteDuration
-    executeWithContextData(POST(Map("accessor" -> accessor.asJson, "increment" -> increment.asJson).asJson, uri / "renew-accessor", token))
+    val body = Map("accessor" -> accessor.asJson, "increment" -> incrementToJson(increment))
+    executeWithContextData(POST(body, uri / "renew-accessor", token))
   }
 
 
@@ -112,7 +111,7 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
     *
     * @param token the token to revoke.
     */
-  def revoke(token: String): F[Unit] = execute(POST(Map("token" -> token).asJson, uri / "revoke", this.token))
+  def revoke(token: String): F[Unit] = execute(POST(Map("token" -> token), uri / "revoke", this.token))
 
   /** Revokes the token used to call it and all child tokens. When the token is revoked,
     * all dynamic secrets generated with it are also revoked. */
@@ -124,8 +123,7 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
     *
     * @param accessor Accessor of the token.
     */
-  def revokeAccessor(accessor: String): F[Unit] =
-    execute(POST(Map("accessor" -> accessor).asJson, uri / "revoke-accessor", token))
+  def revokeAccessor(accessor: String): F[Unit] = execute(POST(Map("accessor" -> accessor), uri / "revoke-accessor", token))
 
   /**
     * Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked.
@@ -133,8 +131,7 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
     *
     * @param token Token to revoke.
     */
-  def revokeTokenAndOrphanChildren(token: String): F[Unit] =
-    execute(POST(Map("token" -> token).asJson, uri / "revoke-orphan", this.token))
+  def revokeTokenAndOrphanChildren(token: String): F[Unit] = execute(POST(Map("token" -> token), uri / "revoke-orphan", this.token))
 
   object roles extends RolesCRUD[F, Role](path, uri) {
     /**

@@ -2,8 +2,6 @@ package pt.tecnico.dsi.vault.sys
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import cats.effect.Sync
-import io.circe.Json
-import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
@@ -23,13 +21,12 @@ final class Leases[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit 
   def list(prefix: String): F[List[String]] =
     executeWithContextKeys(LIST(literalAppendToPath(uri / "lookup", prefix), token))
 
-  def apply(name: String): F[Lease] = executeWithContextData(PUT(Map("lease_id" -> name).asJson, uri / "lookup", token))
+  def apply(name: String): F[Lease] = executeWithContextData(PUT(Map("lease_id" -> name), uri / "lookup", token))
   /**
     * @param id the id of the lease.
     * @return the metadata associated with the lease with `id`. If no lease with that `id` exists a None will be returned.
     */
-  def get(id: String): F[Option[Lease]] =
-    executeOptionWithContextData(PUT(Map("lease_id" -> id).asJson, uri / "lookup", token))
+  def get(id: String): F[Option[Lease]] = executeOptionWithContextData(PUT(Map("lease_id" -> id), uri / "lookup", token))
 
   /**
     * Renews a lease, requesting to extend the lease.
@@ -40,7 +37,8 @@ final class Leases[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit 
     */
   def renew(id: String, increment: FiniteDuration = 0.second): F[LeaseRenew] = {
     //Unfortunately we cannot use increment.asJson directly because this endpoint is expecting an Int
-    val body = Json.obj("lease_id" -> id.asJson, "increment" -> increment.toSeconds.toInt.asJson)
+    import io.circe.syntax._
+    val body = Map("lease_id" -> id.asJson, "increment" -> increment.toSeconds.toInt.asJson)
     execute(PUT(body, uri / "renew", token))
   }
 
@@ -48,7 +46,7 @@ final class Leases[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit 
     * Revokes a lease immediately.
     * @param id Specifies the ID of the lease to revoke.
     */
-  def revoke(id: String): F[Unit] = execute(PUT(Map("lease_id" -> id).asJson, uri / "revoke", token))
+  def revoke(id: String): F[Unit] = execute(PUT(Map("lease_id" -> id), uri / "revoke", token))
 
   /**
     * This endpoint revokes all secrets or tokens generated under a given prefix immediately. Unlike [[revokePrefix]],

@@ -1,13 +1,14 @@
 package pt.tecnico.dsi.vault.sys.models
 
 import scala.concurrent.duration.Duration
-import io.circe.{Codec, Decoder, Encoder}
-import io.circe.derivation.{deriveCodec, renaming}
-import pt.tecnico.dsi.vault.sys.models.AuthMethod.TuneOptions
-import pt.tecnico.dsi.vault.{TokenType, VaultClient, decoderDuration, encodeDuration}
+import io.circe.{Decoder, Encoder}
+import pt.tecnico.dsi.vault.TokenType
 
 object AuthMethod {
   object TuneOptions {
+    import io.circe.Codec
+    import io.circe.derivation.{deriveCodec, renaming}
+    import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
     implicit val codec: Codec.AsObject[TuneOptions] = deriveCodec(renaming.snakeCase, true, None)
   }
   /**
@@ -25,19 +26,13 @@ object AuthMethod {
                          listingVisibility: Option[String] = None, passthroughRequestHeaders: Option[List[String]] = None,
                          allowedResponseHeaders: Option[List[String]] = None, tokenType: TokenType = TokenType.DefaultService)
 
-  implicit val encoder: Encoder.AsObject[AuthMethod] = {
-    Encoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap") { auth: AuthMethod =>
-      (auth.`type`, auth.description, auth.config, auth.options, auth.local, auth.sealWrap)
-    }.mapJsonObject { obj =>
-      // When tunning (updating) an AuthMethod you can set token_type. However when you are enabling an AuthMethod you cannot.
-      // So we simply remove token_type from the encoding of AuthMethod tune configuration.
-      val jsonObject = obj.filterKeys(_ == "config").mapValues(_.mapObject(_.remove("token_type")))
-      obj.add("config", jsonObject.values.head)
-    }
+  implicit val encoder: Encoder.AsObject[AuthMethod] = Mount.encoder[TuneOptions].contramapObject[AuthMethod](identity).mapJsonObject { obj =>
+    // When tunning (updating) an AuthMethod you can set token_type, however when you are enabling an AuthMethod you cannot.
+    // So we simply remove token_type from the encoding of AuthMethod tune configuration.
+    val jsonObject = obj.filterKeys(_ == "config").mapValues(_.mapObject(_.remove("token_type")))
+    obj.add("config", jsonObject.values.head)
   }
-
-  implicit val decoder: Decoder[AuthMethod] = Decoder.forProduct6[AuthMethod, String, String, TuneOptions, Option[Map[String, String]], Boolean, Boolean](
-    "type", "description", "config", "options", "local", "seal_wrap")(AuthMethod.apply)
+  implicit val decoder: Decoder[AuthMethod] = Mount.decoder[TuneOptions]().map(_.asInstanceOf[AuthMethod])
 
   /**
     * Creates a new Authentication Method using the provided settings. This authentication method will throw a
@@ -54,40 +49,8 @@ object AuthMethod {
     *                 by the seal's encryption capability.
     */
   def apply(`type`: String, description: String, config: TuneOptions, options: Option[Map[String, String]] = None,
-            local: Boolean = false, sealWrap: Boolean = false): AuthMethod = {
-    // Bulk rename to ensure the apply argument names are the clean ones
-    val (_type, _description, _config, _options, _local, _sealWrap) = (`type`, description, config, options, local, sealWrap)
-    new AuthMethod {
-      override val `type`: String = _type
-      override val description: String = _description
-      override val config: TuneOptions = _config
-      override val options: Option[Map[String, String]] = _options
-      override val local: Boolean = _local
-      override val sealWrap: Boolean = _sealWrap
-
-      override type Out[_[_]] = Nothing
-      def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = ???
-    }
-  }
+            local: Boolean = false, sealWrap: Boolean = false): AuthMethod =
+    Mount(`type`, description, config, options, local, sealWrap).asInstanceOf[AuthMethod]
 }
 
-trait AuthMethod {
-  /** Specifies the name of the authentication method type, such as "github" or "token". */
-  val `type`: String
-  /** Specifies a human-friendly description of the auth method. */
-  val description: String
-  /** Specifies configuration options for this mount; if set on a specific mount, values will
-    * override any global defaults (e.g. the system TTL/Max TTL) */
-  val config: TuneOptions
-  /** Specifies mount type specific options that are passed to the backend. */
-  val options: Option[Map[String, String]]
-  /** Specifies if the secrets engine is a local mount only. Local mounts are not replicated
-    * nor (if a secondary) removed by replication. */
-  val local: Boolean
-  /** Enable seal wrapping for the mount, causing values stored by the mount to be wrapped
-    * by the seal's encryption capability. */
-  val sealWrap: Boolean
-
-  type Out[T[_]]
-  def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F]
-}
+trait AuthMethod extends Mount[AuthMethod.TuneOptions]

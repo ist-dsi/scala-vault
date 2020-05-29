@@ -2,7 +2,6 @@ package pt.tecnico.dsi.vault.secretEngines.kv
 
 import cats.effect.Sync
 import io.circe.{Decoder, Encoder}
-import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
@@ -13,7 +12,7 @@ final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
   import dsl._
 
   /** Configures backend level settings that are applied to every key in the key-value store. */
-  def configure(configuration: Configuration): F[Unit] = execute(POST(configuration.asJson, uri / "config", token))
+  def configure(configuration: Configuration): F[Unit] = execute(POST(configuration, uri / "config", token))
 
   /**
     * Creates a new version of a secret at the specified `path`.
@@ -23,7 +22,7 @@ final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
     * @param configuration the metadata to update
     */
   def configureAt(path: String, configuration: Configuration): F[Unit] =
-    execute(POST(configuration.asJson, uri / "metadata" / path, token))
+    execute(POST(configuration, uri / "metadata" / path, token))
 
   /** Retrieves the current configuration for the secrets backend at the given path. */
   val configuration: F[Configuration] = executeWithContextData(GET(uri / "config", token))
@@ -74,11 +73,12 @@ final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
     * @tparam A the type of the secret to be created
     */
   def write[A: Encoder.AsObject](path: String, secret: A, cas: Option[Int] = None): F[Version] = {
+    import io.circe.syntax._
     val body = Map(
-      "options" -> cas.map(value => Map("cas" -> value)).getOrElse(Map.empty).asJsonObject,
-      "data" -> secret.asJsonObject,
+      "options" -> cas.map(value => Map("cas" -> value)).getOrElse(Map.empty).asJson,
+      "data" -> secret.asJson,
     )
-    executeWithContextData(PUT(body.asJson, uri / "data" / path, token))
+    executeWithContextData(PUT(body, uri / "data" / path, token))
   }
 
   /**
@@ -89,19 +89,19 @@ final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
     * @param path the path of the secret to delete
     * @param versions The versions to be deleted. The versioned data will not be deleted, but it will no longer be returned in normal get requests.
     */
-  def deleteVersions(path: String, versions: List[Int]): F[Unit] = execute(POST(versions.asJson, uri / "delete" / path, token))
+  def deleteVersions(path: String, versions: List[Int]): F[Unit] = execute(POST(versions, uri / "delete" / path, token))
   /**
     * Undeletes the data for the provided version and path in the key-value store. This restores the data, allowing it to be returned on get requests.
     * @param path the path of the secret to undelete
     * @param versions The versions to undelete. The versions will be restored and their data will be returned on normal get requests.
     */
-  def undeleteVersions(path: String, versions: List[Int]): F[Unit] = execute(POST(versions.asJson, uri / "undelete" / path, token))
+  def undeleteVersions(path: String, versions: List[Int]): F[Unit] = execute(POST(versions, uri / "undelete" / path, token))
   /**
     * Permanently removes the specified version data for the provided key and version numbers from the key-value store.
     * @param path the path of the secret to destroy.
     * @param versions the versions to destroy. Their data will be permanently deleted.
     */
-  def destroyVersions(path: String, versions: List[Int]): F[Unit] = execute(POST(versions.asJson, uri / "destroy" / path, token))
+  def destroyVersions(path: String, versions: List[Int]): F[Unit] = execute(POST(versions, uri / "destroy" / path, token))
 
   /**
     * Issues a soft delete of the secret's latest version at the specified `path`.

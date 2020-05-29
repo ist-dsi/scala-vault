@@ -1,7 +1,6 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import io.circe.syntax._
 import org.http4s.Uri
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
@@ -22,7 +21,7 @@ final class GenerateRoot[F[_]: Sync: Client](val path: String, val uri: Uri) {
     * @return the configuration and progress of the current root generation attempt.
     */
   def start(pgpKey: Option[String] = None): F[RootGenerationProgress] =
-    execute(PUT(Map("pgp_key" -> pgpKey).asJson, uri / "attempt"))
+    execute(PUT(Map("pgp_key" -> pgpKey), uri / "attempt"))
 
   /**
     * Cancels any in-progress root generation attempt. This clears any progress made.
@@ -39,5 +38,5 @@ final class GenerateRoot[F[_]: Sync: Client](val path: String, val uri: Uri) {
     * @param nonce Specifies the nonce of the attempt.
     */
   def put(keyShare: String, nonce: String): F[RootGenerationProgress] =
-    execute(PUT(Map("key" -> keyShare, "nonce" -> nonce).asJson, uri / "update"))
+    execute(PUT(Map("key" -> keyShare, "nonce" -> nonce), uri / "update"))
 }

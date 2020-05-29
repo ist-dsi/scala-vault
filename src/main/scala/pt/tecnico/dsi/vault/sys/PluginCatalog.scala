@@ -27,8 +27,7 @@ class PluginCatalog[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
     * @param `type` the type of this plugin. May be "auth", "database", or "secret".
     * @param plugin the plugin to register.
     */
-  def register(`type`: Type, plugin: Plugin): F[Unit] =
-    execute(PUT(plugin, uri / `type`.toString.toLowerCase / plugin.name, token))
+  def register(`type`: Type, plugin: Plugin): F[Unit] = execute(PUT(plugin, uri / `type`.toString.toLowerCase / plugin.name, token))
 
   /**
     * @param name the name of the plugin to retrieve.

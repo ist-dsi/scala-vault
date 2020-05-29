@@ -45,9 +45,7 @@ final class Auth[F[_]: Sync: Client](val path: String, val uri: Uri, vaultClient
     * @param path Specifies the path in which to enable the auth method.
     * @param method the authentication method to enable.
     */
-  def enableAndReturn(path: String, method: AuthMethod): F[method.Out[F]] = {
-    enable(path, method).as(method.mounted(vaultClient, path))
-  }
+  def enableAndReturn(path: String, method: AuthMethod): F[method.Out[F]] = enable(path, method).as(method.mounted(vaultClient, path))
 
   /**
     * Disables the auth method at the given auth path.

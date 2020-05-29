@@ -9,7 +9,7 @@ import cats.instances.list._
 import cats.instances.try_._
 import cats.syntax.flatMap._
 import cats.syntax.traverse._
-import io.circe.{Decoder, Json, JsonObject}
+import io.circe.{Decoder, JsonObject}
 import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -99,8 +99,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
     * @param pemBundle Specifies the key and certificate concatenated in PEM format.
     * @return
     */
-  def submitCAInformation(pemBundle: String): F[Unit] =
-    execute(POST(Map("pem_bundle" -> pemBundle).asJson, uri / "config" / "ca", token))
+  def submitCAInformation(pemBundle: String): F[Unit] = execute(POST(Map("pem_bundle" -> pemBundle), uri / "config" / "ca", token))
 
   /** @return the duration for which the generated CRL should be marked valid. */
   def readCRLConfiguration(): F[CRLConfiguration] = execute(GET(uri / "config" / "crl", token))
@@ -196,7 +195,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
   //   · issuing_ca
   //   · serial_number?
   def signSelfIssued(certificatePem: String): F[Certificate] =
-    executeWithContextData(POST(Map("certificate" -> certificatePem).asJson, uri / "root" / "sign-self-issued", token))
+    executeWithContextData(POST(Map("certificate" -> certificatePem), uri / "root" / "sign-self-issued", token))
   def signSelfIssued(certificate: X509Certificate): F[Certificate] = signSelfIssued(PKI.pemEncode(certificate))
 
   // We could make the result be a dependent type based upon the Type value
@@ -227,8 +226,12 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
   def signVerbatim(csr: String, role: Option[String] = None, keyUsage: Array[String] = Array("DigitalSignature", "KeyAgreement", "KeyEncipherment"),
                    extendedKeyUsage: Array[String] = Array.empty, extendedKeyUsageOIDs: Array[String] = Array.empty,
                    ttl: Duration = Duration.Undefined, format: Format = Format.Pem): F[Certificate] = {
-    val body = Json.obj("csr" -> csr.asJson, "role" -> role.asJson, "key_usage" -> keyUsage.asJson,
-      "extended_key_usage" -> extendedKeyUsage.asJson, "extended_key_usage_oids" -> extendedKeyUsageOIDs.asJson,
+    val body = Map(
+      "csr" -> csr.asJson,
+      "role" -> role.asJson,
+      "key_usage" -> keyUsage.asJson,
+      "extended_key_usage" -> extendedKeyUsage.asJson,
+      "extended_key_usage_oids" -> extendedKeyUsageOIDs.asJson,
       "ttl" -> ttl.asJson, "format" -> format.asJson
     )
     val path = role.foldLeft(uri / "root" / "sign-verbatim")(_ / _)
@@ -279,7 +282,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
     *                       to populate the whole chain, which will then enable returning the full chain from issue and sign operations.
     */
   def setSignedIntermediate(certificatePEM: String): F[Unit] =
-    execute(POST(Map("certificate" -> certificatePEM).asJson, uri / "intermediate" / "set-signed", token))
+    execute(POST(Map("certificate" -> certificatePEM), uri / "intermediate" / "set-signed", token))
   def setSignedIntermediate(certificate: X509Certificate): F[Unit] = setSignedIntermediate(PKI.pemEncode(certificate))
 
   // We could make the result be a dependent type based upon the Type value
@@ -379,7 +382,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
 
   /** Revokes a certificate using its serial number. This is an alternative option to the standard method of revoking using Vault lease IDs.
     * A successful revocation will rotate the CRL. */
-  def revoke(serial: String): F[Unit] = execute(POST(Map("serial_number" -> serial).asJson, uri / "revoke", token))
+  def revoke(serial: String): F[Unit] = execute(POST(Map("serial_number" -> serial), uri / "revoke", token))
 
   /**
     * Retrieves the certificate with the given `serial`.
@@ -414,7 +417,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
     *                     (according to the local clock) plus the duration of safety_buffer.
     */
   def tidy(tidyCertStore: Boolean = false, tidyRevokedCerts: Boolean = false, safetyBuffer: Duration = Duration.Undefined): F[Unit] =
-    execute(POST(JsonObject(
+    execute(POST(Map(
       "tidy_cert_store" -> tidyCertStore.asJson,
       "tidy_revoked_certs" -> tidyRevokedCerts.asJson,
       "safety_buffer" -> safetyBuffer.asJson,

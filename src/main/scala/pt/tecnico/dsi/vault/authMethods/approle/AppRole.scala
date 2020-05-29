@@ -1,10 +1,7 @@
 package pt.tecnico.dsi.vault.authMethods.approle
 
 import cats.effect.Sync
-import cats.syntax.foldable._
 import cats.syntax.functor._
-import cats.instances.list._
-import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.{Auth, DSL, RolesCRUD}
@@ -48,7 +45,7 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
         * Updates the RoleID of this AppRole role to a custom value.
         * @param newRoleId the new RoleID.
         */
-      def update(newRoleId: String): F[Unit] = execute(POST(RoleId(newRoleId).asJson, uri, token))
+      def update(newRoleId: String): F[Unit] = execute(POST(RoleId(newRoleId), uri, token))
     }
     object secretId {
       val path: String = s"${innerSelf.path}/secret-id"
@@ -69,7 +66,7 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
         * @param properties the secret id properties to use while generating the new secret id.
         */
       def generate(properties: SecretIdProperties): F[SecretIdResponse] = {
-        executeWithContextData[SecretIdResponse](POST.apply(properties.asJson, uri, token))
+        executeWithContextData[SecretIdResponse](POST(properties, uri, token))
       }
 
       /**
@@ -78,6 +75,7 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
         * @param properties the secret id properties to use while generating the new secret id.
         */
       def createCustom(secretId: String, properties: SecretIdProperties): F[SecretIdResponse] = {
+        import io.circe.syntax._
         val body = SecretIdProperties.codec(properties).mapObject(_.add("secret_id", secretId.asJson))
         executeWithContextData[SecretIdResponse](POST(body, uri, token))
       }
@@ -88,15 +86,15 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
         * @param secretId the secret id to read the properties from.
         */
       def get(secretId: String): F[Option[SecretIdProperties]] =
-        executeOptionWithContextData(POST(Map("secret_id" -> secretId).asJson, uri / "lookup", token))
+        executeOptionWithContextData(POST(Map("secret_id" -> secretId), uri / "lookup", token))
       def apply(secretId: String): F[SecretIdProperties] =
-        executeWithContextData(POST(Map("secret_id" -> secretId).asJson, uri / "lookup", token))
+        executeWithContextData(POST(Map("secret_id" -> secretId), uri / "lookup", token))
 
       /**
         * Destroy an secret ID.
         * @param secretId the secret id to destroy.
         */
-      def delete(secretId: String): F[Unit] = execute(POST(Map("secret_id" -> secretId).asJson, uri / "destroy", token))
+      def delete(secretId: String): F[Unit] = execute(POST(Map("secret_id" -> secretId), uri / "destroy", token))
       /**
         * Alternative syntax to delete a secret id:
         * {{{ client.auth.approle.role("my-role") -= "secret-id" }}}
@@ -109,14 +107,14 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
         * @param accessor the secret id accessor to read the properties from.
         */
       def getUsingAccessor(accessor: String): F[Option[SecretIdProperties]] =
-        executeOptionWithContextData(POST(Map("secret_id_accessor" -> accessor).asJson, uri / "secret-id-accessor" / "lookup", token))
+        executeOptionWithContextData(POST(Map("secret_id_accessor" -> accessor), uri / "secret-id-accessor" / "lookup", token))
 
       /**
         * Destroy an secret ID using its accessor.
         * @param accessor the secret id accessor to use to destroy the corresponding secret id.
         */
       def deleteUsingAccesor(accessor: String): F[Unit] =
-        execute(POST(Map("secret_id_accessor" -> accessor).asJson, uri / "secret-id-accessor" / "destroy", token))
+        execute(POST(Map("secret_id_accessor" -> accessor), uri / "secret-id-accessor" / "destroy", token))
     }
   }
 
@@ -128,5 +126,5 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
     * @param secretId the secret id to use.
     */
   def login(roleId: String, secretId: String): F[Auth] =
-    executeWithContextAuth(POST(Map("role_id" -> roleId, "secret_id" -> secretId).asJson, uri / "login"))
+    executeWithContextAuth(POST(Map("role_id" -> roleId, "secret_id" -> secretId), uri / "login"))
 }

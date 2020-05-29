@@ -2,7 +2,6 @@ package pt.tecnico.dsi.vault.secretEngines.kv
 
 import cats.effect.Sync
 import io.circe.{Decoder, Encoder}
-import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
@@ -39,7 +38,7 @@ final class KeyValueV1[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
     * @param secret the secret.
     * @tparam A the type of the secret to be created
     */
-  def write[A: Encoder.AsObject](path: String, secret: A): F[Unit] = execute(PUT(secret.asJson, uri / path, token))
+  def write[A: Encoder.AsObject](path: String, secret: A): F[Unit] = execute(PUT(secret, uri / path, token))
 
   /**
     * Deletes the secret at the specified `path`.

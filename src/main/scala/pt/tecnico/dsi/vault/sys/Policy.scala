@@ -1,7 +1,6 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
@@ -24,7 +23,7 @@ final class Policy[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit 
   /** Adds a new or updates an existing policy. Once a policy is updated, it takes effect immediately to all associated users. */
   def create(name: String, policy: PolicyModel): F[Unit] = {
     // This endpoint is inconsistent with the read policy endpoint
-    execute(PUT(Map("policy" -> policy.rules).asJson, uri / name, token))
+    execute(PUT(Map("policy" -> policy.rules), uri / name, token))
   }
 
   /**
