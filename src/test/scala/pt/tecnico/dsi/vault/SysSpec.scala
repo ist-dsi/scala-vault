@@ -150,15 +150,8 @@ class SysSpec extends Utils {
         _ <- client.sys.policy.create("test2", Policy("""path "*" { capabilities = ["read", "delete"] }""")).value(_ shouldBe ())
         // This is also testing `get`
         _ <- client.sys.policy("test2").value(_.rules should include ("delete"))
-        _ <- (client.sys.policy += "test2" -> Policy("""path "*" { capabilities = ["read"] }""")).idempotently(_ shouldBe ())
         result <- client.sys.policy("test2").idempotently(_.rules should not contain "delete")
       } yield result
-    }
-    "create multiple policies" in idempotently {
-      (client.sys.policy ++= List(
-        "a" -> Policy("""path "a/" { capabilities = ["read"] }"""),
-        "b" -> Policy("""path "b/" { capabilities = ["read"] }""")
-      )).map(_ shouldBe ())
     }
     "list policies" in idempotently {
       //TODO: this test should stand on its own
@@ -167,22 +160,10 @@ class SysSpec extends Utils {
     "delete a policy" in idempotently {
       for {
         first <- client.sys.policy.delete("test2")
-        second <- client.sys.policy -= "test2"
         list <- client.sys.policy.list()
       } yield {
         first shouldBe ()
-        second shouldBe ()
         list should not contain ("teste2")
-      }
-    }
-    "delete multiple policies" in idempotently {
-      val policiesToDelete = List("test", "a", "b")
-      for {
-        disables <- client.sys.policy --= policiesToDelete
-        policies <- client.sys.policy.list()
-      } yield {
-        disables shouldBe ()
-        policies should contain noElementsOf(policiesToDelete)
       }
     }
   }
@@ -201,16 +182,8 @@ class SysSpec extends Utils {
         _ <- client.sys.auth.enable("test2", method).value(_ shouldBe ())
         // This is also testing `tuneOptions`
         _ <- client.sys.auth("test2").value(_.defaultLeaseTtl shouldBe 1.day)
-        // This is also testing `tune`
-        _ <- (client.sys.auth += "test2" -> createAuthMethod("approle")).idempotently(_ shouldBe ())
         result <- client.sys.auth("test2").idempotently(_.defaultLeaseTtl shouldBe 1.hour)
       } yield result
-    }
-    "mount multiple authentication methods" in idempotently {
-      (client.sys.auth ++= List(
-        "ldap" -> createAuthMethod("ldap"),
-        "cert" -> createAuthMethod("cert")
-      )).map(_ shouldBe ())
     }
     "list authentication methods" in idempotently {
       client.sys.auth.list().map { authMethods =>
@@ -223,22 +196,10 @@ class SysSpec extends Utils {
     "disable an authentication method" in idempotently {
       for {
         first <- client.sys.auth.disable("test2")
-        second <- client.sys.auth -= "test2"
         list <- client.sys.auth.list()
       } yield {
         first shouldBe ()
-        second shouldBe ()
         list should not contain key ("teste2/")
-      }
-    }
-    "disable multiple authentication methods" in idempotently {
-      val methodsToDisable = List("test2", "ldap", "test", "cert")
-      for {
-        disables <- client.sys.auth --= methodsToDisable
-        methods <- client.sys.auth.list()
-      } yield {
-        disables shouldBe ()
-        methods.keys should contain noElementsOf(methodsToDisable.map(_ + "/"))
       }
     }
   }
@@ -257,16 +218,8 @@ class SysSpec extends Utils {
         _ <- client.sys.mounts.enable("test2", engine).value(_ shouldBe ())
         // This is also testing `tuneOptions`
         _ <- client.sys.mounts("test2").value(_.defaultLeaseTtl shouldBe 1.day)
-        // This is also testing `tune`
-        _ <- (client.sys.mounts += "test2" -> createSecretEngine("consul")).idempotently(_ shouldBe ())
         result <- client.sys.mounts("test2").idempotently(_.defaultLeaseTtl shouldBe 1.hour)
       } yield result
-    }
-    "mount multiple authentication methods" in idempotently {
-      (client.sys.mounts ++= List(
-        "pki" -> createSecretEngine("pki"),
-        "database" -> createSecretEngine("database")
-      )).map(_ shouldBe ())
     }
     "list authentication methods" in idempotently {
       client.sys.mounts.list().map { secretEngines =>
@@ -279,11 +232,9 @@ class SysSpec extends Utils {
     "disable a secret engine" in idempotently {
       for {
         first <- client.sys.mounts.disable("test2")
-        second <- client.sys.mounts -= "test2"
         list <- client.sys.mounts.list()
       } yield {
         first shouldBe ()
-        second shouldBe ()
         list should not contain key ("teste2/")
       }
     }
@@ -300,17 +251,6 @@ class SysSpec extends Utils {
         secondRemount shouldBe ()
       }
       io.unsafeToFuture()
-    }
-
-    "disable multiple secrets engines" in idempotently {
-      val enginesToDisable = List("test2", "pki", "database")
-      for {
-        disables <- client.sys.mounts --= enginesToDisable
-        engines <- client.sys.mounts.list()
-      } yield {
-        disables shouldBe ()
-        engines.keys should contain noElementsOf(enginesToDisable.map(_ + "/"))
-      }
     }
   }
 }

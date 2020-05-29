@@ -1,8 +1,6 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import cats.instances.list._
-import cats.syntax.foldable._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
@@ -31,21 +29,6 @@ class PluginCatalog[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
     */
   def register(`type`: Type, plugin: Plugin): F[Unit] =
     execute(PUT(plugin, uri / `type`.toString.toLowerCase / plugin.name, token))
-  /**
-    * Alternative syntax to register a plugin:
-    * {{{ client.sys.pluginCatalog += Plugin.Auth -> Plugin(...) }}}
-    */
-  def +=(tuple: (Type, Plugin)): F[Unit] = register(tuple._1, tuple._2)
-  /**
-    * Allows registering multiple plugins in one go:
-    * {{{
-    *   client.sys.pluginCatalog ++= List(
-    *     Plugin.Auth-> Plugin(...),
-    *     Plugin.Database -> Plugin(...),
-    *   )
-    * }}}
-    */
-  def ++=(list: List[(Type, Plugin)]): F[Unit] = list.map(+=).sequence_
 
   /**
     * @param name the name of the plugin to retrieve.
@@ -61,16 +44,4 @@ class PluginCatalog[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
     * @param name the name of the plugin to delete.
     */
   def remove(`type`: Type, name: String): F[Unit] = execute(DELETE(uri / `type`.toString.toLowerCase / name, token))
-  /**
-    * Alternative syntax to remove a plugin from the catalog:
-    * {{{ client.sys.pluginCatalog -= (Plugin.Auth, "plugin-name") }}}
-    */
-  def -=(tuple: (Type, String)): F[Unit] = remove(tuple._1, tuple._2)
-  /**
-    * Allows removing multiple plugin from the catalog in one go:
-    * {{{
-    *   client.sys.pluginCatalog --= List(Plugin.Auth -> "auth-plugin-name", Plugin.Database -> "mysql")
-    * }}}
-    */
-  def --=(plugins: List[(Type, String)]): F[Unit] = plugins.map(-=).sequence_
 }

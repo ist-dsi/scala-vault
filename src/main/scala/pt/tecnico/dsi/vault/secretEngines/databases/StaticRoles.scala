@@ -1,7 +1,5 @@
 package pt.tecnico.dsi.vault.secretEngines.databases
 
-import cats.instances.list._
-import cats.syntax.foldable._
 import org.http4s.Uri
 import pt.tecnico.dsi.vault.secretEngines.databases.models.{StaticCredential, StaticRole}
 
@@ -26,36 +24,9 @@ trait StaticRoles[F[_]] { self: Databases[F, _, _] =>
       *
       * @note This endpoint distinguishes between create and update ACL capabilities. */
     def create(name: String, role: StaticRole): F[Unit] = execute(POST(role, uri / name, token))
-    /**
-      * Alternative syntax to create a role:
-      * * {{{ client.secretEngines.database("path").staticRoles += "a" -> Role(...) }}}
-      */
-    def +=(tuple: (String, StaticRole)): F[Unit] = create(tuple._1, tuple._2)
-    /**
-      * Allows creating multiple roles in one go:
-      * {{{
-      *   client.secretEngines.database("path").staticRoles ++= List(
-      *     "a" -> Role(...),
-      *     "b" -> Role(...),
-      *   )
-      * }}}
-      */
-    def ++=(list: List[(String, StaticRole)]): F[Unit] = list.map(+=).sequence_
 
     /** Deletes the static role definition and revokes the database user. */
     def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
-    /**
-      * Alternative syntax to delete a role:
-      * * {{{ client.secretEngines.database("path").staticRoles -= "a" }}}
-      */
-    def -=(name: String): F[Unit] = delete(name)
-    /**
-      * Allows deleting multiple roles in one go:
-      * {{{
-      *   client.secretEngines.database("path").staticRoles --= List("a", "b")
-      * }}}
-      */
-    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
   }
 
   /**

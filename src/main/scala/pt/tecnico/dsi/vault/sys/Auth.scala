@@ -1,9 +1,7 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import cats.instances.list._
 import cats.syntax.flatMap._
-import cats.syntax.foldable._
 import cats.syntax.functor._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -38,21 +36,6 @@ final class Auth[F[_]: Sync: Client](val path: String, val uri: Uri, vaultClient
         case _ => tune(path, method.config)
       }
   }
-  /**
-    * Alternative syntax to enable an authentication method:
-    * {{{ client.sys.auth += "my-path" -> AuthMethod(...) }}}
-    */
-  def +=(tuple: (String, AuthMethod)): F[Unit] = enable(tuple._1, tuple._2)
-  /**
-    * Allows enabling multiple authentication methods in one go:
-    * {{{
-    *   client.sys.auth ++= List(
-    *     "my-path" -> AuthMethod(...),
-    *     "your-path" -> AuthMethod(...),
-    *   )
-    * }}}
-    */
-  def ++=(list: List[(String, AuthMethod)]): F[Unit] = list.map(+=).sequence_
 
   /**
     * Enables a new auth method and returns the controller for it.
@@ -74,18 +57,6 @@ final class Auth[F[_]: Sync: Client](val path: String, val uri: Uri, vaultClient
     * @param path Specifies the path to disable.
     */
   def disable(path: String): F[Unit] = execute(DELETE(uri / path, token))
-  /**
-    * Alternative syntax to disable an authentication method:
-    * {{{ client.sys.auth -= "my-path" }}}
-    */
-  def -=(path: String): F[Unit] = disable(path)
-  /**
-    * Allows disabling multiple authentication methods in one go:
-    * {{{
-    *   client.sys.auth --= List("my-path", "your-path")
-    * }}}
-    */
-  def --=(paths: List[String]): F[Unit] = paths.map(disable).sequence_
 
   /**
     * Reads the given auth path's configuration.

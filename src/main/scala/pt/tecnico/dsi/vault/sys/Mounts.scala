@@ -1,9 +1,7 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
-import cats.instances.list._
 import cats.syntax.flatMap._
-import cats.syntax.foldable._
 import cats.syntax.functor._
 import io.circe.syntax._
 import org.http4s.{Header, Uri}
@@ -31,21 +29,6 @@ final class Mounts[F[_]: Sync: Client](val path: String, val uri: Uri, vaultClie
         case _ => tune(path, engine.config)
       }
   }
-  /**
-    * Alternative syntax to enable a secret engine:
-    * {{{ client.sys.mounts += "my-path" -> SecretEngine(...) }}}
-    */
-  def +=(tuple: (String, SecretEngine)): F[Unit] = enable(tuple._1, tuple._2)
-  /**
-    * Allows enabling multiple secrets engines in one go:
-    * {{{
-    *   client.sys.mounts ++= List(
-    *     "my-path" -> SecretEngine(...),
-    *     "your-path" -> SecretEngine(...),
-    *   )
-    * }}}
-    */
-  def ++=(list: List[(String, SecretEngine)]): F[Unit] = list.map(+=).sequence_
 
   /**
     * Enables a new secret engine at the given path and returns the controller for it.
@@ -60,18 +43,6 @@ final class Mounts[F[_]: Sync: Client](val path: String, val uri: Uri, vaultClie
     * @param path Specifies the path of the secrets engine that will be disabled.
     */
   def disable(path: String): F[Unit] = execute(DELETE(uri / path, token))
-  /**
-    * Alternative syntax to disable a secret engine:
-    * {{{ client.sys.mounts -= "my-path" }}}
-    */
-  def -=(path: String): F[Unit] = disable(path)
-  /**
-    * Allows disabling multiple secrets engines in one go:
-    * {{{
-    *   client.sys.mounts --= List("my-path", "your-path")
-    * }}}
-    */
-  def --=(paths: List[String]): F[Unit] = paths.map(disable).sequence_
 
   /**
     * Reads the given mount's configuration. Unlike the mounts endpoint, this will return the current time in seconds

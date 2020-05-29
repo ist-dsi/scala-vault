@@ -1,8 +1,6 @@
 package pt.tecnico.dsi.vault.secretEngines.kv
 
 import cats.effect.Sync
-import cats.instances.list._
-import cats.syntax.foldable._
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
 import org.http4s.{Header, Uri}
@@ -42,27 +40,10 @@ final class KeyValueV1[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
     * @tparam A the type of the secret to be created
     */
   def write[A: Encoder.AsObject](path: String, secret: A): F[Unit] = execute(PUT(secret.asJson, uri / path, token))
-  /**
-    * Alternative syntax to create a secret:
-    * * {{{ client.secretEngines.kv += "a" -> MyClass(...) }}}
-    */
-  def +=[A: Encoder.AsObject](path: String, secret: A): F[Unit] = write(path, secret)
 
   /**
     * Deletes the secret at the specified `path`.
     * @param path the path where the secret to be deleted resides.
     */
   def delete(path: String): F[Unit] = execute(DELETE(uri / path, token))
-  /**
-    * Alternative syntax to delete a secret:
-    * {{{ client.secretEngines.kv -= "path" }}}
-    */
-  def -=(path: String): F[Unit] = delete(path)
-  /**
-    * Allows deleting multiple secrets in one go:
-    * {{{
-    *   client.secretEngines.kv --= List("path-a", "path-b")
-    * }}}
-    */
-  def --=(path: List[String]): F[Unit] = path.map(delete).sequence_
 }

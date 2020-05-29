@@ -80,11 +80,6 @@ final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
     )
     executeWithContextData(PUT(body.asJson, uri / "data" / path, token))
   }
-  /**
-    * Alternative syntax to create a secret:
-    * * {{{ client.secretEngines.kv += "a" -> MyClass(...) }}}
-    */
-  def +=[A: Encoder.AsObject](path: String, secret: A): F[Version] = write(path, secret)
 
   /**
     * Issues a soft delete of the specified versions of the secret.

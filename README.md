@@ -10,30 +10,30 @@ The Scala client for HashiCorp's Vault.
 
 Currently supported endpoints:
   
-  - Auth Methods:
-    - AppRole
-    - Token
-  - Secret Engines:
-    - Consul
-    - Databases
-      - Elasticsearch
-      - MongoDB
-      - MySQL
-    - KeyValue versions 1 and 2
-    - PKI
-  - Sys:
-    - Auth mounts
-    - Generate Root
-    - Health
-    - Init
-    - Keys (rotate and key status)
-    - Leader (status and step down)
-    - Leases
-    - Mounts
-    - Plugin Catalog
-    - Policy
-    - Rekey
-    - Seal (status, seal, and unseal)
+- Auth Methods:
+  - AppRole
+  - Token
+- Secret Engines:
+  - Consul
+  - Databases
+    - Elasticsearch
+    - MongoDB
+    - MySQL
+  - KeyValue versions 1 and 2
+  - PKI
+- Sys:
+  - Auth mounts
+  - Generate Root
+  - Health
+  - Init
+  - Keys (rotate and key status)
+  - Leader (status and step down)
+  - Leases
+  - Mounts
+  - Plugin Catalog
+  - Policy
+  - Rekey
+  - Seal (status, seal, and unseal)
 
 [Latest scaladoc documentation](https://ist-dsi.github.io/scala-vault/latest/api/pt/tecnico/dsi/scala-vault/index.html)
 

@@ -1,8 +1,6 @@
 package pt.tecnico.dsi.vault.secretEngines.databases
 
 import cats.effect.Sync
-import cats.instances.list._
-import cats.syntax.foldable._
 import io.circe.Codec
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -32,39 +30,12 @@ abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Rol
       * @note This endpoint distinguishes between create and update ACL capabilities.
       **/
     def create(name: String, connection: Connection): F[Unit] = execute(POST(connection, uri / name, token))
-    /**
-      * Alternative syntax to create a connection:
-      * {{{ client.secretEngines.database("path").connections += Connection(...) }}}
-      */
-    def +=(tuple: (String, Connection)): F[Unit] = create(tuple._1, tuple._2)
-    /**
-      * Allows creating multiple connections in one go:
-      * {{{
-      *   client.secretEngines.database("path").connections ++= List(
-      *     Connection(...),
-      *     Connection(...),
-      *   )
-      * }}}
-      */
-    def ++=(list: List[(String, Connection)]): F[Unit] = list.map(+=).sequence_
 
     /**
       * Deletes the connection with the given `name`.
       * @param name the name of the connection to delete.
       */
     def delete(name: String): F[Unit] = execute(DELETE(uri / name, token))
-    /**
-      * Alternative syntax to delete a connection:
-      * {{{ client.secretEngines.database("path").connections -= "name" }}}
-      */
-    def -=(name: String): F[Unit] = delete(name)
-    /**
-      * Allows deleting multiple connection in one go:
-      * {{{
-      *   client.secretEngines.database("path").connections --= List("a", "b")
-      * }}}
-      */
-    def --=(names: List[String]): F[Unit] = names.map(delete).sequence_
 
     /**
       * Closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.
