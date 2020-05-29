@@ -72,7 +72,7 @@ final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
     *            if the key’s current version matches the version specified in the cas parameter.
     * @tparam A the type of the secret to be created
     */
-  def write[A: Encoder.AsObject](path: String, secret: A, cas: Option[Int] = None): F[Version] = {
+  def write[A: Encoder.AsObject](path: String, secret: A, cas: Option[Int] = None): F[Option[Version]] = {
     import io.circe.syntax._
     val body = Map(
       "options" -> cas.map(value => Map("cas" -> value)).getOrElse(Map.empty).asJson,
