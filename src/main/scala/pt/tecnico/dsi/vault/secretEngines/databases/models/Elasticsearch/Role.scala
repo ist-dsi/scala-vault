@@ -2,9 +2,7 @@ package pt.tecnico.dsi.vault.secretEngines.databases.models.Elasticsearch
 
 import scala.concurrent.duration.Duration
 import io.circe._
-import io.circe.parser.decode
 import io.circe.syntax._
-import io.circe.Decoder.Result
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 
@@ -12,18 +10,12 @@ object Role {
   val encoder: Encoder[Role] = Encoder.forProduct4("db_name", "creation_statements", "default_ttl", "max_ttl")(r =>
     (r.dbName, r.creationStatements, r.defaultTtl, r.maxTtl)
   )
-  val decoder: Decoder[Role] = new Decoder[Role] {
-    private def decodeTo[A: Decoder](cursor: HCursor, at: String) =
-      decode[A](at).left.map(e => DecodingFailure(e.getMessage, cursor.downField(at).history))
-
-    override def apply(c: HCursor): Result[Role] =
-      for {
-        dbName <- c.get[String]("db_name")
-        defaultTtl <- c.get[Duration]("default_ttl")
-        maxTtl <- c.get[Duration]("max_ttl")
-        creationStatementsJson <- decodeTo[JsonObject](c, "creation_statements")
-      } yield Role(dbName, creationStatementsJson, defaultTtl, maxTtl)
-  }
+  val decoder: Decoder[Role] = (cursor: HCursor) => for {
+    dbName <- cursor.get[String]("db_name")
+    defaultTtl <- cursor.get[Duration]("default_ttl")
+    maxTtl <- cursor.get[Duration]("max_ttl")
+    creationStatementsJson <- BaseRole.decodeJsonStringDownField[JsonObject](cursor, "creation_statements")
+  } yield Role(dbName, creationStatementsJson, defaultTtl, maxTtl)
   implicit val codec: Codec[Role] = Codec.from(decoder, encoder)
 
   def apply(dbName: String, roleDefinition: RoleDefinition, defaultTtl: Duration, maxTtl: Duration): Role =

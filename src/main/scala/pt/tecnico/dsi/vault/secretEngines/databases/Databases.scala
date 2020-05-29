@@ -13,8 +13,8 @@ abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Rol
   import dsl._
 
   object connections {
-    val path: String = "config"
-    val uri: Uri = self.uri / path
+    val path: String = s"$path/config"
+    val uri: Uri = self.uri / "config"
 
     /** @return all available connections. */
     def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))

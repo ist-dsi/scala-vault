@@ -2,6 +2,22 @@ package pt.tecnico.dsi.vault.secretEngines.databases.models
 
 import scala.concurrent.duration.Duration
 
+object BaseRole {
+  import io.circe.{parser, Decoder, DecodingFailure, HCursor}
+  /**
+    * Using `cursor` read the field `at` as a String, then parse it as Json and decode it as `A`
+    * @param cursor the cursor to use for the decoding.
+    * @param at the name of field.
+    * @tparam A the type to be decoded into
+    */
+  def decodeJsonStringDownField[A: Decoder](cursor: HCursor, at: String): Either[DecodingFailure, A] = {
+    val cursorAt = cursor.downField(at)
+    for {
+      input <- cursorAt.as[String]
+      result <- parser.decode[A](input).left.map(e => DecodingFailure(e.getMessage, cursorAt.history))
+    } yield result
+  }
+}
 trait BaseRole {
   /** The name of the database connection to use for this role. */
   def dbName: String

@@ -170,7 +170,8 @@ class SysSpec extends Utils {
   }
 
   "The auth endpoint" should {
-    def createAuthMethod(`type`: String): AuthMethod = AuthMethod(`type`, "description", TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days))
+    def createAuthMethod(`type`: String): AuthMethod = AuthMethod(`type`, "description",
+      TuneOptions(defaultLeaseTtl = 1.hour, maxLeaseTtl = 30.days, tokenType = Some(TokenType.DefaultService)))
 
     "mount an authentication method" in idempotently {
       client.sys.auth.enable("test", createAuthMethod("approle")).map(_ shouldBe ())

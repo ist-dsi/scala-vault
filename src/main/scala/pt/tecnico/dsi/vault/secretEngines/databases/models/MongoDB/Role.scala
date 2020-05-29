@@ -3,9 +3,7 @@ package pt.tecnico.dsi.vault.secretEngines.databases.models.MongoDB
 import scala.concurrent.duration.Duration
 import io.circe._
 import io.circe.derivation.{deriveCodec, renaming}
-import io.circe.parser.decode
 import io.circe.syntax._
-import io.circe.Decoder.Result
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 
@@ -18,19 +16,13 @@ object Role {
   val encoder: Encoder[Role] = Encoder.forProduct5("db_name", "creation_statements", "revocation_statements", "default_ttl", "max_ttl")(r =>
     (r.dbName, r.creationStatements, r.revocationStatements, r.defaultTtl, r.maxTtl)
   )
-  val decoder: Decoder[Role] = new Decoder[Role] {
-    private def decodeTo[A: Decoder](cursor: HCursor, at: String) =
-      decode[A](at).left.map(e => DecodingFailure(e.getMessage, cursor.downField(at).history))
-
-    override def apply(c: HCursor): Result[Role] =
-      for {
-        dbName <- c.get[String]("db_name")
-        defaultTtl <- c.get[Duration]("default_ttl")
-        maxTtl <- c.get[Duration]("max_ttl")
-        creationStatementsJson <- decodeTo[JsonObject](c, "creation_statements")
-        revocationStatementsJson <- decodeTo[JsonObject](c, "revocation_statements")
-      } yield Role(dbName, creationStatementsJson, revocationStatementsJson, defaultTtl, maxTtl)
-  }
+  val decoder: Decoder[Role] = (cursos: HCursor) => for {
+    dbName <- cursos.get[String]("db_name")
+    defaultTtl <- cursos.get[Duration]("default_ttl")
+    maxTtl <- cursos.get[Duration]("max_ttl")
+    creationStatementsJson <- BaseRole.decodeJsonStringDownField[JsonObject](cursos, "creation_statements")
+    revocationStatementsJson <- BaseRole.decodeJsonStringDownField[JsonObject](cursos, "revocation_statements")
+  } yield Role(dbName, creationStatementsJson, revocationStatementsJson, defaultTtl, maxTtl)
   implicit val codec: Codec[Role] = Codec.from(decoder, encoder)
 
   def defaultCreationStatements(database: String = "admin", roles: List[MongoRole]) = JsonObject(
