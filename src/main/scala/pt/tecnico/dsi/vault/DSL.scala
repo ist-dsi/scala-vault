@@ -21,9 +21,6 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
   // have a higher priority than the jsonDecoder defined above. https://github.com/http4s/http4s/issues/2806
   implicit def void: EntityDecoder[F, Unit] = EntityDecoder.void
 
-  /** Creates a new `Decoder[A]` by first going down to `field`. */
-  def decoderDownField[A](field: String)(implicit decoder: Decoder[A]): Decoder[A] = decoder.prepare(_.downField(field))
-
   // Have you ever heard about the LIST HTTP method, neither have I, as it does not exist </faceplam>
   // Unfortunately NoBody is a sealed trait. So we must resort to a more verbose, and ugly, way of getting a nice syntax for LIST.
   // We need a marker type to ensure we are not generating an EmptyRequestGenerator for methods with body.

@@ -4,7 +4,7 @@ import io.circe.derivation.{deriveEncoder, renaming}
 import io.circe.Encoder
 
 object Application {
-  implicit val encoder: Encoder.AsObject[Application] = deriveEncoder(renaming.snakeCase, None)
+  implicit val encoder: Encoder.AsObject[Application] = deriveEncoder(renaming.snakeCase)
 }
 /**
   * @param application The name of the application to which this entry applies.

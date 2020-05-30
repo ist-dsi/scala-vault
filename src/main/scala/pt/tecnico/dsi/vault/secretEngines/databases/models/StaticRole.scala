@@ -6,7 +6,7 @@ import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.{decoderFiniteDuration, encodeFiniteDuration}
 
 object StaticRole {
-  implicit val codec: Codec.AsObject[StaticRole] = deriveCodec(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[StaticRole] = deriveCodec(renaming.snakeCase)
 }
 
 /**

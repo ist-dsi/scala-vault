@@ -4,7 +4,7 @@ import io.circe.Codec
 import pt.tecnico.dsi.vault.VaultClient
 
 object AuthMethod {
-  implicit val codec: Codec.AsObject[AuthMethod] = Codec.AsObject.from(Mount.decoder(apply), Mount.encoder.contramapObject(identity))
+  implicit val codec: Codec.AsObject[AuthMethod] = Codec.AsObject.from(Mount.decoder(apply), Mount.encoder)
 
   /**
     * Creates a new Authentication Method using the provided settings. This authentication method will throw a

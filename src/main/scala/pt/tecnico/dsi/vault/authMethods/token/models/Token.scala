@@ -7,7 +7,7 @@ import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration, TokenType}
 
 object Token {
-  implicit val codec: Codec.AsObject[Token] = deriveCodec(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Token] = deriveCodec(renaming.snakeCase)
 }
 case class Token(id: String, path: String, accessor: String,
                  creationTime: Long, creationTtl: Duration,

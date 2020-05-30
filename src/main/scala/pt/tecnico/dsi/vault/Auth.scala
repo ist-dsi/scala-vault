@@ -4,7 +4,7 @@ import io.circe.Decoder
 import io.circe.derivation.{deriveDecoder, renaming}
 
 object Auth {
-  implicit val decoder: Decoder[Auth] = deriveDecoder(renaming.snakeCase, false, None)
+  implicit val decoder: Decoder[Auth] = deriveDecoder(renaming.snakeCase)
 }
 case class Auth(clientToken: String, accessor: String,
                 policies: List[String], tokenPolicies: List[String],

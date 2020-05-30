@@ -395,7 +395,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
     *               See {@see PKI.toSerialString}.
     */
   def readCertificate(serial: String): F[Option[X509Certificate]] = {
-    implicit val d = Context.decoder[X509Certificate](decoderDownField("certificate"))
+    implicit val d = Context.decoder(Decoder[X509Certificate].at("certificate"))
     executeOptionWithContextData[X509Certificate](GET(uri / "cert" / serial))
   }
   /** Retrieves the certificate with the given `serial`. */

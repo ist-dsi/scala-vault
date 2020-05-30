@@ -4,7 +4,7 @@ import io.circe.Codec
 import pt.tecnico.dsi.vault.VaultClient
 
 object SecretEngine {
-  implicit val codec: Codec.AsObject[SecretEngine] = Codec.AsObject.from(Mount.decoder(apply), Mount.encoder.contramapObject(identity))
+  implicit val codec: Codec.AsObject[SecretEngine] = Codec.AsObject.from(Mount.decoder(apply), Mount.encoder)
 
   /**
     * Creates a new Secret Engine using the provided settings. This secret engine will throw a NotImplementedError

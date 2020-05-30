@@ -4,7 +4,7 @@ import io.circe.{Encoder, JsonObject}
 import io.circe.derivation.{deriveEncoder, renaming}
 
 object RoleDefinition {
-  implicit val encoder: Encoder.AsObject[RoleDefinition] = deriveEncoder(renaming.snakeCase, None)
+  implicit val encoder: Encoder.AsObject[RoleDefinition] = deriveEncoder(renaming.snakeCase)
 }
 /**
   *

@@ -4,7 +4,7 @@ import io.circe.Encoder
 import io.circe.derivation.{deriveEncoder, renaming}
 
 object InitOptions {
-  implicit val encoder: Encoder.AsObject[InitOptions] = deriveEncoder(renaming.snakeCase, None)
+  implicit val encoder: Encoder.AsObject[InitOptions] = deriveEncoder(renaming.snakeCase)
 }
 
 /**

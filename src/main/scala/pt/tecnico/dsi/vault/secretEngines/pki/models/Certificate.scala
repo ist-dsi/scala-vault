@@ -6,7 +6,7 @@ import io.circe.derivation.{deriveDecoder, renaming}
 import pt.tecnico.dsi.vault.secretEngines.pki.PKI.{pemEncode, decoderX509Certificate}
 
 object Certificate {
-  implicit val decoder: Decoder[Certificate] = deriveDecoder(renaming.snakeCase, true, None)
+  implicit val decoder: Decoder[Certificate] = deriveDecoder(renaming.snakeCase)
 }
 // Is it worth changing this to multiple classes, and select over them using path dependent types.
 // When generating a Certificate with Type = Exported we know for sure the private key exists.

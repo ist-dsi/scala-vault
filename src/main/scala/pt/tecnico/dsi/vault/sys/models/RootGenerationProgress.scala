@@ -4,7 +4,7 @@ import io.circe.Decoder
 import io.circe.derivation.{deriveDecoder, renaming}
 
 object RootGenerationProgress {
-  implicit val decoder: Decoder[RootGenerationProgress] = deriveDecoder(renaming.snakeCase, false, None)
+  implicit val decoder: Decoder[RootGenerationProgress] = deriveDecoder(renaming.snakeCase)
 
   def decode(otp: String, encodedRootToken: String): String = {
     import java.util.Base64

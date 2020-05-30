@@ -5,7 +5,7 @@ import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.{decodeArrayAsCSV, encodeArrayAsCSV}
 
 object Names {
-  implicit val codec: Codec.AsObject[Names] = deriveCodec(renaming.snakeCase, true, None)
+  implicit val codec: Codec.AsObject[Names] = deriveCodec(renaming.snakeCase)
 }
 
 /**

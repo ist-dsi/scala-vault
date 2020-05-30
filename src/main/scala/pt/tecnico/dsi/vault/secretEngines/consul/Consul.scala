@@ -1,6 +1,7 @@
 package pt.tecnico.dsi.vault.secretEngines.consul
 
 import cats.effect.Sync
+import io.circe.Decoder
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.{DSL, RolesCRUD}
@@ -31,7 +32,7 @@ final class Consul[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit 
     * @param role the name of an existing role against which to create this Consul credential.
     */
   def generateCredential(role: String): F[String] = {
-    implicit val d = decoderDownField[String]("token")
+    implicit val d = Decoder[String].at("token")
     executeWithContextData(GET(uri / "creds" / role, token))
   }
 

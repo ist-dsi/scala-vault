@@ -8,21 +8,21 @@ import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 
 object MongoRole {
-  implicit val codec: Codec.AsObject[MongoRole] = deriveCodec(renaming.snakeCase, true, None)
+  implicit val codec: Codec.AsObject[MongoRole] = deriveCodec(renaming.snakeCase)
 }
 case class MongoRole(role: String, db: String)
 
 object Role {
-  val encoder: Encoder[Role] = Encoder.forProduct5("db_name", "creation_statements", "revocation_statements", "default_ttl", "max_ttl")(r =>
-    (r.dbName, r.creationStatements, r.revocationStatements, r.defaultTtl, r.maxTtl)
-  )
-  val decoder: Decoder[Role] = (cursos: HCursor) => for {
-    dbName <- cursos.get[String]("db_name")
-    defaultTtl <- cursos.get[Duration]("default_ttl")
-    maxTtl <- cursos.get[Duration]("max_ttl")
-    creationStatementsJson <- BaseRole.decodeJsonStringDownField[JsonObject](cursos, "creation_statements")
-    revocationStatementsJson <- BaseRole.decodeJsonStringDownField[JsonObject](cursos, "revocation_statements")
+  val encoder: Encoder.AsObject[Role] = (a: Role) => BaseRole.encoder[Role].encodeObject(a).add("revocation_statements", a.revocationStatements.asJson)
+
+  val decoder: Decoder[Role] = (cursor: HCursor) => for {
+    dbName <- cursor.get[String]("db_name")
+    defaultTtl <- cursor.get[Duration]("default_ttl")
+    maxTtl <- cursor.get[Duration]("max_ttl")
+    creationStatementsJson <- BaseRole.decodeJsonStringDownField[JsonObject](cursor, "creation_statements")
+    revocationStatementsJson <- BaseRole.decodeJsonStringDownField[JsonObject](cursor, "revocation_statements")
   } yield Role(dbName, creationStatementsJson, revocationStatementsJson, defaultTtl, maxTtl)
+
   implicit val codec: Codec[Role] = Codec.from(decoder, encoder)
 
   def defaultCreationStatements(database: String = "admin", roles: List[MongoRole]) = JsonObject(

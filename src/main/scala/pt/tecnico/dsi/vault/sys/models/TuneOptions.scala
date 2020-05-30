@@ -1,15 +1,14 @@
 package pt.tecnico.dsi.vault.sys.models
 
 import scala.concurrent.duration.Duration
+import io.circe.Codec
+import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.TokenType
+import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 
 object TuneOptions {
-  import io.circe.Codec
-  import io.circe.derivation.{deriveCodec, renaming}
-  import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
-  implicit val codec: Codec.AsObject[TuneOptions] = deriveCodec(renaming.snakeCase, true, None)
+  implicit val codec: Codec.AsObject[TuneOptions] = deriveCodec(renaming.snakeCase)
 }
-
 /**
   * @param defaultLeaseTtl The default lease duration, specified as a string duration like "5s" or "30m".
   * @param maxLeaseTtl The maximum lease duration, specified as a string duration like "5s" or "30m".

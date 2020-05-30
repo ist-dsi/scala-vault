@@ -1,11 +1,12 @@
 package pt.tecnico.dsi.vault.sys.models
 
 import io.circe.{Decoder, Encoder}
+import io.circe.derivation.{deriveDecoder, renaming}
 import pt.tecnico.dsi.vault.VaultClient
 
 object Mount {
-  def encoder: Encoder.AsObject[Mount] =
-    Encoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap") { engine: Mount =>
+  def encoder[T <: Mount]: Encoder.AsObject[T] =
+    Encoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap") { engine: T =>
       (engine.`type`, engine.description, engine.config, engine.options, engine.local, engine.sealWrap)
     }.mapJsonObject { obj =>
       // When tunning (updating) a Mount you can set token_type, however when you are enabling it you cannot.

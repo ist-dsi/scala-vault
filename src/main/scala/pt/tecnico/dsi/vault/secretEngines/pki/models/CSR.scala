@@ -4,6 +4,6 @@ import io.circe.Decoder
 import io.circe.derivation.{deriveDecoder, renaming}
 
 object CSR {
-  implicit val decoder: Decoder[CSR] = deriveDecoder(renaming.snakeCase, true, None)
+  implicit val decoder: Decoder[CSR] = deriveDecoder(renaming.snakeCase)
 }
 case class CSR(csr: String, privateKey: Option[String] = None, privateKeyType: Option[KeySettings.Type] = None)

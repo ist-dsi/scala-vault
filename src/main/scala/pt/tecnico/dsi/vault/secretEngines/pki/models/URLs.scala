@@ -6,7 +6,7 @@ import org.http4s.Uri
 import org.http4s.circe.{decodeUri, encodeUri}
 
 object URLs {
-  implicit val codec: Codec.AsObject[URLs] = deriveCodec(renaming.snakeCase, true, None)
+  implicit val codec: Codec.AsObject[URLs] = deriveCodec(renaming.snakeCase)
 
   def apply(issuingCertificateEndpoint: Uri, crlDistributionPointEndpoint: Uri, ocspServerEndpoint: Uri): URLs =
     URLs(Some(Array(issuingCertificateEndpoint)), Some(Array(crlDistributionPointEndpoint)), Some(Array(ocspServerEndpoint)))

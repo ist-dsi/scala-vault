@@ -5,7 +5,7 @@ import io.circe.Decoder
 import io.circe.derivation.{deriveDecoder, renaming}
 
 object KeyStatus {
-  implicit val decoder: Decoder[KeyStatus] = deriveDecoder(renaming.snakeCase, false, None)
+  implicit val decoder: Decoder[KeyStatus] = deriveDecoder(renaming.snakeCase)
 }
 
 /**

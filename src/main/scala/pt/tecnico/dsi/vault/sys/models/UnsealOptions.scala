@@ -4,6 +4,6 @@ import io.circe.Encoder
 import io.circe.derivation.{deriveEncoder, renaming}
 
 object UnsealOptions {
-  implicit val encoder: Encoder.AsObject[UnsealOptions] = deriveEncoder(renaming.snakeCase, None)
+  implicit val encoder: Encoder.AsObject[UnsealOptions] = deriveEncoder(renaming.snakeCase)
 }
 case class UnsealOptions(key: String, reset: Option[Boolean] = None, migrate: Option[Boolean] = None)

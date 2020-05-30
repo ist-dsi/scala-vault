@@ -4,6 +4,6 @@ import io.circe.Decoder
 import io.circe.derivation.{deriveDecoder, renaming}
 
 object SecretIdResponse {
-  implicit val decoder: Decoder[SecretIdResponse] = deriveDecoder(renaming.snakeCase, false, None)
+  implicit val decoder: Decoder[SecretIdResponse] = deriveDecoder(renaming.snakeCase)
 }
 case class SecretIdResponse(secretIdAccessor: String, secretId: String)

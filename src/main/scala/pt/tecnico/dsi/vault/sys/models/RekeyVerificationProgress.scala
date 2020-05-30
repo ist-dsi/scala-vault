@@ -4,7 +4,7 @@ import io.circe.Decoder
 import io.circe.derivation.{deriveDecoder, renaming}
 
 object RekeyVerificationProgress {
-  implicit val decoder: Decoder[RekeyVerificationProgress] = deriveDecoder(renaming.snakeCase, false, None)
+  implicit val decoder: Decoder[RekeyVerificationProgress] = deriveDecoder(renaming.snakeCase)
 }
 
 /**

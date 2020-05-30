@@ -6,7 +6,7 @@ import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 
 object CreateOptions {
-  implicit val codec: Codec.AsObject[CreateOptions] = deriveCodec(renaming.snakeCase, true, None)
+  implicit val codec: Codec.AsObject[CreateOptions] = deriveCodec(renaming.snakeCase)
 }
 /**
   * @param displayName The display name of the token.

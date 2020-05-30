@@ -1,6 +1,7 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Sync
+import io.circe.Decoder
 import org.http4s.Uri
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
@@ -12,7 +13,7 @@ final class Init[F[_]: Sync: Client](val path: String, val uri: Uri) {
 
   /** @return the initialization status of Vault. */
   def initialized(): F[Boolean] = {
-    implicit val d = decoderDownField[Boolean]("initialized")
+    implicit val d = Decoder[Boolean].at("initialized")
     execute(GET(uri))
   }
 

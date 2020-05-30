@@ -1,9 +1,10 @@
 package pt.tecnico.dsi.vault.secretEngines.databases.models
 
 import scala.concurrent.duration.Duration
+import io.circe.{parser, Encoder, Decoder, DecodingFailure, HCursor}
+import pt.tecnico.dsi.vault.encodeDuration
 
 object BaseRole {
-  import io.circe.{parser, Decoder, DecodingFailure, HCursor}
   /**
     * Using `cursor` read the field `at` as a String, then parse it as Json and decode it as `A`
     * @param cursor the cursor to use for the decoding.
@@ -17,6 +18,11 @@ object BaseRole {
       result <- parser.decode[A](input).left.map(e => DecodingFailure(e.getMessage, cursorAt.history))
     } yield result
   }
+
+  def encoder[T <: BaseRole]: Encoder.AsObject[T] =
+    Encoder.forProduct4("db_name", "creation_statements", "default_ttl", "max_ttl")(r =>
+      (r.dbName, r.creationStatements, r.defaultTtl, r.maxTtl)
+    )
 }
 trait BaseRole {
   /** The name of the database connection to use for this role. */

@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 import pt.tecnico.dsi.vault.secretEngines.databases.models.MySQL.Role._
 
 object Role {
-  implicit val codec: Codec.AsObject[Role] = deriveCodec(renaming.snakeCase, true, None)
+  implicit val codec: Codec.AsObject[Role] = deriveCodec(renaming.snakeCase)
 
   def defaultCreationStatements(permissions: NonEmptyList[String] = NonEmptyList.one("ALL"), privLevel: String = "*.*", host: String = "%") = List(
     s"CREATE USER '{{name}}'@'$host' IDENTIFIED BY '{{password}}';",
