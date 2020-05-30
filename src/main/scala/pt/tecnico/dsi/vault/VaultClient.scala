@@ -38,26 +38,6 @@ final class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implici
 
   val uri: Uri = baseUri / "v1"
 
-  object sys {
-    val path: String = "sys"
-    val uri: Uri = self.uri / path
-
-    import pt.tecnico.dsi.vault.sys._
-
-    val init = new Init[F](s"$path/init", uri / "init") // Does not require a token
-    val health = new Health[F](s"$path/health", uri / "health") // Does not require a token
-    val leader = new Leader[F](uri) // One endpoint requires a token, the other does not
-    val seal = new Seal[F](uri) // Does not require a token
-    val generateRoot = new GenerateRoot[F](s"$path/generate-root", uri / "generate-root") // Does not require a token
-    val leases = new Leases[F](s"$path/leases", uri / "leases")
-    val policy = new Policy[F](s"$path/policy", uri / "policy")
-    val auth = new Auth[F](s"$path/auth", uri / "auth", self)
-    val mounts = new Mounts[F](s"$path/mounts", uri / "mounts", self)
-    val keys = new Keys[F](uri) // One endpoint requires a token, the other does not
-    val rekey = new Rekey[F](uri / "rekey") // Does not require a token
-    val pluginCatalog = new PluginCatalog[F](s"$path/plugins/catalog", uri / "plugins" / "catalog")
-  }
-
   object authMethods {
     val path: String = "auth"
     val uri: Uri = self.uri / path
@@ -83,6 +63,26 @@ final class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implici
     def mysql(at: String = "database"): MySql[F] = new MySql[F](at, uri / at)
     def mongodb(at: String = "database"): MongoDB[F] = new MongoDB[F](at, uri / at)
     def elasticsearch(at: String = "database"): Elasticsearch[F] = new Elasticsearch[F](at, uri / at)
+  }
+
+  object sys {
+    val path: String = "sys"
+    val uri: Uri = self.uri / path
+
+    import pt.tecnico.dsi.vault.sys._
+
+    val init = new Init[F](s"$path/init", uri / "init") // Does not require a token
+    val health = new Health[F](s"$path/health", uri / "health") // Does not require a token
+    val leader = new Leader[F](uri) // One endpoint requires a token, the other does not
+    val seal = new Seal[F](uri) // Does not require a token
+    val generateRoot = new GenerateRoot[F](s"$path/generate-root", uri / "generate-root") // Does not require a token
+    val leases = new Leases[F](s"$path/leases", uri / "leases")
+    val policy = new Policy[F](s"$path/policy", uri / "policy")
+    val auth = new Auth[F](s"$path/auth", uri / "auth", self)
+    val mounts = new Mounts[F](s"$path/mounts", uri / "mounts", self)
+    val keys = new Keys[F](uri) // One endpoint requires a token, the other does not
+    val rekey = new Rekey[F](uri / "rekey") // Does not require a token
+    val pluginCatalog = new PluginCatalog[F](s"$path/plugins/catalog", uri / "plugins" / "catalog")
   }
 
   private val dsl = new DSL[F] {}

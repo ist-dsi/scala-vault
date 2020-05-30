@@ -1,31 +1,39 @@
 package pt.tecnico.dsi.vault.secretEngines.kv
 
 import cats.effect.Sync
+import cats.syntax.functor._
 import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.DSL
-import pt.tecnico.dsi.vault.secretEngines.kv.models.{Configuration, Metadata, Version}
+import pt.tecnico.dsi.vault.secretEngines.kv.models.{Configuration, Metadata, Secret, VersionMetadata}
 
 final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
-  /** Configures backend level settings that are applied to every key in the key-value store. */
+  /** Sets backend level configurations that are applied to every key in the key-value store. */
   def configure(configuration: Configuration): F[Unit] = execute(POST(configuration, uri / "config", token))
+  /** Retrieves the current backend level configuration. */
+  val configuration: F[Configuration] = executeWithContextData(GET(uri / "config", token))
 
   /**
-    * Creates a new version of a secret at the specified `path`.
+    * Configures the metadata for the secret at the specified path.
+    * If no secret exists at `path` a new one will be created.
     * If the value does not yet exist, the calling token must have an ACL policy granting the  create capability.
     * If the value already exists, the calling token must have an ACL policy granting the update capability.
     * @param path the path to update the metadata.
     * @param configuration the metadata to update
     */
-  def configureAt(path: String, configuration: Configuration): F[Unit] =
-    execute(POST(configuration, uri / "metadata" / path, token))
-
-  /** Retrieves the current configuration for the secrets backend at the given path. */
-  val configuration: F[Configuration] = executeWithContextData(GET(uri / "config", token))
+  def configureAt(path: String, configuration: Configuration): F[Unit] = execute(POST(configuration, uri / "metadata" / path, token))
+  /** Alias for `configureAt`.
+    * This method exists to make this API similar to the Vault API documentation. However the name is misleading. */
+  def updateMetadata(path: String, configuration: Configuration): F[Unit] = configureAt(path, configuration)
+  /**
+    * Retrieves the metadata and versions for the secret at the specified path.
+    * @param path the path of the secret to read.
+    */
+  def readMetadata(path: String): F[Metadata] = execute(GET(uri / "metadata" / path, token))
 
   /**
     * Returns a list of key names at the specified location. Folders are suffixed with /.
@@ -37,42 +45,42 @@ final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
   def list(path: String): F[List[String]] = executeWithContextKeys(LIST(uri / "metadata" / path, token))
 
   /**
-    * Retrieves the secret at the specified `path`.
+    * Reads the secret data and metadata at `path`.
     * @param path the path from which to retrieve the secret.
-    * @param version Specifies the version to return. If not set the latest version is returned.
+    * @param version the version to return. If not set the latest version is returned.
+    * @tparam A the type of the secret data.
     */
-  def read[A: Decoder](path: String, version: Option[Int] = None): F[Option[A]] = {
-    val requestUri: Uri = uri / "data" / path +??("version", version)
-    executeOptionWithContextData(GET(requestUri, token))
-  }
+  def readWithVersion[A: Decoder](path: String, version: Option[Int] = None): F[Option[Secret[A]]] =
+    executeOptionWithContextData(GET(uri / "data" / path +??("version", version), token))
   /**
-    * Retrieves the secret at the specified `path` assuming it exists.
-    * @param path the path from which to retrieve the secret.
-    * @param version Specifies the version to return. If not set the latest version is returned.
+    * Retrieves the secret data at `path`.
+    * @param path the path from which to retrieve the secret data.
+    * @param version the version to return. If not set the latest version is returned.
+    * @tparam A the type of the secret data.
     */
-  def apply[A: Decoder](path: String, version: Option[Int] = None): F[A] = {
-    val requestUri: Uri = uri / "data" / path +??("version", version)
-    executeWithContextData(GET(requestUri, token))
-  }
+  def read[A: Decoder](path: String, version: Option[Int] = None): F[Option[A]] = readWithVersion(path, version).map(_.map(_.data))
   /**
-    * Retrieves the metadata and versions for the secret at the specified path.
-    * @param path the path of the secret to read.
+    * Retrieves the secret data at `path` assuming it exists.
+    * @param path the path from which to retrieve the secret data.
+    * @param version Specifies the version to return. If not set the latest version is returned.
+    * @tparam A the type of the secret data.
     */
-  def readMetadata(path: String): F[Metadata] = execute(GET(uri / "metadata" / path, token))
+  def apply[A: Decoder](path: String, version: Option[Int] = None): F[A] =
+    executeWithContextData[Secret[A]](GET(uri / "data" / path +??("version", version), token)).map(_.data)
 
   /**
-    * Stores a secret of type `A` at the specified location. Given that `A` can be encoded as a Json Object.
+    * Stores a secret of type `A` at `path`. Given that `A` can be encoded as a Json Object.
     * If the value does not yet exist, the calling token must have an ACL policy granting the `create` capability.
     * If the value already exists, the calling token must have an ACL policy granting the `update` capability.
     *
-    * @param path   the path at which to create the secret.
+    * @param path the path at which to create the secret.
     * @param secret the secret.
     * @param cas Set the "cas" value to use a Check-And-Set operation. If not set the write will be allowed.
     *            If set to 0 a write will only be allowed if the key doesn’t exist. If the index is non-zero the write will only be allowed
     *            if the key’s current version matches the version specified in the cas parameter.
-    * @tparam A the type of the secret to be created
+    * @tparam A the type of the secret to be created.
     */
-  def write[A: Encoder.AsObject](path: String, secret: A, cas: Option[Int] = None): F[Option[Version]] = {
+  def write[A: Encoder.AsObject](path: String, secret: A, cas: Option[Int] = None): F[VersionMetadata] = {
     import io.circe.syntax._
     val body = Map(
       "options" -> cas.map(value => Map("cas" -> value)).getOrElse(Map.empty).asJson,

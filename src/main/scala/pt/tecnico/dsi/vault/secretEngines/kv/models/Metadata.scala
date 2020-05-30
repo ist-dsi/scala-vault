@@ -11,15 +11,16 @@ object Metadata {
     updatedTime <- c.get[OffsetDateTime]("updated_time")
     currentVersion <- c.get[Int]("current_version")
     oldestVersion <- c.get[Int]("oldest_version")
-    versions <- c.get[Map[Int, Version]]("versions")
+    versions <- c.get[Map[Int, VersionMetadata]]("versions")
+    correctVersions = versions.map { case (number, version) => (number, version.copy(version = number)) }
     maxVersions <- c.get[Int]("max_versions")
     casRequired <- c.get[Boolean]("cas_required")
     deleteVersionAfter <- c.get[FiniteDuration]("delete_version_after")
-  } yield Metadata(createdTime, updatedTime, currentVersion, oldestVersion, versions, Configuration(maxVersions, casRequired, deleteVersionAfter))
+  } yield Metadata(createdTime, updatedTime, currentVersion, oldestVersion, correctVersions, Configuration(maxVersions, casRequired, deleteVersionAfter))
 }
 case class Metadata(
   createdTime: OffsetDateTime, updatedTime: OffsetDateTime,
   currentVersion: Int, oldestVersion: Int,
-  versions: Map[Int, Version],
+  versions: Map[Int, VersionMetadata],
   configuration: Configuration,
 )
