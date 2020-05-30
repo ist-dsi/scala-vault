@@ -3,8 +3,7 @@ package pt.tecnico.dsi.vault.sys.models
 import scala.concurrent.duration.Duration
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
-import pt.tecnico.dsi.vault.TokenType
-import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
+import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration, TokenType}
 
 object TuneOptions {
   implicit val codec: Codec.AsObject[TuneOptions] = deriveCodec(renaming.snakeCase)

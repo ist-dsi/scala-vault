@@ -1,22 +1,30 @@
 package pt.tecnico.dsi.vault.sys.models
 
-import io.circe.{Decoder, Encoder}
-import io.circe.derivation.{deriveDecoder, renaming}
+import io.circe.{Codec, Encoder}
 import pt.tecnico.dsi.vault.VaultClient
 
 object Mount {
-  def encoder[T <: Mount]: Encoder.AsObject[T] =
-    Encoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap") { engine: T =>
-      (engine.`type`, engine.description, engine.config, engine.options, engine.local, engine.sealWrap)
-    }.mapJsonObject { obj =>
-      // When tunning (updating) a Mount you can set token_type, however when you are enabling it you cannot.
-      // So we simply remove token_type from the encoded json.
-      val jsonObject = obj.filterKeys(_ == "config").mapValues(_.mapObject(_.remove("token_type")))
-      obj.add("config", jsonObject.values.head)
-    }
-  def decoder[T <: Mount](
-    f: (String, String, TuneOptions, Option[Map[String, String]], Boolean, Boolean) => T): Decoder[T] =
-    Decoder.forProduct6("type", "description", "config", "options", "local", "seal_wrap")(f)
+  def codec[T <: Mount](f: (String, String, TuneOptions, Option[Map[String, String]], Boolean, Boolean) => T): Codec.AsObject[T] = {
+    // When tuning (updating) a Mount you can set token_type in TuneOptions, however when you are enabling it you cannot.
+    // So we simply remove token_type from the encoded json.
+    implicit val e: Encoder.AsObject[TuneOptions] = (a: TuneOptions) => TuneOptions.codec.encodeObject(a).remove("token_type")
+    Codec.forProduct6("type", "description", "config", "options", "local", "seal_wrap")(f)(mount =>
+      (mount.`type`, mount.description, mount.config, mount.options, mount.local, mount.sealWrap)
+    )
+  }
+
+  private[models] abstract class UnmountableMount(_type: String, _description: String, _config: TuneOptions, _options: Option[Map[String, String]],
+                                                  _local: Boolean, _sealWrap: Boolean) extends Mount {
+    override val `type`: String = _type
+    override val description: String = _description
+    override val config: TuneOptions = _config
+    override val options: Option[Map[String, String]] = _options
+    override val local: Boolean = _local
+    override val sealWrap: Boolean = _sealWrap
+
+    override type Out[_[_]] = Nothing
+    def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = ???
+  }
 }
 
 trait Mount {

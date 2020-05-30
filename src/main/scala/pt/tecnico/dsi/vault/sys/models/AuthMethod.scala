@@ -1,10 +1,10 @@
 package pt.tecnico.dsi.vault.sys.models
 
 import io.circe.Codec
-import pt.tecnico.dsi.vault.VaultClient
+import pt.tecnico.dsi.vault.sys.models.Mount.UnmountableMount
 
 object AuthMethod {
-  implicit val codec: Codec.AsObject[AuthMethod] = Codec.AsObject.from(Mount.decoder(apply), Mount.encoder)
+  implicit val codec: Codec.AsObject[AuthMethod] = Mount.codec(apply)
 
   /**
     * Creates a new Authentication Method using the provided settings. This authentication method will throw a
@@ -21,21 +21,8 @@ object AuthMethod {
     *                 by the seal's encryption capability.
     */
   def apply(`type`: String, description: String, config: TuneOptions, options: Option[Map[String, String]] = None,
-            local: Boolean = false, sealWrap: Boolean = false): AuthMethod = {
-    // Bulk rename to ensure the apply argument names are the clean ones
-    val (_type, _description, _config, _options, _local, _sealWrap) = (`type`, description, config, options, local, sealWrap)
-    new AuthMethod {
-      override val `type`: String = _type
-      override val description: String = _description
-      override val config: TuneOptions = _config
-      override val options: Option[Map[String, String]] = _options
-      override val local: Boolean = _local
-      override val sealWrap: Boolean = _sealWrap
-
-      override type Out[_[_]] = Nothing
-      def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = ???
-    }
-  }
+            local: Boolean = false, sealWrap: Boolean = false): AuthMethod =
+    new UnmountableMount(`type`, description, config, options, local, sealWrap) with AuthMethod {}
 }
 
 trait AuthMethod extends Mount

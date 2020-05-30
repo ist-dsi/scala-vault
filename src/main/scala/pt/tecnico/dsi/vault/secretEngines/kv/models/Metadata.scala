@@ -1,23 +1,18 @@
 package pt.tecnico.dsi.vault.secretEngines.kv.models
 
 import java.time.OffsetDateTime
-import scala.concurrent.duration.FiniteDuration
 import io.circe.{Decoder, HCursor}
-import pt.tecnico.dsi.vault.decoderFiniteDuration
 
 object Metadata {
-  implicit val decoder: Decoder[Metadata] = (c: HCursor) => for {
-    createdTime <- c.get[OffsetDateTime]("created_time")
-    updatedTime <- c.get[OffsetDateTime]("updated_time")
-    currentVersion <- c.get[Int]("current_version")
-    oldestVersion <- c.get[Int]("oldest_version")
-    incorrectVersions <- c.get[Map[Int, VersionMetadata]]("versions")
+  implicit val decoder: Decoder[Metadata] = (cursor: HCursor) => for {
+    createdTime <- cursor.get[OffsetDateTime]("created_time")
+    updatedTime <- cursor.get[OffsetDateTime]("updated_time")
+    currentVersion <- cursor.get[Int]("current_version")
+    oldestVersion <- cursor.get[Int]("oldest_version")
+    incorrectVersions <- cursor.get[Map[Int, VersionMetadata]]("versions")
     versions = incorrectVersions.map { case (number, version) => (number, version.copy(version = number)) }
-
-    maxVersions <- c.get[Int]("max_versions")
-    casRequired <- c.get[Boolean]("cas_required")
-    deleteVersionAfter <- c.get[FiniteDuration]("delete_version_after")
-  } yield Metadata(createdTime, updatedTime, currentVersion, oldestVersion, versions, Configuration(maxVersions, casRequired, deleteVersionAfter))
+    configuration <- cursor.as[Configuration]
+  } yield Metadata(createdTime, updatedTime, currentVersion, oldestVersion, versions, configuration)
 }
 case class Metadata(
   createdTime: OffsetDateTime, updatedTime: OffsetDateTime,
