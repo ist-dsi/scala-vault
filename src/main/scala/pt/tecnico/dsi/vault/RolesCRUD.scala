@@ -4,6 +4,7 @@ import cats.effect.Sync
 import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
+import org.http4s.Method.{DELETE, GET, POST}
 
 class RolesCRUD[F[_]: Sync: Client, Role: Encoder: Decoder](basePath: String, baseUri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}

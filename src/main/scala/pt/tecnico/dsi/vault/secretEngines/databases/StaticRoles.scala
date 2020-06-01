@@ -1,5 +1,6 @@
 package pt.tecnico.dsi.vault.secretEngines.databases
 
+import org.http4s.Method.{DELETE, GET, POST}
 import org.http4s.Uri
 import pt.tecnico.dsi.vault.secretEngines.databases.models.{StaticCredential, StaticRole}
 

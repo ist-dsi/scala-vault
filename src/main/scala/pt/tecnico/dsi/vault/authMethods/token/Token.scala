@@ -10,6 +10,7 @@ import io.circe.syntax._
 import io.circe.Json
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
+import org.http4s.Method.POST
 import pt.tecnico.dsi.vault.{Auth, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token => MToken}
 

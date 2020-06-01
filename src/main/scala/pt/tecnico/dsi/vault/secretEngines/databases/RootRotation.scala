@@ -1,5 +1,7 @@
 package pt.tecnico.dsi.vault.secretEngines.databases
 
+import org.http4s.Method.POST
+
 trait RootRotation[F[_]] { self: Databases[F, _, _] =>
   import dsl._
 

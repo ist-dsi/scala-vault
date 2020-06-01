@@ -24,5 +24,4 @@ object AuthMethod {
             local: Boolean = false, sealWrap: Boolean = false): AuthMethod =
     new UnmountableMount(`type`, description, config, options, local, sealWrap) with AuthMethod {}
 }
-
 trait AuthMethod extends Mount

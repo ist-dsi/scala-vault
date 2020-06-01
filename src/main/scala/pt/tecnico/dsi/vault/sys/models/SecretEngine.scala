@@ -23,5 +23,4 @@ object SecretEngine {
             local: Boolean = false, sealWrap: Boolean = false): SecretEngine =
     new UnmountableMount(`type`, description, config, options, local, sealWrap) with SecretEngine {}
 }
-
 trait SecretEngine extends Mount

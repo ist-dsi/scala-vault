@@ -4,6 +4,7 @@ import cats.effect.Sync
 import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
+import org.http4s.Method.{DELETE, GET, PUT}
 import pt.tecnico.dsi.vault.DSL
 
 final class KeyValueV1[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {

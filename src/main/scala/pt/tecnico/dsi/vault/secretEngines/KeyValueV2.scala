@@ -7,6 +7,6 @@ final case class KeyValueV2(description: String, config: TuneOptions, _options: 
                             local: Boolean = false, sealWrap: Boolean = false) extends SecretEngine {
   val `type` = "kv"
   override val options: Option[Map[String, String]] = Some(_options.getOrElse(Map.empty) + ("version" -> "2"))
-  type Out[T[_]] = kv.KeyValueV2[T]
+  type Out[F[_]] = kv.KeyValueV2[F]
   override def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F] = vaultClient.secretEngines.keyValueV2(path)
 }

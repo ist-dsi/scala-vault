@@ -4,6 +4,7 @@ import cats.effect.Sync
 import io.circe.Codec
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
+import org.http4s.Method.{DELETE, GET, POST}
 import pt.tecnico.dsi.vault.{DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.secretEngines.databases.models._
 

@@ -13,6 +13,7 @@ import io.circe.{Decoder, JsonObject}
 import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
+import org.http4s.Method.{DELETE, GET, POST}
 import pt.tecnico.dsi.vault.{encodeDuration, Context, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.secretEngines.pki.PKI._
 import pt.tecnico.dsi.vault.secretEngines.pki.models._

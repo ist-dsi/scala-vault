@@ -4,6 +4,7 @@ import cats.effect.Sync
 import io.circe.Decoder
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
+import org.http4s.Method.{DELETE, GET, PUT}
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{Policy => PolicyModel}
 

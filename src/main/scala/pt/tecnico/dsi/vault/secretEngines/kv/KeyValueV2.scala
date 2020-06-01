@@ -5,6 +5,7 @@ import cats.syntax.functor._
 import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
+import org.http4s.Method.{DELETE, GET, POST, PUT}
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.secretEngines.kv.models.{Configuration, Metadata, Secret, VersionMetadata}
 

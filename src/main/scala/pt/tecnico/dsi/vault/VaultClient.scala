@@ -1,9 +1,10 @@
 package pt.tecnico.dsi.vault
 
 import cats.effect.Sync
-import io.circe.Decoder
+import io.circe.{Decoder, Encoder}
 import org.http4s._
 import org.http4s.client.Client
+import org.http4s.Method.{DELETE, GET, PUT}
 
 // Some operations don't require a token. So the fact that we are requiring one might be misleading.
 // We could implement something like this:
@@ -52,9 +53,9 @@ final class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implici
 
   object secretEngines {
     import pt.tecnico.dsi.vault.secretEngines.consul.Consul
+    import pt.tecnico.dsi.vault.secretEngines.databases._
     import pt.tecnico.dsi.vault.secretEngines.kv._
     import pt.tecnico.dsi.vault.secretEngines.pki.PKI
-    import pt.tecnico.dsi.vault.secretEngines.databases._
 
     def keyValueV1(at: String = "kv"): KeyValueV1[F] = new KeyValueV1[F](at, uri / at)
     def keyValueV2(at: String = "kv"): KeyValueV2[F] = new KeyValueV2[F](at, uri / at)
@@ -88,13 +89,8 @@ final class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implici
   private val dsl = new DSL[F] {}
   import dsl._
 
-  def write[A: Decoder](path: String, body: A)(implicit aEncoder: EntityEncoder[F, A]): F[Context[A]] =
-    client.expect(PUT(body, uri / path, tokenHeader))
-
-  def read[A: Decoder](path: String)(implicit contextDecoder: EntityDecoder[F, Context[A]]): F[Context[A]] =
-    client.expect(GET(uri / path, tokenHeader))
-
+  def write[A: Encoder](path: String, body: A): F[Unit] = execute(PUT(body, uri / path, tokenHeader))
+  def read[A: Decoder](path: String): F[Context[A]] = execute(GET(uri / path, tokenHeader))
   def list(path: String): F[List[String]] = executeWithContextKeys(LIST(uri / path))
-
   def delete(path: String): F[Unit] = execute(DELETE(uri / path))
 }

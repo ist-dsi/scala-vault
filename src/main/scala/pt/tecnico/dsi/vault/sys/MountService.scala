@@ -6,6 +6,7 @@ import cats.syntax.functor._
 import io.circe.Codec
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
+import org.http4s.Method.{DELETE, GET, POST}
 import pt.tecnico.dsi.vault.{DSL, VaultClient}
 import pt.tecnico.dsi.vault.sys.models.{Mount, TuneOptions}
 

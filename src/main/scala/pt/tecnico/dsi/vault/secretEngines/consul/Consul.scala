@@ -4,6 +4,7 @@ import cats.effect.Sync
 import io.circe.Decoder
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
+import org.http4s.Method.{GET, POST}
 import pt.tecnico.dsi.vault.{DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.secretEngines.consul.models.Role
 
@@ -24,7 +25,7 @@ final class Consul[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit 
       "scheme" -> uri.scheme.getOrElse(Scheme.http).value,
       "token" -> token
     )
-    execute(POST(data, uri / "config" / "access", this.token))
+    execute(POST(data, self.uri / "config" / "access", this.token))
   }
 
   /**

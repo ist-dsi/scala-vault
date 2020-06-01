@@ -4,6 +4,7 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import cats.effect.Sync
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
+import org.http4s.Method.PUT
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{Lease, LeaseRenew}
 

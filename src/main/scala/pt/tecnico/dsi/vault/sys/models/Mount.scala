@@ -42,6 +42,6 @@ trait Mount {
   /** Enable seal wrapping for the mount, causing values stored by the mount to be wrapped by the seal's encryption capability. */
   val sealWrap: Boolean
 
-  type Out[T[_]]
+  type Out[F[_]]
   def mounted[F[_]](vaultClient: VaultClient[F], path: String): Out[F]
 }

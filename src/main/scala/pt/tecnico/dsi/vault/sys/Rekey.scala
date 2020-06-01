@@ -3,6 +3,7 @@ package pt.tecnico.dsi.vault.sys
 import cats.effect.Sync
 import org.http4s.Uri
 import org.http4s.client.Client
+import org.http4s.Method.{DELETE, GET, PUT}
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{BackupKeys, RekeyProgress, RekeyVerificationProgress}
 
