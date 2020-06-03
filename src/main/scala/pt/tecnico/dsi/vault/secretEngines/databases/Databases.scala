@@ -14,7 +14,7 @@ abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Rol
   import dsl._
 
   object connections {
-    val path: String = s"$path/config"
+    val path: String = s"${self.path}/config"
     val uri: Uri = self.uri / "config"
 
     /** @return all available connections. */

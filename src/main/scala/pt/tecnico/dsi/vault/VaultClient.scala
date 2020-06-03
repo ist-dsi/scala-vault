@@ -61,9 +61,9 @@ final class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implici
     def keyValueV2(at: String = "kv"): KeyValueV2[F] = new KeyValueV2[F](at, uri / at)
     def consul(at: String = "consul"): Consul[F] = new Consul[F](at, uri / at)
     def pki(at: String = "pki"): PKI[F] = new PKI[F](at, uri / at)
-    def mysql(at: String = "database"): MySql[F] = new MySql[F](at, uri / at)
-    def mongodb(at: String = "database"): MongoDB[F] = new MongoDB[F](at, uri / at)
-    def elasticsearch(at: String = "database"): Elasticsearch[F] = new Elasticsearch[F](at, uri / at)
+    def mysql(at: String = "mysql"): MySql[F] = new MySql[F](at, uri / at)
+    def mongodb(at: String = "mongodb"): MongoDB[F] = new MongoDB[F](at, uri / at)
+    def elasticsearch(at: String = "elasticsearch"): Elasticsearch[F] = new Elasticsearch[F](at, uri / at)
   }
 
   object sys {

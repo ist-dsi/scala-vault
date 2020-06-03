@@ -14,7 +14,7 @@ import org.http4s.Method.POST
 import pt.tecnico.dsi.vault.{Auth, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token => MToken}
 
-final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
+final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 

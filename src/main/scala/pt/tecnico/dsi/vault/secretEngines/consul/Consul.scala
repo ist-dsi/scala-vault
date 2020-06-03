@@ -8,7 +8,7 @@ import org.http4s.Method.{GET, POST}
 import pt.tecnico.dsi.vault.{DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.secretEngines.consul.models.Role
 
-final class Consul[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
+final class Consul[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -25,7 +25,7 @@ final class Consul[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit 
       "scheme" -> uri.scheme.getOrElse(Scheme.http).value,
       "token" -> token
     )
-    execute(POST(data, self.uri / "config" / "access", this.token))
+    execute(POST(data, this.uri / "config" / "access", this.token))
   }
 
   /**

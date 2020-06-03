@@ -14,4 +14,4 @@ case class Connection(connectionUrl: String, username: String, password: String,
                       rootRotationStatements: Array[String] = Array.empty) extends BaseConnection {
   /** The name of the plugin to use for this connection. */
   override def pluginName: String = Connection.pluginName
-  }
+}
