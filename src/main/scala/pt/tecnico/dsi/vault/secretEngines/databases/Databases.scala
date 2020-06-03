@@ -43,7 +43,7 @@ abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Rol
       * Closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.
       * @param name the name of the connection to reset.
       */
-    def reset(name: String): F[Unit] = execute(POST(self.uri / "reset" / name))
+    def reset(name: String): F[Unit] = execute(POST(self.uri / "reset" / name, token))
   }
 
   object roles extends RolesCRUD[F, Role](path, uri)
