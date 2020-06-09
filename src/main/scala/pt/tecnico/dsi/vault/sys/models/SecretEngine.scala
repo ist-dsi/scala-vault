@@ -19,8 +19,8 @@ object SecretEngine {
     * @param sealWrap Enable seal wrapping for the mount, causing values stored by the mount to be wrapped
     *                 by the seal's encryption capability.
     */
-  def apply(`type`: String, description: String, config: TuneOptions, options: Option[Map[String, String]] = None,
-            local: Boolean = false, sealWrap: Boolean = false): SecretEngine =
-    new UnmountableMount(`type`, description, config, options, local, sealWrap) with SecretEngine {}
+  def apply(`type`: String, description: String, config: TuneOptions, options: Map[String, String] = Map.empty,
+            local: Boolean = false, sealWrap: Boolean = false, externalEntropyAccess: Boolean = false): SecretEngine =
+    new UnmountableMount(`type`, description, config, options, local, sealWrap, externalEntropyAccess) with SecretEngine {}
 }
 trait SecretEngine extends Mount

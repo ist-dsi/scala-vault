@@ -4,7 +4,9 @@ import io.circe.Codec
 import pt.tecnico.dsi.vault.sys.models.Mount.UnmountableMount
 
 object AuthMethod {
-  implicit val codec: Codec.AsObject[AuthMethod] = Mount.codec(apply)
+  implicit val codec: Codec.AsObject[AuthMethod] = Mount.codec {
+    case (tpe, description, config, options, local, sealWrap, _) => apply(tpe, description, config, options, local, sealWrap)
+  }
 
   /**
     * Creates a new Authentication Method using the provided settings. This authentication method will throw a
@@ -20,8 +22,14 @@ object AuthMethod {
     * @param sealWrap Enable seal wrapping for the mount, causing values stored by the mount to be wrapped
     *                 by the seal's encryption capability.
     */
-  def apply(`type`: String, description: String, config: TuneOptions, options: Option[Map[String, String]] = None,
+  def apply(`type`: String, description: String, config: TuneOptions, options: Map[String, String] = Map.empty,
             local: Boolean = false, sealWrap: Boolean = false): AuthMethod =
-    new UnmountableMount(`type`, description, config, options, local, sealWrap) with AuthMethod {}
+    new UnmountableMount(`type`, description, config, options, local, sealWrap, false) with AuthMethod {}
 }
-trait AuthMethod extends Mount
+trait AuthMethod extends Mount {
+  /**
+    * @inheritdoc
+    * Overridden to false as authentication methods cannot access external entropy.
+    */
+  override val externalEntropyAccess: Boolean = false
+}

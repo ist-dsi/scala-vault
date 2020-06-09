@@ -52,11 +52,14 @@ final class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implici
   }
 
   object secretEngines {
+    import pt.tecnico.dsi.vault.secretEngines.identity.Identity
     import pt.tecnico.dsi.vault.secretEngines.consul.Consul
     import pt.tecnico.dsi.vault.secretEngines.databases._
     import pt.tecnico.dsi.vault.secretEngines.kv._
     import pt.tecnico.dsi.vault.secretEngines.pki.PKI
 
+    // The Identity secret engine is always mounted at this location, and cannot be changed.
+    val identity: Identity[F] = new Identity[F]("identity", uri / "identity")
     def keyValueV1(at: String = "kv"): KeyValueV1[F] = new KeyValueV1[F](at, uri / at)
     def keyValueV2(at: String = "kv"): KeyValueV2[F] = new KeyValueV2[F](at, uri / at)
     def consul(at: String = "consul"): Consul[F] = new Consul[F](at, uri / at)

@@ -16,8 +16,8 @@ object WriteConcern {
   implicit val decoder: Decoder[WriteConcern] = Decoder.decodeString.emap(decode(_)(lastDecoder).left.map(_.getMessage))
 }
 /**
-  * This class does not correspond directly to https://docs.mongodb.com/manual/reference/write-concern/ but rather
-  * to https://godoc.org/gopkg.in/mgo.v2#Safe. See https://www.vaultproject.io/api/secret/databases/mongodb#write_concern.
+  * This class does not correspond directly to [[https://docs.mongodb.com/manual/reference/write-concern/ MongoDB Write Concern]] but rather
+  * to [[https://godoc.org/gopkg.in/mgo.v2#Safe mgo Safe]]. See [[https://www.vaultproject.io/api/secret/databases/mongodb#write_concern Vault MongoDB]].
   * @param minNumberOfWrites how many servers should confirm a write before the operation is considered successful.
   *                          When set to 0 - requests no acknowledgment of the write operation. If you also set waitForAcknowledge to true,
   *                          that prevails to request acknowledgment from the standalone mongod or the primary of a replica set.

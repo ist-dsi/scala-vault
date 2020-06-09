@@ -19,6 +19,7 @@ Currently supported endpoints:
     - Elasticsearch
     - MongoDB
     - MySQL
+  - Identity
   - KeyValue versions 1 and 2
   - PKI
 - Sys:

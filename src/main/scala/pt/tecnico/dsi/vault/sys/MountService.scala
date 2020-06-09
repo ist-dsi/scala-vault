@@ -8,14 +8,14 @@ import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
 import pt.tecnico.dsi.vault.{DSL, VaultClient}
-import pt.tecnico.dsi.vault.sys.models.{Mount, TuneOptions}
+import pt.tecnico.dsi.vault.sys.models.{Mount, Mounted, TuneOptions}
 
 abstract class MountService[F[_]: Sync: Client, T <: Mount: Codec](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
   /** Lists all the mounts. */
-  def list(): F[Map[String, T]] = executeWithContextData(GET(uri, token))
+  def list(): F[Map[String, Mounted]] = executeWithContextData(GET(uri, token))
 
   /**
     * Enables a new Mount at the given path.

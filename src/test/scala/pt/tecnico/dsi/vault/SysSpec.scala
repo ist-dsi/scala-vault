@@ -214,9 +214,10 @@ class SysSpec extends Utils {
         result <- client.sys.mounts("test2").idempotently(_.defaultLeaseTtl shouldBe 1.day)
       } yield result
     }
-    "list authentication methods" in idempotently {
+    "list secret engines" in idempotently {
       client.sys.mounts.list().map { secretEngines =>
         secretEngines should contain key "test/"
+        secretEngines("test/").accessor should startWith("consul")
         secretEngines should contain key "test2/"
         secretEngines.values.map(_.config) should contain(createSecretEngine("dummy").config)
       }
