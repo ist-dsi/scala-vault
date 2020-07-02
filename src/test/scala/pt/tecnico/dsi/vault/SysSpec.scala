@@ -46,7 +46,7 @@ class SysSpec extends Utils {
     }*/
 
     "unseal vault" in {
-      client.sys.seal.unseal(unsealKey).value { status =>
+      client.sys.seal.unseal(unsealKey).map { status =>
         status.`sealed` shouldBe false
         status.secretShares shouldBe 1
         status.secretThreshold shouldBe 1
@@ -56,7 +56,7 @@ class SysSpec extends Utils {
 
   "The generate root endpoint" should {
     "start a generation" in {
-      client.sys.generateRoot.start().value { status =>
+      client.sys.generateRoot.start().map { status =>
         status.complete shouldBe false
         status.progress shouldBe 0
         status.required shouldBe 1
@@ -64,7 +64,7 @@ class SysSpec extends Utils {
     }
 
     "return the root generation progress" in {
-      client.sys.generateRoot.progress().value { progress =>
+      client.sys.generateRoot.progress().map { progress =>
         progress.complete shouldBe false
         progress.progress shouldBe 0
         progress.required shouldBe 1
@@ -148,15 +148,14 @@ class SysSpec extends Utils {
     }
     "edit a policy" in {
       for {
-        _ <- client.sys.policy.create("test2", Policy("""path "*" { capabilities = ["read", "delete"] }""")).value(_ shouldBe ())
-        // This is also testing `get`
-        _ <- client.sys.policy("test2").value(_.rules should include ("delete"))
+        _ <- client.sys.policy.create("test2", Policy("""path "*" { capabilities = ["read", "delete"] }"""))
+        _ <- client.sys.policy("test2").map(_.rules should include ("delete"))
         result <- client.sys.policy("test2").idempotently(_.rules should not contain "delete")
       } yield result
     }
     "list policies" in idempotently {
       //TODO: this test should stand on its own
-      client.sys.policy.list().map(_ should contain allOf ("test", "test2"))
+      client.sys.policy.list().map(_ should contain.allOf("test", "test2"))
     }
     "delete a policy" in idempotently {
       for {
@@ -179,7 +178,7 @@ class SysSpec extends Utils {
     "edit an authentication method" in {
       val method = AuthMethod("approle", "description", TuneOptions(defaultLeaseTtl = 1.day))
       for {
-        _ <- client.sys.auth.enable("test2", method).value(_ shouldBe ())
+        _ <- client.sys.auth.enable("test2", method).map(_ shouldBe ())
         result <- client.sys.auth("test2").idempotently(_.defaultLeaseTtl shouldBe 1.day)
       } yield result
     }
@@ -210,7 +209,7 @@ class SysSpec extends Utils {
     "edit a secret engine" in {
       val engine = SecretEngine("consul", "", TuneOptions(defaultLeaseTtl = 1.day))
       for {
-        _ <- client.sys.mounts.enable("test2", engine).value(_ shouldBe ())
+        _ <- client.sys.mounts.enable("test2", engine).map(_ shouldBe ())
         result <- client.sys.mounts("test2").idempotently(_.defaultLeaseTtl shouldBe 1.day)
       } yield result
     }

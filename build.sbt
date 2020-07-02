@@ -5,13 +5,12 @@ name := "scala-vault"
 // ==== Compile Options =================================================================================================
 // ======================================================================================================================
 javacOptions ++= Seq("-Xlint", "-encoding", "UTF-8", "-Dfile.encoding=utf-8")
-scalaVersion := "2.13.2"
+scalaVersion := "2.13.3"
 
 scalacOptions ++= Seq(
   "-encoding", "utf-8",            // Specify character encoding used by source files.
   "-explaintypes",                 // Explain type errors in more detail.
   "-feature",                      // Emit warning and location for usages of features that should be imported explicitly.
-  "-language:implicitConversions", // Explicitly enables the implicit conversions feature
   "-Ybackend-parallelism", "8",    // Maximum worker threads for backend.
   "-Ybackend-worker-queue", "10",  // Backend threads worker queue size.
   "-Ymacro-annotations",           // Enable support for macro annotations, formerly in macro paradise.
@@ -40,15 +39,21 @@ fork := true
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
-  "org.http4s"      %% s"http4s-$module" % "0.21.4"
+  "org.http4s"      %% s"http4s-$module" % "0.21.6"
 } ++ Seq(
   "io.circe"        %% "circe-derivation" % "0.13.0-M4",
   "io.circe"        %% "circe-parser"     % "0.13.0", // Just used in Databases
   "com.beachape"    %% "enumeratum-circe" % "1.6.1",
   "ch.qos.logback"  %  "logback-classic"  % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"        % "3.1.2" % Test,
+  "org.scalatest"   %% "scalatest"        % "3.2.0" % Test,
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
+// http://www.scalatest.org/user_guide/using_the_runner
+//   -o[configs...] - causes test results to be written to the standard output.
+//      D - show all durations
+//      F - show full stack traces
+testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
 
 Test / logBuffered := false
 Test / fork := true

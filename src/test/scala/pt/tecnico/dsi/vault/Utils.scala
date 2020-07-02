@@ -1,6 +1,7 @@
 package pt.tecnico.dsi.vault
 
 import cats.effect.{ContextShift, IO, Timer}
+import cats.implicits._
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.syntax.literals._
 import org.log4s._
@@ -38,19 +39,14 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   val client = new VaultClient[IO](uri"http://localhost:8200", rootToken)
 
   implicit class RichIO[T](io: IO[T]) {
-    def value(test: T => Assertion): Future[Assertion] = io.map(test).unsafeToFuture()
-    def valueShouldBe(v: T): Future[Assertion] = value(_ shouldBe v)
-
-    def idempotently(test: T => Assertion, repetitions: Int = 3): Future[Assertion] = {
+    def idempotently(test: T => Assertion, repetitions: Int = 3): IO[Assertion] = {
       require(repetitions >= 2, "To test for idempotency at least 2 repetitions must be made")
 
-      io.unsafeToFuture().flatMap { firstResult =>
+      io.flatMap { firstResult =>
         // If this fails we do not want to mask its exception with "Operation is not idempotent".
         // Because failing in the first attempt means whatever is being tested in `test` is not implemented correctly.
         test(firstResult)
-        Future.traverse(2 to repetitions) { _ =>
-          io.unsafeToFuture()
-        } map { results =>
+        (2 to repetitions).toList.traverse(_ => io).map { results =>
           // And now we want to catch the exception because if `test` fails here it means it is not idempotent.
           try {
             results.foreach(test)
@@ -69,8 +65,10 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
         }
       }
     }
-    def valueShouldIdempotentlyBe(value: T): Future[Assertion] = idempotently(_ shouldBe value)
   }
+
+  import scala.language.implicitConversions
+  implicit def io2Future[T](io: IO[T]): Future[T] = io.unsafeToFuture()
 
   private def ordinalSuffix(number: Int): String = {
     number % 100 match {

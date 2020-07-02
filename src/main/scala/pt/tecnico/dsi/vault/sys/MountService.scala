@@ -7,6 +7,7 @@ import io.circe.Codec
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
+import org.http4s.Status.Successful
 import pt.tecnico.dsi.vault.{DSL, VaultClient}
 import pt.tecnico.dsi.vault.sys.models.{Mount, Mounted, TuneOptions}
 
@@ -22,12 +23,16 @@ abstract class MountService[F[_]: Sync: Client, T <: Mount: Codec](val path: Str
     * @param path Specifies the path where the mount will be mounted.
     * @param mount the Mount to enable.
     */
-  def enable(path: String, mount: T): F[Unit] = executeHandlingErrors(POST(mount, uri / path, token)) {
-    case errors if errors.exists(_.contains("path is already in use at")) =>
-      apply(path).flatMap {
-        case options if options == mount.config => implicitly[Sync[F]].unit
-        case _ => tune(path, mount.config)
-      }
+  def enable(path: String, mount: T): F[Unit] = {
+    genericExecute(POST(mount, uri / path, token))({
+      case Successful(response) => response.as[Unit]
+    }, {
+      case errors if errors.exists(_.contains("path is already in use at")) =>
+        apply(path).flatMap {
+          case options if options == mount.config => implicitly[Sync[F]].unit
+          case _ => tune(path, mount.config)
+        }
+    })
   }
 
   /**

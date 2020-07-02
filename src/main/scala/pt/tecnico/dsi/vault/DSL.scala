@@ -4,13 +4,12 @@ import cats.effect.Sync
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.syntax.option._
 import io.circe.{Decoder, Encoder, Printer}
-import org.http4s.Status.{BadRequest, ClientError, Gone, NotFound, Successful, ServerError}
+import org.http4s.Status.{BadRequest, Gone, NotFound, Successful}
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.impl.EmptyRequestGenerator
 import org.http4s.client.{Client, UnexpectedStatus}
-import org.http4s.{circe, EntityDecoder, EntityEncoder, Method, Request}
+import org.http4s.{circe, EntityDecoder, EntityEncoder, Method, Request, Response}
 
 abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sClientDsl[F] {
   val jsonPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
@@ -25,6 +24,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
   // We need a marker type to ensure we are not generating an EmptyRequestGenerator for methods with body.
   sealed trait Marker
   val LIST: Method with Marker = Method.fromString("LIST").toOption.get.asInstanceOf[Method with Marker]
+  import scala.language.implicitConversions
   implicit def listOps(list: Method with Marker): EmptyRequestGenerator[F] = new EmptyRequestGenerator[F] {
     override def method: Method = list
   }
@@ -36,9 +36,14 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param request the request for the endpoint
     * @tparam Data the type we are interested in.
     */
-  def executeWithContextData[Data : Decoder](request: F[Request[F]])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Data] =
+  def executeWithContextData[Data: Decoder](request: F[Request[F]])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Data] =
     execute[Context[Data]](request).map(_.data)
 
+  /**
+    * Executes a request for an endpoint which returns `Option[Context[Data]]` but we are only interested in the Context data.
+    * @param request the request for the endpoint
+    * @tparam Data the type we are interested in.
+    */
   def executeOptionWithContextData[Data: Decoder](request: F[Request[F]])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Option[Data]] =
     executeOption[Context[Data]](request).map(_.map(_.data))
 
@@ -58,48 +63,55 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
   }
 
   /**
-    * Executes a request, handling any `BadRequest` returned by Vault by decoding it to `Errors` and then raising an
-    * error in F.
- *
+    * Executes a request, and on a successful response decodes the body to an `A`.
+    * On any other response `defaultErrorHandler` will be called.
+    *
     * @param request the request to execute.
     * @tparam A the type to which the response will be decoded to.
     */
-  def execute[A: Decoder: EntityDecoderF](request: F[Request[F]]): F[A] = executeHandlingErrors(request)(PartialFunction.empty)
-  /**
-    * Executes a request, handling any `BadRequest` returned by Vault by decoding it to `Errors` and then raising an
-    * error in F.
-    * @param request the request to execute.
-    * @tparam A the type to which the response will be decoded to.
-    */
-  def executeOption[A: Decoder: EntityDecoderF](request: F[Request[F]]): F[Option[A]] = executeOptionHandlingErrors(request)(PartialFunction.empty)
+  def execute[A: Decoder: EntityDecoderF](request: F[Request[F]]): F[A] =
+    genericExecute(request) {
+      case Successful(response) => response.as[A]
+    }
 
+  /**
+    * Executes a request, and on a successful response decodes the body to an `A` inside a Some.
+    * On a NotFound or Gone response returns a None.
+    * On any other response `defaultErrorHandler` will be called.
+    *
+    * @param request the request to execute.
+    * @tparam A the type to which the response will be decoded to.
+    */
+  def executeOption[A: Decoder: EntityDecoderF](request: F[Request[F]]): F[Option[A]] =
+    genericExecute(request) {
+      case Successful(response) => response.as[A].map(Option.apply)
+      case NotFound(_) | Gone(_) => Option.empty[A].pure[F]
+    }
+
+  // Dotty seems intent on ruining this very nice type alias. Why is it nice? Have a look here https://youtu.be/n7PsbJwVSuE?t=409
   type ?=>[T, R] = PartialFunction[T, R]
 
-  // Is it possible to refactor these two methods?
+  /**
+    * Execute the given `request`, and apply the partial function `f` to the response.
+    * If `f` is not defined for some response the `defaultErrorHandler` will be called with `onErrorsPF`
+    *
+    * @param request the request to execute.
+    * @param onErrorsPF the `PartialFunction` to apply on the BadRequest errors.
+    */
+  def genericExecute[A](request: F[Request[F]])(f: Response[F] ?=> F[A], onErrorsPF: List[String] ?=> F[A] = PartialFunction.empty): F[A] =
+    request.flatMap(client.run(_).use(f.applyOrElse(_, defaultErrorHandler(onErrorsPF))))
 
   /**
-    * Execute the given `request`. On a successful response decode the body to an `A`.
-    * If a `BadRequest` is returned its body will be decoded to a `List[String]` and
-    * the `onErrorPF` will be invoked. Allowing to recover for some errors.
-    * Client or server errors will raise error with `UnexpectedStatus`.
-    * @param request the request to execute.
-    * @param onErrorsPF the `PartialFunction` to apply on a BadRequest.
-    * @tparam A the type to decode the response into.
+    * If a `BadRequest` is returned its body will be decoded to a `List[String]` and the `onErrorPF` will be invoked. Allowing to recover for some errors.
+    * Otherwise an error will be raised with `UnexpectedStatus`.
+    * @param onErrorsPF the `PartialFunction` to apply to the BadRequest errors.
     */
-  def executeHandlingErrors[A: Decoder: EntityDecoderF](request: F[Request[F]])(onErrorsPF: List[String] ?=> F[A]): F[A] =
-    client.fetch(request) {
-      case Successful(response) => response.as[A]
-      case BadRequest(response) => response.as[Errors].flatMap(errors => onErrorsPF.applyOrElse(errors.errors, raise))
-      case response @ (ClientError(_) | ServerError(_)) => F.raiseError(UnexpectedStatus(response.status))
-    }
-
-  def executeOptionHandlingErrors[A: Decoder: EntityDecoderF](request: F[Request[F]])(onErrorsPF: List[String] ?=> F[Option[A]]): F[Option[A]] =
-    client.fetch(request) {
-      case Successful(response) => response.as[A].map(_.some)
-      case BadRequest(response) => response.as[Errors].flatMap(errors => onErrorsPF.applyOrElse(errors.errors, raise))
-      case NotFound(_) | Gone(_) => Option.empty[A].pure[F]
-      case response @ (ClientError(_) | ServerError(_)) => F.raiseError(UnexpectedStatus(response.status))
-    }
+  def defaultErrorHandler[A](onErrorsPF: List[String] ?=> F[A]): Response[F] => F[A] = {
+    case BadRequest(response) =>
+      implicit val d = Decoder[List[String]].at("errors")
+      response.as[List[String]].flatMap(errors => onErrorsPF.applyOrElse(errors, raise))
+    case response => F.raiseError(UnexpectedStatus(response.status))
+  }
 
   private def raise[A](errors: List[String]): F[A] = F.raiseError(ErroredRequest(errors))
 }

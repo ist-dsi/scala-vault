@@ -1,10 +1,11 @@
 package pt.tecnico.dsi.vault.secretEngines.databases.models.Elasticsearch
 
-import io.circe.{Encoder, JsonObject}
+import io.circe.{Encoder, Json, JsonObject}
 import io.circe.derivation.{deriveEncoder, renaming}
 
 object RoleDefinition {
-  implicit val encoder: Encoder.AsObject[RoleDefinition] = deriveEncoder(renaming.snakeCase)
+  implicit val encoder: Encoder.AsObject[RoleDefinition] = deriveEncoder[RoleDefinition](renaming.snakeCase)
+    .mapJsonObject(original => JsonObject.singleton("elasticsearch_role_definition", Json.fromJsonObject(original)))
 }
 /**
   *

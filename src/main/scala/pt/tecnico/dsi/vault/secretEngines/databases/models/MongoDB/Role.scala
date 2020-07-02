@@ -4,7 +4,7 @@ import scala.concurrent.duration.Duration
 import io.circe._
 import io.circe.derivation.{deriveCodec, renaming}
 import io.circe.syntax._
-import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
+import pt.tecnico.dsi.vault.decoderDuration
 import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 
 object MongoRole {
