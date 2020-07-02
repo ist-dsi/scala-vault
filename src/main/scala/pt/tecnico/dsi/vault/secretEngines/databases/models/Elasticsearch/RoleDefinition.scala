@@ -5,7 +5,7 @@ import io.circe.derivation.{deriveEncoder, renaming}
 
 object RoleDefinition {
   implicit val encoder: Encoder.AsObject[RoleDefinition] = deriveEncoder[RoleDefinition](renaming.snakeCase)
-    .mapJsonObject(original => JsonObject.singleton("elasticsearch_role_definition", Json.fromJsonObject(original)))
+    .mapJsonObject(original => JsonObject.singleton("elasticsearch_role_definition", Json.fromJsonObject(original).deepDropNullValues))
 }
 /**
   *

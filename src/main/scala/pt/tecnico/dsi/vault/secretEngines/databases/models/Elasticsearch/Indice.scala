@@ -4,7 +4,7 @@ import io.circe.derivation.{deriveEncoder, renaming}
 import io.circe.{Encoder, JsonObject}
 
 object Indice {
-  implicit val encoder: Encoder.AsObject[Indice] = deriveEncoder(renaming.snakeCase)
+  implicit val encoder: Encoder[Indice] = deriveEncoder[Indice](renaming.snakeCase).mapJson(_.deepDropNullValues)
 }
 /**
   * @param names A list of indices (or index name patterns) to which the permissions in this entry apply.
