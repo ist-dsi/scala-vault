@@ -9,7 +9,7 @@ import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
 import org.http4s.Status.{NoContent, Ok}
 import pt.tecnico.dsi.vault.{Context, DSL}
-import pt.tecnico.dsi.vault.secretEngines.identity.models._
+import pt.tecnico.dsi.vault.secretEngines.identity.models.{Group, _}
 
 /** @define name */
 class AliasCRUD[F[_]: Sync: Client, T: Decoder](basePath: String, baseUri: Uri, baseName: String)(implicit token: Header) {
@@ -40,7 +40,10 @@ class AliasCRUD[F[_]: Sync: Client, T: Decoder](basePath: String, baseUri: Uri, 
     * Creates a new alias for a $name.
     * @param name name for the $name alias.
     * @param canonicalId $name ID of to which this alias belongs to.
-    * @param mountAccessor mount accessor which this alias belongs to.
+    * @param mountAccessor mount accessor which this alias belongs to. Can be consulted with:
+    * {{{
+    *   vaultClient.sys.auth.list().map { mountedAuths => mountedAuths(s"\$path/").accessor }
+    * }}}
     */
   def create(name: String, canonicalId: String, mountAccessor: String): F[Unit] =
     execute(POST(Alias(name, canonicalId, mountAccessor, None), uri, token))
@@ -175,23 +178,65 @@ final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implici
     * @define namePlural groups
     */
   object group extends BaseEndpoints[F, Group](path, uri, "group") {
+    // The endpoint POST /identity/group is not here on purpose. It accepts the same arguments as the create below plus an id.
+    // According to the documentation it creates or updates a Group. However if you pass it an ID which does not exist it won't
+    // create a Group with that ID but rather return an error. Thus it becomes awkward to use.
+
     /**
       * Creates or updates a Group.
       *
-      * @note This endpoint distinguishes between create and update ACL capabilities. */
-    def create(group: GroupCreate): F[String] = {
-      implicit val d: Decoder[String] = Decoder.decodeString.at("id")
-      executeWithContextData[String](POST(group, uri, token))
-    }
-    /** Updates an existing group. */
-    def update(id: String, group: GroupCreate): F[Unit] = execute(POST(group.asJson.mapObject(_.remove("id")), uri / "id" / id, token))
-    /**
-      * Create or update a group by a given name.
+      * @note This endpoint distinguishes between create and update ACL capabilities.
       *
-      * @note This endpoint distinguishes between create and update ACL capabilities. */
-    def createByName(entity: Entity): F[Unit] = execute(POST(entity.asJson.mapObject(_.remove("id")), uri / "name" / entity.name, token))
-    /** Updates an existing group. */
-    def updateByName(id: String, entity: Entity): F[Unit] = execute(POST(entity, uri / "id" / id, token))
+      * @param name name of the group.
+      * @param policies policies to be tied to the group.
+      * @param members entity IDs to be assigned as group members.
+      * @param memberGroups group IDs to be assigned as group members.
+      * @param `type` type of the group.
+      * @param metadata metadata to be associated with the group.
+      * @return the id of the created group.
+      */
+    def create(name: String, policies: List[String] = List.empty, members: List[String] = List.empty, memberGroups: List[String] = List.empty,
+               `type`: Group.Type = Group.Type.Internal, metadata: Map[String, String] = Map.empty): F[String] = {
+      val body = Map(
+        "policies" -> policies.asJson,
+        "member_entity_ids" -> members.asJson,
+        "member_group_ids" -> memberGroups.asJson,
+        "type" -> `type`.asJson,
+        "metadata" -> metadata.asJson,
+      )
+      // If a new group is created an Ok will be returned with the body containing the entity id.
+      // If a group with `name` already exists a NoContent will be returned.
+      genericExecute(POST(body, uri / "name" / name, token)) {
+        case Ok(response) =>
+          implicit val d: Decoder[String] = Decoder.decodeString.at("id")
+          response.as[Context[String]].map(_.data)
+        case NoContent(_) => apply(name).map(_.id)
+      }
+    }
+
+    /**
+      * Updates an existing group.
+      * @param id identifier of the group.
+      * @param name name of the group.
+      * @param policies policies to be tied to the group.
+      * @param members entity IDs to be assigned as group members.
+      * @param memberGroups group IDs to be assigned as group members.
+      * @param `type` type of the group.
+      * @param metadata metadata to be associated with the group.
+      * @return
+      */
+    def update(id: String, name: String, policies: List[String] = List.empty, members: List[String] = List.empty, memberGroups: List[String] = List.empty,
+               `type`: Group.Type = Group.Type.Internal, metadata: Map[String, String] = Map.empty): F[Unit] = {
+      val body = Map(
+        "name" -> name.asJson,
+        "policies" -> policies.asJson,
+        "member_entity_ids" -> members.asJson,
+        "member_group_ids" -> memberGroups.asJson,
+        "type" -> `type`.asJson,
+        "metadata" -> metadata.asJson,
+      )
+      execute(POST(body, uri / "id" / id, token))
+    }
   }
 
   /** @define name group */
