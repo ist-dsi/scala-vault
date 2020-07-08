@@ -2,6 +2,7 @@ package pt.tecnico.dsi.vault.secretEngines.identity
 
 import cats.effect.Sync
 import cats.syntax.functor._
+import cats.syntax.flatMap._
 import io.circe.syntax._
 import io.circe.Decoder
 import org.http4s.{Header, Uri}
@@ -151,6 +152,29 @@ final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implici
       )
       execute(POST(body, uri / "id" / id, token))
     }
+    /**
+      * Updates `entity`.
+      * @param entity the entity to update.
+      */
+    def update(entity: Entity): F[Unit] = update(entity.id, entity.name, entity.policies, entity.disabled, entity.metadata)
+
+    /** Gets the entity named `name`, creating one if one does not exist. */
+    def findOrCreate(name: String): F[Entity] =
+      get(name).flatMap {
+        case Some(entity) => Sync[F].pure(entity)
+        case None => create(name).flatMap(apply)
+      }
+
+    /**
+      * Appends `policies` to an entity named `name`. If no entity exists with that name a new entity will be created.
+      *
+      * @param name name of the entity.
+      * @param policies the list of policies to append to the entity.
+      * @return the entity id to which the policies were appended to.
+      */
+    def addPolicies(name: String, policies: String*): F[String] = findOrCreate(name).flatMap { entity =>
+      update(entity.copy(policies = (entity.policies ++ policies).distinct)).map(_ => entity.id)
+    }
 
     /**
       * Deletes all entities provided.
@@ -190,17 +214,17 @@ final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implici
       * @param name name of the group.
       * @param policies policies to be tied to the group.
       * @param members entity IDs to be assigned as group members.
-      * @param memberGroups group IDs to be assigned as group members.
+      * @param subgroups group IDs to be assigned as group members.
       * @param `type` type of the group.
       * @param metadata metadata to be associated with the group.
       * @return the id of the created group.
       */
-    def create(name: String, policies: List[String] = List.empty, members: List[String] = List.empty, memberGroups: List[String] = List.empty,
+    def create(name: String, policies: List[String] = List.empty, members: List[String] = List.empty, subgroups: List[String] = List.empty,
                `type`: Group.Type = Group.Type.Internal, metadata: Map[String, String] = Map.empty): F[String] = {
       val body = Map(
         "policies" -> policies.asJson,
         "member_entity_ids" -> members.asJson,
-        "member_group_ids" -> memberGroups.asJson,
+        "member_group_ids" -> subgroups.asJson,
         "type" -> `type`.asJson,
         "metadata" -> metadata.asJson,
       )
@@ -220,22 +244,71 @@ final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implici
       * @param name name of the group.
       * @param policies policies to be tied to the group.
       * @param members entity IDs to be assigned as group members.
-      * @param memberGroups group IDs to be assigned as group members.
+      * @param subgroups group IDs to be assigned as group members.
       * @param `type` type of the group.
       * @param metadata metadata to be associated with the group.
       * @return
       */
-    def update(id: String, name: String, policies: List[String] = List.empty, members: List[String] = List.empty, memberGroups: List[String] = List.empty,
+    def update(id: String, name: String, policies: List[String] = List.empty, members: List[String] = List.empty, subgroups: List[String] = List.empty,
                `type`: Group.Type = Group.Type.Internal, metadata: Map[String, String] = Map.empty): F[Unit] = {
       val body = Map(
         "name" -> name.asJson,
         "policies" -> policies.asJson,
         "member_entity_ids" -> members.asJson,
-        "member_group_ids" -> memberGroups.asJson,
+        "member_group_ids" -> subgroups.asJson,
         "type" -> `type`.asJson,
         "metadata" -> metadata.asJson,
       )
       execute(POST(body, uri / "id" / id, token))
+    }
+    /**
+      * Updates `group`.
+      * @param group the group to update.
+      */
+    def update(group: Group): F[Unit] =
+      update(group.id, group.name, group.policies, group.members, group.subgroups, group.`type`, group.metadata)
+
+    /**
+      * Gets the group named `name`, creating one if one does not exist.
+      * @param name the name of the group.
+      */
+    def findOrCreate(name: String): F[Group] =
+      get(name).flatMap {
+        case Some(group) => Sync[F].pure(group)
+        case None => create(name).flatMap(apply)
+      }
+
+    /**
+      * Appends `policies` to a group named `name`. If no group exists with that name a new group will be created.
+      *
+      * @param name name of the group.
+      * @param policies the list of policies to append to the group.
+      * @return the group id to which the policies were appended to.
+      */
+    def addPolicies(name: String, policies: String*): F[String] = findOrCreate(name).flatMap { group =>
+      update(group.copy(policies = (group.policies ++ policies).distinct)).map(_ => group.id)
+    }
+
+    /**
+      * Appends `members` to a group named `name`. If no group exists with that name a new group will be created.
+      *
+      * @param name name of the group.
+      * @param members the list of members to append to the group.
+      * @return the group id to which the members were appended to.
+      */
+    def addMembers(name: String, members: String*): F[String] = findOrCreate(name).flatMap { group =>
+      update(group.copy(members = (group.members ++ members).distinct)).map(_ => group.id)
+    }
+
+    /**
+      * Appends `subgroups` to a group named `name`. If no group exists with that name a new group will be created.
+      *
+      * @param name name of the group.
+      * @param subgroups the list of group ids to append to the subgroups of group.
+      * @return the group id to which the subgroups were appended to.
+      */
+    def addSubgroups(name: String, subgroups: String*): F[String] = findOrCreate(name).flatMap { group =>
+      update(group.copy(subgroups = (group.subgroups ++ subgroups).distinct)).map(_ => group.id)
     }
   }
 
