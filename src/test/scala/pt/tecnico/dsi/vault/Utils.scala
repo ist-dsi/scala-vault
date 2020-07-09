@@ -13,6 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.concurrent.duration.DurationInt
 import scala.sys.process._
+import org.http4s.client.Client
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
   val logger: Logger = getLogger
@@ -20,13 +21,15 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   implicit val timer: Timer[IO] = IO.timer(executionContext)
   implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
 
-  val (httpClient, finalizer) = BlazeClientBuilder[IO](global)
+  val (_httpClient, finalizer) = BlazeClientBuilder[IO](global)
     .withResponseHeaderTimeout(10.seconds)
     .withCheckEndpointAuthentication(false)
     .resource.allocated.unsafeRunSync()
   override protected def afterAll(): Unit = finalizer.unsafeRunSync()
 
-  private implicit val c = httpClient
+  //import org.http4s.client.middleware.Logger
+  //implicit val httpClient: Client[IO] = Logger(logBody = true, logHeaders = true)(_httpClient)
+  implicit val httpClient: Client[IO] = _httpClient
 
   val ignoreStdErr = ProcessLogger(_ => ())
   val UnsealKeyRegex = """(?<=Unseal Key: )([^\n]+)""".r.unanchored

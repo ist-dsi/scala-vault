@@ -1,11 +1,11 @@
 package pt.tecnico.dsi.vault.secretEngines.identity.models
 
 import java.time.OffsetDateTime
-import io.circe.Codec
-import io.circe.derivation.deriveCodec
+import io.circe.Decoder
+import io.circe.derivation.{deriveDecoder, renaming}
 
 object EntityAlias {
-  implicit val codec: Codec[EntityAlias] = deriveCodec(identity)
+  implicit val decoder: Decoder[EntityAlias] = deriveDecoder(renaming.snakeCase)
 }
 case class EntityAlias (
   id: String,
@@ -18,4 +18,4 @@ case class EntityAlias (
   mountType: String,
   metadata: Map[String, String] = Map.empty,
   mergedFromCanonicalIds: List[String] = List.empty,
-)
+) extends Alias

@@ -2,7 +2,7 @@ package pt.tecnico.dsi.vault.secretEngines.identity.models
 
 import java.time.OffsetDateTime
 import enumeratum.{Circe, Enum, EnumEntry}
-import io.circe.{Codec, Decoder, Encoder}
+import io.circe.{Decoder, Encoder, HCursor, Json, JsonObject}
 
 object Group {
   sealed trait Type extends EnumEntry
@@ -16,24 +16,37 @@ object Group {
     val values = findValues
   }
 
-  implicit val codec: Codec[Group] = Codec.forProduct13("id", "name", "creation_time", "last_updated_time", "type", "policies", "alias", "member_entity_ids",
-    "member_group_ids", "parent_group_ids", "namespace_id", "modify_index", "metadata")(Group.apply)(g =>
-    (g.id, g.name, g.creationTime, g.lastUpdateTime, g.`type`, g.policies, g.alias, g.members, g.subgroups, g.parentGroups, g.namespaceId, g.modifyIndex,
-      g.metadata)
-  )
+  implicit val decoder: Decoder[Group] = (cursor: HCursor) => for {
+    id <- cursor.get[String]("id")
+    name <- cursor.get[String]("name")
+    creationTime <- cursor.get[OffsetDateTime]("creation_time")
+    lastUpdateTime <- cursor.get[OffsetDateTime]("last_update_time")
+    tpe <- cursor.get[Group.Type]("type")
+    policies <- cursor.getOrElse[List[String]]("policies")(List.empty)
+    alias <- cursor.get[JsonObject]("alias").flatMap { obj =>
+      if (obj.isEmpty) Right(Option.empty[GroupAlias])
+      else GroupAlias.decoder.decodeJson(Json.fromJsonObject(obj)).map(Some(_))
+    }
+    members <- cursor.getOrElse[List[String]]("member_entity_ids")(List.empty)
+    subgroups <- cursor.getOrElse[List[String]]("member_group_ids")(List.empty)
+    parentGroups <- cursor.getOrElse[List[String]]("parent_group_ids")(List.empty)
+    namespaceId <- cursor.get[String]("namespace_id")
+    modifyIndex <- cursor.get[Int]("modify_index")
+    metadata <- cursor.getOrElse[Map[String, String]]("metadata")(Map.empty)
+  } yield Group(id, name, creationTime, lastUpdateTime, tpe, policies, alias, members, subgroups, parentGroups, namespaceId, modifyIndex, metadata)
 }
 case class Group(
   id: String,
   name: String,
   creationTime: OffsetDateTime,
   lastUpdateTime: OffsetDateTime,
-  `type`: Group.Type = Group.Type.Internal,
+  `type`: Group.Type,
   policies: List[String] = List.empty,
-  alias: Option[Group] = None,
+  alias: Option[GroupAlias] = None,
   members: List[String] = List.empty,
   subgroups: List[String] = List.empty,
   parentGroups: List[String] = List.empty,
   namespaceId: String,
   modifyIndex: Int,
   metadata: Map[String, String] = Map.empty,
-)
+) extends Base

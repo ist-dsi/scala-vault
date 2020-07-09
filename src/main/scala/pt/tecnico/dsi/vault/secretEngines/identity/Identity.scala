@@ -1,19 +1,26 @@
 package pt.tecnico.dsi.vault.secretEngines.identity
 
 import cats.effect.Sync
+import cats.syntax.applicative._
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 import io.circe.syntax._
-import io.circe.Decoder
+import io.circe.{Decoder, Encoder}
+import io.circe.derivation.{deriveEncoder, renaming}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
 import org.http4s.Status.{NoContent, Ok}
 import pt.tecnico.dsi.vault.{Context, DSL}
-import pt.tecnico.dsi.vault.secretEngines.identity.models.{Group, _}
+import pt.tecnico.dsi.vault.secretEngines.identity.models._
+import pt.tecnico.dsi.vault.secretEngines.identity.AliasCRUD._
 
+object AliasCRUD {
+  case class AliasCreate(name: String, canonicalId: String, mountAccessor: String, id: Option[String] = None)
+  implicit val encoder: Encoder[AliasCreate] = deriveEncoder(renaming.snakeCase)
+}
 /** @define name */
-class AliasCRUD[F[_]: Sync: Client, T: Decoder](basePath: String, baseUri: Uri, baseName: String)(implicit token: Header) {
+abstract class AliasCRUD[F[_]: Sync: Client, T <: Alias: Decoder](basePath: String, baseUri: Uri, baseName: String)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -37,23 +44,28 @@ class AliasCRUD[F[_]: Sync: Client, T: Decoder](basePath: String, baseUri: Uri, 
     */
   def apply(id: String): F[T] = executeWithContextData(GET(uri / "id" / id, token))
 
+  protected def computeAliasId(name: String, canonicalId: String, mountAccessor: String): F[String]
+
   /**
     * Creates a new alias for a $name.
     *
-    * @note this method it not idempotent. If the alias already exists Vault will complain with:
-    *       `combination of mount and alias name is already in use`. Unfortunately there is nothing we can do, since the
-    *       error does not inform us of the entity id, nor can we update it via the name.
+    * @note this method it not idempotent. If the alias already exists Vault will return NoContent.
+    *       Unfortunately there is nothing we can do, since we don't know the existing alias id, nor can we update the alias via the name.
     * @param name name for the $name alias.
     * @param canonicalId $name ID of to which this alias belongs to.
     * @param mountAccessor mount accessor which this alias belongs to. Can be consulted with:
     * {{{
     *   vaultClient.sys.auth.list().map { mountedAuths => mountedAuths(s"\$path/").accessor }
     * }}}
+    * @return the id of the created alias.
     */
-  def create(name: String, canonicalId: String, mountAccessor: String): F[String] = {
-    implicit val d: Decoder[String] = Decoder.decodeString.at("id")
-    executeWithContextData(POST(Alias(name, canonicalId, mountAccessor, None), uri, token))
-  }
+  def create(name: String, canonicalId: String, mountAccessor: String): F[String] =
+    genericExecute(POST(AliasCreate(name, canonicalId, mountAccessor, None), uri, token)) {
+      case Ok(response) =>
+        implicit val d: Decoder[String] = Decoder.decodeString.at("id")
+        response.as[Context[String]].map(_.data)
+      case NoContent(_) =>computeAliasId(name, canonicalId, mountAccessor)
+    }
 
   /**
     * Updates an existing $name alias.
@@ -63,7 +75,7 @@ class AliasCRUD[F[_]: Sync: Client, T: Decoder](basePath: String, baseUri: Uri, 
     * @param mountAccessor mount accessor which this alias belongs to.
     */
   def update(id: String, name: String, canonicalId: String, mountAccessor: String): F[Unit] =
-    execute(POST(Alias(name, canonicalId, mountAccessor, Some(id)), uri / "id" / id, token))
+    execute(POST(AliasCreate(name, canonicalId, mountAccessor, Some(id)), uri / "id" / id, token))
 
   /**
     * Deletes a $name alias.
@@ -76,7 +88,7 @@ class AliasCRUD[F[_]: Sync: Client, T: Decoder](basePath: String, baseUri: Uri, 
   * @define name entity
   * @define namePlural entities
   */
-class BaseEndpoints[F[_]: Sync: Client, T: Decoder](basePath: String, baseUri: Uri, name: String)(implicit token: Header) {
+abstract class BaseEndpoints[F[_]: Sync: Client, T <: Base: Decoder](basePath: String, baseUri: Uri, name: String)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -94,6 +106,17 @@ class BaseEndpoints[F[_]: Sync: Client, T: Decoder](basePath: String, baseUri: U
   def apply(name: String): F[T] = executeWithContextData(GET(uri / "name" / name, token))
   /** Gets the $name with the given `id`. */
   def getById(id: String): F[Option[T]] = executeOptionWithContextData(GET(uri / "id" / id, token))
+  /** Gets the $name with the given `id`, assuming it exists. */
+  def applyById(id: String): F[T] = executeWithContextData(GET(uri / "id" / id, token))
+
+  protected def create(name: String): F[String]
+
+  /** Gets the $name named `name`, creating one if one does not exist. */
+  def findOrCreate(name: String): F[T] =
+    get(name).flatMap {
+      case Some(value) => value.pure[F]
+      case None => create(name).flatMap(applyById)
+    }
 
   /** Deletes the $name with `name` and all its associated aliases. */
   def delete(name: String): F[Unit] = execute(DELETE(uri / "name" / name, token))
@@ -159,17 +182,13 @@ final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implici
       execute(POST(body, uri / "id" / id, token))
     }
     /**
-      * Updates `entity`.
-      * @param entity the entity to update.
+      * Updates an entity using `entity` to fetch the values for `id`, `name`, `policies`, `disabled`, and `metadata`.
+      * Any other field will not be used.
+      * @param entity the entity from which to fetch the values.
       */
     def update(entity: Entity): F[Unit] = update(entity.id, entity.name, entity.policies, entity.disabled, entity.metadata)
 
-    /** Gets the entity named `name`, creating one if one does not exist. */
-    def findOrCreate(name: String): F[Entity] =
-      get(name).flatMap {
-        case Some(entity) => Sync[F].pure(entity)
-        case None => create(name).flatMap(apply)
-      }
+    override protected def create(name: String): F[String] = create(name, List.empty)
 
     /**
       * Appends `policies` to an entity named `name`. If no entity exists with that name a new entity will be created.
@@ -201,7 +220,14 @@ final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implici
   }
 
   /** @define name entity */
-  object entityAlias extends AliasCRUD[F, EntityAlias](path, uri, "entity")
+  object entityAlias extends AliasCRUD[F, EntityAlias](path, uri, "entity") {
+    override protected def computeAliasId(name: String, canonicalId: String, mountAccessor: String): F[String] =
+      entity.applyById(canonicalId).map { entity =>
+        entity.aliases.collectFirst {
+          case alias if alias.name == name && alias.mountAccessor == mountAccessor => alias.id
+        }.get // We now the alias must exist
+      }
+  }
 
   /**
     * @define name group
@@ -274,15 +300,7 @@ final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implici
     def update(group: Group): F[Unit] =
       update(group.id, group.name, group.policies, group.members, group.subgroups, group.`type`, group.metadata)
 
-    /**
-      * Gets the group named `name`, creating one if one does not exist.
-      * @param name the name of the group.
-      */
-    def findOrCreate(name: String): F[Group] =
-      get(name).flatMap {
-        case Some(group) => Sync[F].pure(group)
-        case None => create(name).flatMap(apply)
-      }
+    override protected def create(name: String): F[String] = create(name, List.empty)
 
     /**
       * Appends `policies` to a group named `name`. If no group exists with that name a new group will be created.
@@ -299,7 +317,7 @@ final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implici
       * Appends `members` to a group named `name`. If no group exists with that name a new group will be created.
       *
       * @param name name of the group.
-      * @param members the list of members to append to the group.
+      * @param members the list of entity IDs to append to the group.
       * @return the group id to which the members were appended to.
       */
     def addMembers(name: String, members: String*): F[String] = findOrCreate(name).flatMap { group =>
@@ -310,7 +328,7 @@ final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implici
       * Appends `subgroups` to a group named `name`. If no group exists with that name a new group will be created.
       *
       * @param name name of the group.
-      * @param subgroups the list of group ids to append to the subgroups of group.
+      * @param subgroups the list of group Is to append to the subgroups of group.
       * @return the group id to which the subgroups were appended to.
       */
     def addSubgroups(name: String, subgroups: String*): F[String] = findOrCreate(name).flatMap { group =>
@@ -319,5 +337,10 @@ final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implici
   }
 
   /** @define name group */
-  object groupAlias extends AliasCRUD[F, GroupAlias](path, uri, "group")
+  object groupAlias extends AliasCRUD[F, GroupAlias](path, uri, "group") {
+    override protected def computeAliasId(name: String, canonicalId: String, mountAccessor: String): F[String] = {
+      // We know the alias is defined
+      group.applyById(canonicalId).map(_.alias.get.id)
+    }
+  }
 }

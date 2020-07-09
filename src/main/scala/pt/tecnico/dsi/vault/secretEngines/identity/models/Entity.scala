@@ -1,14 +1,23 @@
 package pt.tecnico.dsi.vault.secretEngines.identity.models
 
 import java.time.OffsetDateTime
-import io.circe.Codec
+import io.circe.{Decoder, HCursor}
 
 object Entity {
-  implicit val codec: Codec[Entity] = Codec.forProduct12("id", "name", "creation_time", "last_update_time", "policies", "aliases", "group_ids",
-    "direct_group_ids", "inherited_group_ids", "namespace_id", "disabled", "metadata")(Entity.apply)(e =>
-    (e.id, e.name, e.creationTime, e.lastUpdateTime, e.policies, e.aliases, e.groups, e.directGroups, e.inheritedGroups, e.namespaceId, e.disabled,
-      e.metadata)
-  )
+  implicit val decoder: Decoder[Entity] = (cursor: HCursor) => for {
+    id <- cursor.get[String]("id")
+    name <- cursor.get[String]("name")
+    creationTime <- cursor.get[OffsetDateTime]("creation_time")
+    lastUpdateTime <- cursor.get[OffsetDateTime]("last_update_time")
+    policies <- cursor.getOrElse[List[String]]("policies")(List.empty)
+    aliases <- cursor.getOrElse[List[EntityAlias]]("aliases")(List.empty)
+    groups <- cursor.getOrElse[List[String]]("group_ids")(List.empty)
+    directGroups <- cursor.getOrElse[List[String]]("direct_group_ids")(List.empty)
+    inheritedGroups <- cursor.getOrElse[List[String]]("inherited_group_ids")(List.empty)
+    namespaceId <- cursor.get[String]("namespace_id")
+    disabled <- cursor.getOrElse[Boolean]("disabled")(false)
+    metadata <- cursor.getOrElse[Map[String, String]]("metadata")(Map.empty)
+  } yield Entity(id, name, creationTime, lastUpdateTime, policies, aliases, groups, directGroups, inheritedGroups, namespaceId, disabled, metadata)
 }
 case class Entity(
   id: String,
@@ -23,4 +32,4 @@ case class Entity(
   namespaceId: String,
   disabled: Boolean = false,
   metadata: Map[String, String] = Map.empty,
-)
+) extends Base
