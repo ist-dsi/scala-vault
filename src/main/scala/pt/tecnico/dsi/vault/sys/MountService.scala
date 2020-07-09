@@ -23,7 +23,7 @@ abstract class MountService[F[_]: Sync: Client, T <: Mount: Codec](val path: Str
     * @param path Specifies the path where the mount will be mounted.
     * @param mount the Mount to enable.
     */
-  def enable(path: String, mount: T): F[Unit] = {
+  def enable(path: String, mount: T): F[Unit] =
     genericExecute(POST(mount, uri / path, token))({
       case Successful(response) => response.as[Unit]
     }, {
@@ -33,7 +33,6 @@ abstract class MountService[F[_]: Sync: Client, T <: Mount: Codec](val path: Str
           case _ => tune(path, mount.config)
         }
     })
-  }
 
   /**
     * Enables a new Mount at the given path and returns the controller for it.

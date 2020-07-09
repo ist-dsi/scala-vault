@@ -39,6 +39,10 @@ class AliasCRUD[F[_]: Sync: Client, T: Decoder](basePath: String, baseUri: Uri, 
 
   /**
     * Creates a new alias for a $name.
+    *
+    * @note this method it not idempotent. If the alias already exists Vault will complain with:
+    *       `combination of mount and alias name is already in use`. Unfortunately there is nothing we can do, since the
+    *       error does not inform us of the entity id, nor can we update it via the name.
     * @param name name for the $name alias.
     * @param canonicalId $name ID of to which this alias belongs to.
     * @param mountAccessor mount accessor which this alias belongs to. Can be consulted with:
@@ -46,8 +50,10 @@ class AliasCRUD[F[_]: Sync: Client, T: Decoder](basePath: String, baseUri: Uri, 
     *   vaultClient.sys.auth.list().map { mountedAuths => mountedAuths(s"\$path/").accessor }
     * }}}
     */
-  def create(name: String, canonicalId: String, mountAccessor: String): F[Unit] =
-    execute(POST(Alias(name, canonicalId, mountAccessor, None), uri, token))
+  def create(name: String, canonicalId: String, mountAccessor: String): F[String] = {
+    implicit val d: Decoder[String] = Decoder.decodeString.at("id")
+    executeWithContextData(POST(Alias(name, canonicalId, mountAccessor, None), uri, token))
+  }
 
   /**
     * Updates an existing $name alias.
