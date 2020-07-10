@@ -1,7 +1,7 @@
 language: scala
 
 scala:
-  - 2.13.1
+  - 2.13.3
 
 services: docker
 
@@ -19,14 +19,9 @@ cache:
     - $HOME/.sbt/boot/
 
 before_script:
-  #- docker run -e SKIP_SETCAP=true --cap-add IPC_LOCK -d --name=dev-vault -p 8200:8200 vault
   - |
     docker run --cap-add IPC_LOCK -d --name=dev-vault -p 8200:8200 vault
 
 script:
   - sbt compile
   - sbt -Dsbt.color=true coverage test
-
-#after_success:
-#  - sbt coverageReport codacyCoverage
-#  - bash <(curl -s https://codecov.io/bash)
