@@ -39,13 +39,13 @@ fork := true
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
-  "org.http4s"      %% s"http4s-$module" % "0.21.6"
+  "org.http4s"      %% s"http4s-$module" % "1.0.0-M4"
 } ++ Seq(
   "io.circe"        %% "circe-derivation" % "0.13.0-M4",
   "io.circe"        %% "circe-parser"     % "0.13.0", // Just used in Databases
   "com.beachape"    %% "enumeratum-circe" % "1.6.1",
   "ch.qos.logback"  %  "logback-classic"  % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"        % "3.2.0" % Test,
+  "org.scalatest"   %% "scalatest"        % "3.2.2" % Test,
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
@@ -88,10 +88,14 @@ excludeFilter in ghpagesCleanSite := AllPassFilter // We want to keep all the pr
 val latestFileName = "latest"
 val createLatestSymlink = taskKey[Unit](s"Creates a symlink named $latestFileName which points to the latest version.")
 createLatestSymlink := {
-  ghpagesSynchLocal.value // Ensure the ghpagesRepository already exists
   import java.nio.file.Files
-  val path = (ghpagesRepository.value / "api" / latestFileName).toPath
-  if (!Files.isSymbolicLink(path)) Files.createSymbolicLink(path, new File(latestReleasedVersion.value).toPath)
+  // We use ghpagesSynchLocal instead of ghpagesRepository to ensure the files in the local filesystem already exist
+  val linkName = (ghpagesSynchLocal.value / "api" / latestFileName).toPath
+  val target = new File(latestReleasedVersion.value).toPath
+  if (!(Files.isSymbolicLink(linkName) && Files.readSymbolicLink(linkName) == target)) {
+    Files.delete(linkName)
+    Files.createSymbolicLink(linkName, target)
+  }
 }
 ghpagesPushSite := ghpagesPushSite.dependsOn(createLatestSymlink).value
 ghpagesBranch := "gh-pages"

@@ -15,7 +15,9 @@ final class Consul[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit 
   /**
     * Configures the access information for Consul. This access information is used so that Vault can communicate
     * with Consul and generate Consul tokens.
-    * @param uri the address of the Consul instance.
+    * @param uri the address of the Consul instance. If uri does not have a host `localhost` will be used.
+    *            If uri does not have a port 8500 will be used. If uri does not have a scheme `http` will be used.
+    *            Thus the "default" uri will be http://localhost:8500.
     * @param token the Consul ACL token to use. This must be a management type token.
     */
   def configure(uri: Uri, token: String): F[Unit] = {

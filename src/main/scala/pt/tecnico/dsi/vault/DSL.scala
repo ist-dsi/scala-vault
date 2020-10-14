@@ -88,8 +88,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
       case NotFound(_) | Gone(_) => Option.empty[A].pure[F]
     }
 
-  // Dotty seems intent on ruining this very nice type alias. Why is it nice? Have a look here https://youtu.be/n7PsbJwVSuE?t=409
-  type ?=>[T, R] = PartialFunction[T, R]
+  type /=>[-T, +R] = PartialFunction[T, R]
 
   /**
     * Execute the given `request`, and apply the partial function `f` to the response.
@@ -98,7 +97,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param request the request to execute.
     * @param onErrorsPF the `PartialFunction` to apply on the BadRequest errors.
     */
-  def genericExecute[A](request: F[Request[F]])(f: Response[F] ?=> F[A], onErrorsPF: List[String] ?=> F[A] = PartialFunction.empty): F[A] =
+  def genericExecute[A](request: F[Request[F]])(f: Response[F] /=> F[A], onErrorsPF: List[String] /=> F[A] = PartialFunction.empty): F[A] =
     request.flatMap(client.run(_).use(f.applyOrElse(_, defaultErrorHandler(onErrorsPF))))
 
   /**
@@ -106,7 +105,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * Otherwise an error will be raised with `UnexpectedStatus`.
     * @param onErrorsPF the `PartialFunction` to apply to the BadRequest errors.
     */
-  def defaultErrorHandler[A](onErrorsPF: List[String] ?=> F[A]): Response[F] => F[A] = {
+  def defaultErrorHandler[A](onErrorsPF: List[String] /=> F[A]): Response[F] => F[A] = {
     case BadRequest(response) =>
       implicit val d = Decoder[List[String]].at("errors")
       response.as[List[String]].flatMap(errors => onErrorsPF.applyOrElse(errors, raise))
