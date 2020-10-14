@@ -12,7 +12,10 @@ final class AppRole[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit
   private val dsl = new DSL[F] {}
   import dsl._
 
-  object roles extends RolesCRUD[F, Role](path, uri)
+  object roles extends RolesCRUD[F, Role](path, uri) {
+    override val path: String = s"${self.path}/role"
+    override val uri: Uri = self.uri / "role"
+  }
 
   def role(id: String): AppRoleRole = new AppRoleRole(id)
   final class AppRoleRole(val id: String) { innerSelf =>

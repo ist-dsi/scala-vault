@@ -58,8 +58,8 @@ object PKI {
     }
   }
 
-  implicit val decoderX509Certificate: Decoder[X509Certificate] = Decoder.decodeString.emapTry(parseCertificate)
-  val decoderPemCAChain: Decoder[List[X509Certificate]] = Decoder.decodeString.emapTry(parseChain)
+  implicit val decoderX509Certificate: Decoder[X509Certificate] = Decoder[String].emapTry(parseCertificate)
+  val decoderPemCAChain: Decoder[List[X509Certificate]] = Decoder[String].emapTry(parseChain)
 }
 
 // TODO: refactor de documentation. Extract variables.

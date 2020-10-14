@@ -21,7 +21,7 @@ final class Consul[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit 
   def configure(uri: Uri, token: String): F[Unit] = {
     import org.http4s.Uri.Scheme
     val data = Map(
-      "address" -> s"${uri.host}:${uri.port}",
+      "address" -> s"${uri.host.getOrElse("localhost")}:${uri.port.getOrElse(8500)}",
       "scheme" -> uri.scheme.getOrElse(Scheme.http).value,
       "token" -> token
     )

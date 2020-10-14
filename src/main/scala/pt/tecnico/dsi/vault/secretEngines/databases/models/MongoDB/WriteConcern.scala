@@ -13,7 +13,7 @@ object WriteConcern {
     Decoder.forProduct5("w", "wmode", "wtimeout", "j", "fsync")(WriteConcern.apply)
 
   implicit val encoder: Encoder[WriteConcern] = Encoder.encodeString.contramap(_.asJson(firstEncoder).noSpaces)
-  implicit val decoder: Decoder[WriteConcern] = Decoder.decodeString.emap(decode(_)(lastDecoder).left.map(_.getMessage))
+  implicit val decoder: Decoder[WriteConcern] = Decoder[String].emap(decode(_)(lastDecoder).left.map(_.getMessage))
 }
 /**
   * This class does not correspond directly to [[https://docs.mongodb.com/manual/reference/write-concern/ MongoDB Write Concern]] but rather
