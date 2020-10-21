@@ -11,7 +11,7 @@ object Connection extends BaseConnectionObject[Connection] {
   override protected val derivedCodec: Codec.AsObject[Connection] = deriveCodec(renaming.snakeCase)
 }
 
-case class Connection(connectionUrl: String, username: String, password: String,
+case class Connection(connectionUrl: String, username: String, password: String, tlsCertificateKey: String = "", tlsCa: String = "",
                       maxOpenConnections: Int = 2, maxIdleConnections: Int = 0, maxConnectionLifetime: Duration = Duration.Zero,
                       verifyConnection: Boolean = true, allowedRoles: Array[String] = Array.empty,
                       rootRotationStatements: Array[String] = Array.empty) extends BaseConnection {
