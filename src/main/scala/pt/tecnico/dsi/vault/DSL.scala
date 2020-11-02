@@ -7,7 +7,6 @@ import cats.syntax.functor._
 import io.circe.{Decoder, Encoder, Printer}
 import org.http4s.Status.{BadRequest, Gone, NotFound, Successful}
 import org.http4s.client.dsl.Http4sClientDsl
-import org.http4s.client.impl.EmptyRequestGenerator
 import org.http4s.client.{Client, UnexpectedStatus}
 import org.http4s.{circe, EntityDecoder, EntityEncoder, Method, Request, Response}
 
@@ -20,14 +19,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
   implicit def void: EntityDecoder[F, Unit] = EntityDecoder.void
 
   // Have you ever heard about the LIST HTTP method, neither have I, as it does not exist </faceplam>
-  // Unfortunately NoBody is a sealed trait. So we must resort to a more verbose, and ugly, way of getting a nice syntax for LIST.
-  // We need a marker type to ensure we are not generating an EmptyRequestGenerator for methods with body.
-  sealed trait Marker
-  val LIST: Method with Marker = Method.fromString("LIST").toOption.get.asInstanceOf[Method with Marker]
-  import scala.language.implicitConversions
-  implicit def listOps(list: Method with Marker): EmptyRequestGenerator[F] = new EmptyRequestGenerator[F] {
-    override def method: Method = list
-  }
+  val LIST: Method = Method.fromString("LIST").toOption.get
 
   type EntityDecoderF[T] = EntityDecoder[F, T]
 

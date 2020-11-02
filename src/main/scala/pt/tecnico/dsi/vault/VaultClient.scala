@@ -86,7 +86,7 @@ final class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implici
     val mounts = new Mounts[F](s"$path/mounts", uri / "mounts", self)
     val keys = new Keys[F](uri) // One endpoint requires a token, the other does not
     val rekey = new Rekey[F](uri / "rekey") // Does not require a token
-    val pluginCatalog = new PluginCatalog[F](s"$path/plugins/catalog", uri / "plugins" / "catalog")
+    val plugins = new Plugins[F](s"$path/plugins", uri / "plugins")
   }
 
   private val dsl = new DSL[F] {}
