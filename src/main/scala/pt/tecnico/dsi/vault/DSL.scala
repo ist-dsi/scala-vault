@@ -5,10 +5,10 @@ import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.circe.{Decoder, Encoder, Printer}
-import org.http4s.Status.{BadRequest, Gone, NotFound, Successful}
+import org.http4s.Status.{BadRequest, Gone, InternalServerError, NotFound, Successful}
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.{Client, UnexpectedStatus}
-import org.http4s.{circe, EntityDecoder, EntityEncoder, Method, Request, Response}
+import org.http4s.{circe, EntityDecoder, EntityEncoder, Method, Request, Response, Status}
 
 abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sClientDsl[F] {
   val jsonPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
@@ -98,11 +98,14 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param onErrorsPF the `PartialFunction` to apply to the BadRequest errors.
     */
   def defaultErrorHandler[A](onErrorsPF: List[String] /=> F[A]): Response[F] => F[A] = {
-    case BadRequest(response) =>
+    case response @ (BadRequest(_) | InternalServerError(_)) =>
       implicit val d = Decoder[List[String]].at("errors")
-      response.as[List[String]].flatMap(errors => onErrorsPF.applyOrElse(errors, raise))
-    case response => F.raiseError(UnexpectedStatus(response.status))
+      response.as[List[String]].flatMap(errors => onErrorsPF.applyOrElse(errors, raise(response.status)))
+    case response =>
+      // https://github.com/http4s/http4s/issues/3707
+      response.body.compile.drain.flatMap(_ => F.raiseError(UnexpectedStatus(response.status)))
   }
 
-  private def raise[A](errors: List[String]): F[A] = F.raiseError(ErroredRequest(errors))
+  private def raise[A](status: Status)(errors: List[String]): F[A] =
+    F.raiseError(new Exception(s"unexpected HTTP $status with errors:\n\t${errors.mkString("\n\t")}"))
 }
