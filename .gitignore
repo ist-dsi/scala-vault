@@ -276,3 +276,4 @@ server.pid
 
 .metals/
 .bloop/
+.bsp/

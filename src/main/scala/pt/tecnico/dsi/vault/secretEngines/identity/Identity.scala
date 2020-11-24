@@ -85,8 +85,8 @@ abstract class AliasCRUD[F[_]: Sync: Client, T <: Alias: Decoder](basePath: Stri
 }
 
 /**
-  * @define name entity
-  * @define namePlural entities
+  * @define name
+  * @define namePlural
   */
 abstract class BaseEndpoints[F[_]: Sync: Client, T <: Base: Decoder](basePath: String, baseUri: Uri, name: String)(implicit token: Header) {
   private val dsl = new DSL[F] {}

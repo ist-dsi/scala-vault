@@ -52,7 +52,7 @@ final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
     * @tparam A the type of the secret data.
     */
   def readWithVersion[A: Decoder](path: String, version: Option[Int] = None): F[Option[Secret[A]]] =
-    executeOptionWithContextData(GET((uri / "data" / path).+??("version", version), token))
+    executeOptionWithContextData(GET((uri / "data" / path).withOptionQueryParam("version", version), token))
   /**
     * Retrieves the secret data at `path`.
     * @param path the path from which to retrieve the secret data.
@@ -67,7 +67,7 @@ final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(impli
     * @tparam A the type of the secret data.
     */
   def apply[A: Decoder](path: String, version: Option[Int] = None): F[A] =
-    executeWithContextData[Secret[A]](GET((uri / "data" / path).+??("version", version), token)).map(_.data)
+    executeWithContextData[Secret[A]](GET((uri / "data" / path).withOptionQueryParam("version", version), token)).map(_.data)
 
   /**
     * Stores a secret of type `A` at `path`. Given that `A` can be encoded as a Json Object.

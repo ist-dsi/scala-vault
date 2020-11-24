@@ -90,20 +90,20 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param onErrorsPF the `PartialFunction` to apply on the BadRequest errors.
     */
   def genericExecute[A](request: F[Request[F]])(f: Response[F] /=> F[A], onErrorsPF: List[String] /=> F[A] = PartialFunction.empty): F[A] =
-    request.flatMap(client.run(_).use(f.applyOrElse(_, defaultErrorHandler(onErrorsPF))))
+    request.flatMap(req => client.run(req).use(f.applyOrElse(_, defaultErrorHandler(req)(onErrorsPF))))
 
   /**
     * If a `BadRequest` is returned its body will be decoded to a `List[String]` and the `onErrorPF` will be invoked. Allowing to recover for some errors.
     * Otherwise an error will be raised with `UnexpectedStatus`.
     * @param onErrorsPF the `PartialFunction` to apply to the BadRequest errors.
     */
-  def defaultErrorHandler[A](onErrorsPF: List[String] /=> F[A]): Response[F] => F[A] = {
+  def defaultErrorHandler[A](request: Request[F])(onErrorsPF: List[String] /=> F[A]): Response[F] => F[A] = {
     case response @ (BadRequest(_) | InternalServerError(_)) =>
       implicit val d = Decoder[List[String]].at("errors")
       response.as[List[String]].flatMap(errors => onErrorsPF.applyOrElse(errors, raise(response.status)))
     case response =>
       // https://github.com/http4s/http4s/issues/3707
-      response.body.compile.drain.flatMap(_ => F.raiseError(UnexpectedStatus(response.status)))
+      response.body.compile.drain.flatMap(_ => F.raiseError(UnexpectedStatus(response.status, request.method, request.uri)))
   }
 
   private def raise[A](status: Status)(errors: List[String]): F[A] =
