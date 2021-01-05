@@ -3,6 +3,7 @@ package pt.tecnico.dsi.vault.authMethods.token
 import scala.concurrent.duration.FiniteDuration
 import cats.effect.Sync
 import cats.instances.list._
+import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.traverse._
@@ -11,7 +12,8 @@ import io.circe.Json
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.POST
-import pt.tecnico.dsi.vault.{Auth, DSL, RolesCRUD}
+import org.http4s.Status.Successful
+import pt.tecnico.dsi.vault.{Auth, Context, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token => MToken}
 
 final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
@@ -52,11 +54,18 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
     */
   def createRole(role: String, options: CreateOptions): F[Auth] = executeWithContextAuth(POST(options, uri / "create" / role, token))
 
+  // Usually when something does not exist a REST API returns a 404, but not this one.
+  private def lookup(thingName: String, thing: String, uri: Uri): F[Option[MToken]] =
+    genericExecute(POST(Map(thingName -> thing), uri, token))({
+      case Successful(response) => response.as[Context[MToken]].map(context => Option(context.data))
+    }, {
+      case errors if errors.exists(_.contains(s"invalid $thingName")) => Option.empty[MToken].pure[F]
+    })
 
   /** @param token the token for which to retrieve information.
     * @return returns information about the `token`.
     */
-  def lookup(token: String): F[MToken] = executeWithContextData(POST(Map("token" -> token), uri / "lookup", this.token))
+  def lookup(token: String): F[Option[MToken]] = lookup("token", token, uri / "lookup")
 
   /** @return returns information about the current client token.
     */
@@ -65,8 +74,7 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
   /** @param accessor the token accessor for which to retrieve the information.
     * @return returns information about the client token from the `accessor`.
     */
-  def lookupAccessor(accessor: String): F[MToken] = executeWithContextData(POST(Map("accessor" -> accessor), uri / "lookup-accessor", token))
-
+  def lookupAccessor(accessor: String): F[Option[MToken]] = lookup("accessor", accessor, uri / "lookup-accessor")
 
 
   //Unfortunately the endpoints using this are expecting an Int, so we cannot use increment.asJson
@@ -155,6 +163,6 @@ final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit t
   def listAccessorsWithRootPolicy: F[List[MToken]] =
     for {
       listAccessors <- accessors()
-      listTokens <- listAccessors.traverse(lookupAccessor)
+      listTokens <- listAccessors.flatTraverse(accessor => lookupAccessor(accessor).map(_.toList))
     } yield listTokens.collect { case t if t.policies.contains("root") => t }
 }
