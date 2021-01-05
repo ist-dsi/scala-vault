@@ -28,7 +28,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param request the request for the endpoint
     * @tparam Data the type we are interested in.
     */
-  def executeWithContextData[Data: Decoder](request: F[Request[F]])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Data] =
+  def executeWithContextData[Data: Decoder](request: Request[F])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Data] =
     execute[Context[Data]](request).map(_.data)
 
   /**
@@ -36,21 +36,21 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param request the request for the endpoint
     * @tparam Data the type we are interested in.
     */
-  def executeOptionWithContextData[Data: Decoder](request: F[Request[F]])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Option[Data]] =
+  def executeOptionWithContextData[Data: Decoder](request: Request[F])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Option[Data]] =
     executeOption[Context[Data]](request).map(_.map(_.data))
 
   /**
     * Executes a request for an endpoint which returns `Context[Keys]` but we are only interested in the keys.
     * @param request the request for the endpoint
     */
-  def executeWithContextKeys(request: F[Request[F]])(implicit decoder: EntityDecoder[F, Context[Keys]]): F[List[String]] =
+  def executeWithContextKeys(request: Request[F])(implicit decoder: EntityDecoder[F, Context[Keys]]): F[List[String]] =
     execute[Context[Keys]](request).map(_.data.keys)
 
   /**
     * Executes a request for an endpoint which returns `Context[_]` but we are only interested in the `Auth`.
     * @param request the request for the endpoint
     */
-  def executeWithContextAuth(request: F[Request[F]]): F[Auth] = execute[Context[Option[Unit]]](request).flatMap { context =>
+  def executeWithContextAuth(request: Request[F]): F[Auth] = execute[Context[Option[Unit]]](request).flatMap { context =>
     F.fromOption(context.auth, new Throwable("Was expecting response to contain \"auth\" field."))
   }
 
@@ -61,7 +61,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param request the request to execute.
     * @tparam A the type to which the response will be decoded to.
     */
-  def execute[A: Decoder: EntityDecoderF](request: F[Request[F]]): F[A] =
+  def execute[A: Decoder: EntityDecoderF](request: Request[F]): F[A] =
     genericExecute(request) {
       case Successful(response) => response.as[A]
     }
@@ -74,7 +74,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param request the request to execute.
     * @tparam A the type to which the response will be decoded to.
     */
-  def executeOption[A: Decoder: EntityDecoderF](request: F[Request[F]]): F[Option[A]] =
+  def executeOption[A: Decoder: EntityDecoderF](request: Request[F]): F[Option[A]] =
     genericExecute(request) {
       case Successful(response) => response.as[A].map(Option.apply)
       case NotFound(_) | Gone(_) => Option.empty[A].pure[F]
@@ -89,8 +89,8 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sC
     * @param request the request to execute.
     * @param onErrorsPF the `PartialFunction` to apply on the BadRequest errors.
     */
-  def genericExecute[A](request: F[Request[F]])(f: Response[F] /=> F[A], onErrorsPF: List[String] /=> F[A] = PartialFunction.empty): F[A] =
-    request.flatMap(req => client.run(req).use(f.applyOrElse(_, defaultErrorHandler(req)(onErrorsPF))))
+  def genericExecute[A](request: Request[F])(f: Response[F] /=> F[A], onErrorsPF: List[String] /=> F[A] = PartialFunction.empty): F[A] =
+    client.run(request).use(f.applyOrElse(_, defaultErrorHandler(request)(onErrorsPF)))
 
   /**
     * If a `BadRequest` is returned its body will be decoded to a `List[String]` and the `onErrorPF` will be invoked. Allowing to recover for some errors.
