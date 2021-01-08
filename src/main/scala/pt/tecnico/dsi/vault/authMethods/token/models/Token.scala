@@ -15,6 +15,6 @@ case class Token(id: String, path: String, accessor: String,
                  expireTime: Option[OffsetDateTime], explicitMaxTtl: Duration, ttl: Duration,
                  numUses: Int, orphan: Boolean,
                  meta: Option[Map[String, String]], policies: List[String], `type`: TokenType) {
-  def hasExpired(currentDateTime: OffsetDateTime = OffsetDateTime.now()): Boolean =
-    expireTime.exists(t => currentDateTime.isAfter(t))
+  def isExpiredAt(dateTime: OffsetDateTime): Boolean = expireTime.exists(dateTime.isAfter)
+  val isExpired: Boolean = isExpiredAt(OffsetDateTime.now)
 }
