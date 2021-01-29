@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.vault.sys
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.Plugin
 import pt.tecnico.dsi.vault.sys.models.Plugin.Type
 
-class Plugins[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
+class Plugins[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 

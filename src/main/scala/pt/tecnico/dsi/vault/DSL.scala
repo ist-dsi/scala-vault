@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.vault
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -10,7 +10,7 @@ import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.{Client, UnexpectedStatus}
 import org.http4s.{circe, EntityDecoder, EntityEncoder, Method, Request, Response, Status}
 
-abstract class DSL[F[_]](implicit client: Client[F], F: Sync[F]) extends Http4sClientDsl[F] {
+abstract class DSL[F[_]](implicit client: Client[F], F: Concurrent[F]) extends Http4sClientDsl[F] {
   val jsonPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
   implicit def jsonEncoder[A: Encoder]: EntityEncoder[F, A] = circe.jsonEncoderWithPrinterOf[F, A](jsonPrinter)
   implicit def jsonDecoder[A: Decoder]: EntityDecoder[F, A] = circe.accumulatingJsonOf[F, A]

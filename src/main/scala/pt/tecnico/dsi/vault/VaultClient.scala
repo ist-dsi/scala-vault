@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.vault
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import io.circe.{Decoder, Encoder}
 import org.http4s._
 import org.http4s.client.Client
@@ -9,7 +9,7 @@ import org.http4s.Method.{DELETE, GET, PUT}
 // Some operations don't require a token. So the fact that we are requiring one might be misleading.
 // We could implement something like this:
 /*object VaultClient {
-  class VaultClientPublicEndpoints[F[_]: Sync](val baseUri: Uri)(implicit client: Client[F]) { self =>
+  class VaultClientPublicEndpoints[F[_]: Concurrent](val baseUri: Uri)(implicit client: Client[F]) { self =>
     val uri = baseUri / "v1"
 
     object sys {
@@ -27,14 +27,14 @@ import org.http4s.Method.{DELETE, GET, PUT}
     }
   }
 
-  def apply[F[_]: Sync](baseUri: Uri, token: String)(implicit client: Client[F]): VaultClient[F] =
+  def apply[F[_]: Concurrent](baseUri: Uri, token: String)(implicit client: Client[F]): VaultClient[F] =
     new VaultClient(baseUri, token)
-  def apply[F[_]: Sync](baseUri: Uri)(implicit client: Client[F]): VaultClientPublicEndpoints[F] =
+  def apply[F[_]: Concurrent](baseUri: Uri)(implicit client: Client[F]): VaultClientPublicEndpoints[F] =
     new VaultClientPublicEndpoints(baseUri)
 }*/
 // But is it worth the extra complexity?
 
-final class VaultClient[F[_]: Sync](val baseUri: Uri, val token: String)(implicit client: Client[F]) { self =>
+final class VaultClient[F[_]: Concurrent](val baseUri: Uri, val token: String)(implicit client: Client[F]) { self =>
   implicit val tokenHeader: Header = Header("X-Vault-Token", token)
 
   val uri: Uri = baseUri / "v1"

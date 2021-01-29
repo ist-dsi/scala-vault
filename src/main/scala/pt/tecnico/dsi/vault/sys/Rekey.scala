@@ -1,13 +1,13 @@
 package pt.tecnico.dsi.vault.sys
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, PUT}
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{BackupKeys, RekeyProgress, RekeyVerificationProgress}
 
-final class Rekey[F[_]: Sync: Client](uri: Uri) { self =>
+final class Rekey[F[_]: Concurrent: Client](uri: Uri) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 

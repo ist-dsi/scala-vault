@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.vault.authMethods.token
 
 import scala.concurrent.duration.FiniteDuration
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.instances.list._
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
@@ -16,7 +16,7 @@ import org.http4s.Status.Successful
 import pt.tecnico.dsi.vault.{Auth, Context, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token => MToken}
 
-final class Token[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
+final class Token[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 

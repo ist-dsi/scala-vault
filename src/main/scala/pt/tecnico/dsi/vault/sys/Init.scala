@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.vault.sys
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import io.circe.Decoder
 import org.http4s.Uri
 import org.http4s.client.Client
@@ -8,7 +8,7 @@ import org.http4s.Method.{GET, PUT}
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{InitOptions, InitResult}
 
-final class Init[F[_]: Sync: Client](val path: String, val uri: Uri) {
+final class Init[F[_]: Concurrent: Client](val path: String, val uri: Uri) {
   private val dsl = new DSL[F] {}
   import dsl._
 

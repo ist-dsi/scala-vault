@@ -4,7 +4,7 @@ import java.math.BigInteger
 import java.security.cert.{X509Certificate, X509CRL}
 import scala.concurrent.duration.Duration
 import scala.util.Try
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.instances.list._
 import cats.instances.try_._
 import cats.syntax.flatMap._
@@ -66,7 +66,7 @@ object PKI {
 /**
   * @define sudoRequired This endpoint requires sudo capabilities.
   */
-final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
+final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -78,14 +78,14 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
   def readCACertificatePem: F[String] = execute(GET(uri / "ca" / "pem"))
   /** Retrieves the CA certificate. */
   def readCACertificate: F[X509Certificate] = readCACertificatePem.flatMap { pem =>
-    implicitly[Sync[F]].fromTry(parseCertificate(pem))
+    implicitly[Concurrent[F]].fromTry(parseCertificate(pem))
   }
 
   /** Retrieves the CA certificate chain, including the CA in PEM format. */
   def readCACertificateChainPem: F[String] = execute(GET(uri / "ca_chain"))
   /** Retrieves the CA certificate chain, including the CA. */
   def readCACertificateChain: F[List[X509Certificate]] = readCACertificateChainPem.flatMap { pem =>
-    implicitly[Sync[F]].fromTry(parseChain(pem))
+    implicitly[Concurrent[F]].fromTry(parseChain(pem))
   }
 
   /**
@@ -126,7 +126,7 @@ final class PKI[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit tok
   def readCRLPem: F[String] = execute(GET(uri / "crl" / "pem", token))
   /** Retrieves the current CRL. */
   def readCRL: F[X509CRL] = readCRLPem.flatMap{ pem =>
-    implicitly[Sync[F]].fromTry(parseCRL(pem))
+    implicitly[Concurrent[F]].fromTry(parseCRL(pem))
   }
 
   /**

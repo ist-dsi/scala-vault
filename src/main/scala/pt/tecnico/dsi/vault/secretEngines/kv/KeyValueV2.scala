@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.vault.secretEngines.kv
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.syntax.functor._
 import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
@@ -9,7 +9,7 @@ import org.http4s.Method.{DELETE, GET, POST, PUT}
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.secretEngines.kv.models.{Configuration, Metadata, Secret, VersionMetadata}
 
-final class KeyValueV2[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
+final class KeyValueV2[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 

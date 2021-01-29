@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.vault.secretEngines.consul
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import io.circe.Decoder
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -8,7 +8,7 @@ import org.http4s.Method.{GET, POST}
 import pt.tecnico.dsi.vault.{DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.secretEngines.consul.models.Role
 
-final class Consul[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
+final class Consul[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 

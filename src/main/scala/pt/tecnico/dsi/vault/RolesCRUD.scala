@@ -1,12 +1,12 @@
 package pt.tecnico.dsi.vault
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
 
-class RolesCRUD[F[_]: Sync: Client, Role: Encoder: Decoder](basePath: String, baseUri: Uri)(implicit token: Header) {
+class RolesCRUD[F[_]: Concurrent: Client, Role: Encoder: Decoder](basePath: String, baseUri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 

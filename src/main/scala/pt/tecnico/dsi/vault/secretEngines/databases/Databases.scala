@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.vault.secretEngines.databases
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import io.circe.Codec
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.{DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.secretEngines.databases.models._
 
 abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Role <: BaseRole : Codec]
-                        (val path: String, val uri: Uri)(implicit protected val token: Header, protected val F: Sync[F]) { self =>
+                        (val path: String, val uri: Uri)(implicit protected val token: Header, protected val F: Concurrent[F]) { self =>
   protected val dsl: DSL[F] = new DSL[F] {}
   import dsl._
 

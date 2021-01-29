@@ -1,14 +1,14 @@
 package pt.tecnico.dsi.vault.sys
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import cats.effect.Sync
+import cats.effect.Concurrent
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.PUT
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{Lease, LeaseRenew}
 
-final class Leases[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) {
+final class Leases[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 

@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.vault.sys
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.circe.Codec
@@ -11,7 +11,7 @@ import org.http4s.Status.Successful
 import pt.tecnico.dsi.vault.{DSL, VaultClient}
 import pt.tecnico.dsi.vault.sys.models.{Mount, Mounted, TuneOptions}
 
-abstract class MountService[F[_]: Sync: Client, T <: Mount: Codec](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header) {
+abstract class MountService[F[_]: Concurrent: Client, T <: Mount: Codec](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -29,7 +29,7 @@ abstract class MountService[F[_]: Sync: Client, T <: Mount: Codec](val path: Str
     }, {
       case errors if errors.exists(_.contains("path is already in use at")) =>
         apply(path).flatMap {
-          case options if options == mount.config => implicitly[Sync[F]].unit
+          case options if options == mount.config => implicitly[Concurrent[F]].unit
           case _ => tune(path, mount.config)
         }
     })

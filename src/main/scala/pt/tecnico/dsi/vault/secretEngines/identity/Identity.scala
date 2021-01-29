@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.vault.secretEngines.identity
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.syntax.applicative._
 import cats.syntax.functor._
 import cats.syntax.flatMap._
@@ -20,7 +20,7 @@ object AliasCRUD {
   implicit val encoder: Encoder[AliasCreate] = deriveEncoder(renaming.snakeCase)
 }
 /** @define name */
-abstract class AliasCRUD[F[_]: Sync: Client, T <: Alias: Decoder](basePath: String, baseUri: Uri, baseName: String)(implicit token: Header) {
+abstract class AliasCRUD[F[_]: Concurrent: Client, T <: Alias: Decoder](basePath: String, baseUri: Uri, baseName: String)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -88,7 +88,7 @@ abstract class AliasCRUD[F[_]: Sync: Client, T <: Alias: Decoder](basePath: Stri
   * @define name
   * @define namePlural
   */
-abstract class BaseEndpoints[F[_]: Sync: Client, T <: Base: Decoder](basePath: String, baseUri: Uri, name: String)(implicit token: Header) {
+abstract class BaseEndpoints[F[_]: Concurrent: Client, T <: Base: Decoder](basePath: String, baseUri: Uri, name: String)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -124,7 +124,7 @@ abstract class BaseEndpoints[F[_]: Sync: Client, T <: Base: Decoder](basePath: S
   def deleteById(id: String): F[Unit] = execute(DELETE(uri / "id" / id, token))
 }
 
-final class Identity[F[_]: Sync: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
+final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 

@@ -1,13 +1,13 @@
 package pt.tecnico.dsi.vault.sys
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{GET, PUT}
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.KeyStatus
 
-final class Keys[F[_]: Sync: Client](uri: Uri)(implicit token: Header) {
+final class Keys[F[_]: Concurrent: Client](uri: Uri)(implicit token: Header) {
   private val dsl = new DSL[F] {}
   import dsl._
 
