@@ -76,7 +76,7 @@ class SysSpec extends Utils {
     }
 
     "generate a root token" in {
-      val io = for {
+      for {
         start <- client.sys.generateRoot.start()
         progress <- client.sys.generateRoot.put(unsealKey, start.nonce)
       } yield {
@@ -90,22 +90,25 @@ class SysSpec extends Utils {
         logger.info(s"RootGeneration produced ${token}")
         token should not be empty
       }
-      io.unsafeToFuture()
     }
   }
 
   "The leases endpoint" should {
     import pt.tecnico.dsi.vault.authMethods.token.models.CreateOptions
     // Unfortunately we first need to create a token in order to have leases
-    client.authMethods.token.create(CreateOptions(ttl = 5.minute, explicitMaxTtl = 20.minutes)).unsafeRunSync()
+    val createToken = client.authMethods.token.create(CreateOptions(ttl = 5.minute, explicitMaxTtl = 20.minutes))
     val prefix = "auth/token/create"
 
     "list leases" in idempotently {
-      client.sys.leases.list(prefix).map(_.length should be >= 1)
+      for {
+        _ <- createToken
+        leases <- client.sys.leases.list(prefix)
+      } yield leases.length should be >= 1
     }
 
     "read info about a lease" in idempotently {
       for {
+        _ <- createToken
         leases <- client.sys.leases.list(prefix)
         lease <- client.sys.leases(s"$prefix/${leases.last}")
       } yield lease.renewable shouldBe true
@@ -232,7 +235,7 @@ class SysSpec extends Utils {
     }
     "remount a secret engine" in {
       // The second remount is just so we can re-run the tests
-      val io = for {
+      for {
         _ <- client.sys.mounts.enable("secret", createSecretEngine("kv"))
         firstRemount <- client.sys.mounts.remount("secret", "new-secret")
         read <- client.sys.mounts.list()
@@ -242,7 +245,6 @@ class SysSpec extends Utils {
         read.keys should contain ("new-secret/")
         secondRemount shouldBe ()
       }
-      io.unsafeToFuture()
     }
   }
 }

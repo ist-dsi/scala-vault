@@ -1,6 +1,7 @@
 package pt.tecnico.dsi.vault
 
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.unsafe.implicits.global
+import cats.effect.IO
 import cats.implicits._
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.syntax.literals._
@@ -9,28 +10,23 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest._
 import org.scalatest.wordspec.AsyncWordSpec
 import org.scalatest.matchers.should.Matchers
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.sys.process._
 import org.http4s.client.Client
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
   val logger: Logger = getLogger
-  implicit override def executionContext: ExecutionContextExecutor = ExecutionContext.global
-  implicit val timer: Timer[IO] = IO.timer(executionContext)
-  implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
-
-  val (_httpClient, finalizer) = BlazeClientBuilder[IO](global)
+  val (_httpClient, finalizer) = BlazeClientBuilder[IO](global.compute)
     .withResponseHeaderTimeout(10.seconds)
     .withCheckEndpointAuthentication(false)
     .resource.allocated.unsafeRunSync()
   override protected def afterAll(): Unit = finalizer.unsafeRunSync()
-
+  
   //import org.http4s.client.middleware.Logger
   //implicit val httpClient: Client[IO] = Logger(logBody = true, logHeaders = true)(_httpClient)
   implicit val httpClient: Client[IO] = _httpClient
-
+  
   val ignoreStdErr = ProcessLogger(_ => ())
   val UnsealKeyRegex = """(?<=Unseal Key: )([^\n]+)""".r.unanchored
   val RootTokenRegex = """(?<=Root Token: )([^\n]+)""".r.unanchored
@@ -40,7 +36,7 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   logger.info(s"Unseal Key: $unsealKey\nRoot Token: $rootToken")
   // By default the vault container listens in 0.0.0.0:8200
   val client = new VaultClient[IO](uri"http://localhost:8200", rootToken)
-
+  
   implicit class RichIO[T](io: IO[T]) {
     def idempotently(test: T => Assertion, repetitions: Int = 3): IO[Assertion] = {
       require(repetitions >= 2, "To test for idempotency at least 2 repetitions must be made")
@@ -69,10 +65,10 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
       }
     }
   }
-
+  
   import scala.language.implicitConversions
   implicit def io2Future[T](io: IO[T]): Future[T] = io.unsafeToFuture()
-
+  
   private def ordinalSuffix(number: Int): String = {
     number % 100 match {
       case 1 => "st"
@@ -81,10 +77,10 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
       case _ => "th"
     }
   }
-
+  
   def idempotently(test: IO[Assertion], repetitions: Int = 3): Future[Assertion] = {
     require(repetitions >= 2, "To test for idempotency at least 2 repetitions must be made")
-
+    
     // If the first run fails we do not want to mask its exception, because failing in the first attempt means
     // whatever is being tested in `test` is not implemented correctly.
     test.unsafeToFuture().flatMap { _ =>
