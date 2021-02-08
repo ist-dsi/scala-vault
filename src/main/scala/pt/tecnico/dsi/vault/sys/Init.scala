@@ -13,7 +13,7 @@ final class Init[F[_]: Concurrent: Client](val path: String, val uri: Uri) {
   import dsl._
 
   /** @return the initialization status of Vault. */
-  def initialized(): F[Boolean] = {
+  val initialized: F[Boolean] = {
     implicit val d = Decoder[Boolean].at("initialized")
     execute(GET(uri))
   }

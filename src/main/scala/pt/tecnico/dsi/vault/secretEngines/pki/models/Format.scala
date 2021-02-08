@@ -1,10 +1,10 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
-import enumeratum.{Enum, EnumEntry}
-import pt.tecnico.dsi.vault.CirceLowercaseEnum
+import enumeratum.EnumEntry.Lowercase
+import enumeratum.{CirceEnum, Enum, EnumEntry}
 
-sealed trait Format extends EnumEntry
-case object Format extends Enum[Format] with CirceLowercaseEnum[Format] {
+sealed trait Format extends EnumEntry with Lowercase
+case object Format extends Enum[Format] with CirceEnum[Format] {
   case object Pem extends Format
   case object Der extends Format
   case object Pem_Bundle extends Format

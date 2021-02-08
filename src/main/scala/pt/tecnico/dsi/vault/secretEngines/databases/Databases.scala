@@ -18,7 +18,7 @@ abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Rol
     val uri: Uri = self.uri / "config"
 
     /** @return all available connections. */
-    def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
+    val list: F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
     /** @return the connection associated with `name`. */
     def get(name: String): F[Option[Connection]] = executeOptionWithContextData(GET(uri / name, token))

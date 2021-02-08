@@ -75,16 +75,16 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   // TODO: these read methods return 204 when no CA is configured
 
   /** Retrieves the CA certificate in a PEM format. */
-  def readCACertificatePem: F[String] = execute(GET(uri / "ca" / "pem"))
+  val readCACertificatePem: F[String] = execute(GET(uri / "ca" / "pem"))
   /** Retrieves the CA certificate. */
-  def readCACertificate: F[X509Certificate] = readCACertificatePem.flatMap { pem =>
+  val readCACertificate: F[X509Certificate] = readCACertificatePem.flatMap { pem =>
     implicitly[Concurrent[F]].fromTry(parseCertificate(pem))
   }
 
   /** Retrieves the CA certificate chain, including the CA in PEM format. */
-  def readCACertificateChainPem: F[String] = execute(GET(uri / "ca_chain"))
+  val readCACertificateChainPem: F[String] = execute(GET(uri / "ca_chain"))
   /** Retrieves the CA certificate chain, including the CA. */
-  def readCACertificateChain: F[List[X509Certificate]] = readCACertificateChainPem.flatMap { pem =>
+  val readCACertificateChain: F[List[X509Certificate]] = readCACertificateChainPem.flatMap { pem =>
     implicitly[Concurrent[F]].fromTry(parseChain(pem))
   }
 
@@ -103,7 +103,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   def submitCAInformation(pemBundle: String): F[Unit] = execute(POST(Map("pem_bundle" -> pemBundle), uri / "config" / "ca", token))
 
   /** @return the duration for which the generated CRL should be marked valid. */
-  def readCRLConfiguration(): F[CRLConfiguration] = execute(GET(uri / "config" / "crl", token))
+  val readCRLConfiguration: F[CRLConfiguration] = execute(GET(uri / "config" / "crl", token))
   /** Sets the duration for which the generated CRL should be marked valid.
     * If the CRL is disabled, it will return a signed but zero-length CRL for any request. If enabled, it will re-build the CRL.
     *
@@ -114,7 +114,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   def setCRLConfiguration(config: CRLConfiguration): F[Unit] = execute(POST(config, uri / "config" / "crl", token))
 
   /** @return the URLs to be encoded in generated certificates. */
-  def readURLs(): F[URLs] = executeWithContextData(GET(uri / "config" / "urls", token))
+  val readURLs: F[URLs] = executeWithContextData(GET(uri / "config" / "urls", token))
   /**
     * Sets the issuing certificate endpoints, CRL distribution points, and OCSP server endpoints that will
     * be encoded into issued certificates. You can update any of the values at any time without affecting the other existing values.
@@ -123,9 +123,9 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   def setURLs(urls: URLs): F[Unit] = execute(POST(urls, uri / "config" / "urls", token))
 
   /** Retrieves the current CRL in a PEM format. */
-  def readCRLPem: F[String] = execute(GET(uri / "crl" / "pem", token))
+  val readCRLPem: F[String] = execute(GET(uri / "crl" / "pem", token))
   /** Retrieves the current CRL. */
-  def readCRL: F[X509CRL] = readCRLPem.flatMap{ pem =>
+  val readCRL: F[X509CRL] = readCRLPem.flatMap{ pem =>
     implicitly[Concurrent[F]].fromTry(parseCRL(pem))
   }
 
@@ -133,7 +133,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
     * Forces a rotation of the CRL. This can be used by administrators to cut the size of the CRL if it contains a number
     * of certificates that have now expired, but has not been rotated due to no further certificates being revoked.
     */
-  def rotateCRLs(): F[Unit] = execute(GET(uri / "crl" / "rotate", token))
+  val rotateCRLs: F[Unit] = execute(GET(uri / "crl" / "rotate", token))
 
   //</editor-fold>
 
@@ -188,7 +188,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   /** Deletes the current CA key. The old CA certificate will still be accessible for reading until
     * a new certificate/key are generated or uploaded.
     * $sudoRequired */
-  def deleteRoot(): F[Unit] = execute(DELETE(uri / "root", token))
+  val deleteRoot: F[Unit] = execute(DELETE(uri / "root", token))
 
   // We could make the result be a dependent type based upon the Type value
   // Devolve com Context:
@@ -403,7 +403,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   def readCertificate(serial: BigInteger): F[Option[X509Certificate]] = readCertificate(toSerialString(serial))
 
   /** Returns the serial numbers of the current certificates. */
-  def listCertificates(): F[List[String]] = executeWithContextKeys(GET(uri / "certs", token))
+  val listCertificates: F[List[String]] = executeWithContextKeys(GET(uri / "certs", token))
   //</editor-fold>
 
   /**

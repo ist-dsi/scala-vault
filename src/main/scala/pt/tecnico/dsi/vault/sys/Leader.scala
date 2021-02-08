@@ -12,7 +12,7 @@ final class Leader[F[_]: Concurrent: Client](uri: Uri)(implicit token: Header) {
   import dsl._
 
   /** @return the high availability status and current leader instance of Vault. */
-  def status(): F[LeaderStatus] = execute(GET(uri / "leader"))
+  val status: F[LeaderStatus] = execute(GET(uri / "leader"))
 
   /**
     * Forces the node to give up active status. If the node does not have active status, this does nothing.
@@ -20,5 +20,5 @@ final class Leader[F[_]: Concurrent: Client](uri: Uri)(implicit token: Header) {
     * standby nodes grab the active lock in the interim, the same node may become the active node again.
     * Requires a token with `root` policy or `sudo` capability on the path.
     */
-  def stepDown(): F[Unit] = execute(PUT(uri / "step-down", token))
+  val stepDown: F[Unit] = execute(PUT(uri / "step-down", token))
 }

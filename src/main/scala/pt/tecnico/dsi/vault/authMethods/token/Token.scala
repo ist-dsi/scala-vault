@@ -23,7 +23,7 @@ final class Token[F[_]: Concurrent: Client](val path: String, val uri: Uri)(impl
   /** @return a list with all token accessor. This requires sudo capability, and access to it should be tightly
     *         controlled as the accessors can be used to revoke very large numbers of tokens and their associated
     *         leases at once. */
-  def accessors(): F[List[String]] = executeWithContextKeys(LIST(uri / "accessors", token))
+  val accessors: F[List[String]] = executeWithContextKeys(LIST(uri / "accessors", token))
 
   /**
     * Creates a new token. Certain options are only available when called by a root token.
@@ -69,7 +69,7 @@ final class Token[F[_]: Concurrent: Client](val path: String, val uri: Uri)(impl
 
   /** @return returns information about the current client token.
     */
-  def lookupSelf(): F[MToken] = executeWithContextData(POST(uri / "lookup-self", token))
+  val lookupSelf: F[MToken] = executeWithContextData(POST(uri / "lookup-self", token))
 
   /** @param accessor the token accessor for which to retrieve the information.
     * @return returns information about the client token from the `accessor`.
@@ -124,7 +124,7 @@ final class Token[F[_]: Concurrent: Client](val path: String, val uri: Uri)(impl
 
   /** Revokes the token used to call it and all child tokens. When the token is revoked,
     * all dynamic secrets generated with it are also revoked. */
-  def revokeSelf(): F[Unit] = execute(POST(uri / "revoke-self", token))
+  val revokeSelf: F[Unit] = execute(POST(uri / "revoke-self", token))
 
   /**
     * Revoke the token associated with the accessor and all the child tokens. This is meant for purposes where there
@@ -162,7 +162,7 @@ final class Token[F[_]: Concurrent: Client](val path: String, val uri: Uri)(impl
     */
   def listAccessorsWithRootPolicy: F[List[MToken]] =
     for {
-      listAccessors <- accessors()
-      listTokens <- listAccessors.flatTraverse(accessor => lookupAccessor(accessor).map(_.toList))
+      listAccessors <- accessors
+      listTokens <- listAccessors.flatTraverse(lookupAccessor(_).map(_.toList))
     } yield listTokens.collect { case t if t.policies.contains("root") => t }
 }

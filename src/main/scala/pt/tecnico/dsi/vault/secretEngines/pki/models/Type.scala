@@ -1,10 +1,10 @@
 package pt.tecnico.dsi.vault.secretEngines.pki.models
 
-import enumeratum.{EnumEntry, Enum}
-import pt.tecnico.dsi.vault.CirceLowercaseEnum
+import enumeratum.EnumEntry.Lowercase
+import enumeratum.{CirceEnum, Enum, EnumEntry}
 
-sealed trait Type extends EnumEntry
-case object Type extends Enum[Type] with CirceLowercaseEnum[Type] {
+sealed trait Type extends EnumEntry with Lowercase
+case object Type extends Enum[Type] with CirceEnum[Type] {
   /** The private key will be returned in the response. */
   case object Exported extends Type
   /** Te private key will not be returned and cannot be retrieved later. */

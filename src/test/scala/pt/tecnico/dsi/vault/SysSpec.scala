@@ -6,14 +6,14 @@ import pt.tecnico.dsi.vault.sys.models.{AuthMethod, SecretEngine, TuneOptions}
 class SysSpec extends Utils {
   "The init endpoint" should {
     "return the initialization status" in idempotently {
-      client.sys.init.initialized().map(_ shouldBe true)
+      client.sys.init.initialized.map(_ shouldBe true)
     }
     // We cannot test initialize because the vault docker comes already initialized.
   }
 
   "The health endpoint" should {
     "return the health status" in idempotently {
-      client.sys.health.status().map { status =>
+      client.sys.health.status.map { status =>
         status.`sealed` shouldBe false
         status.initialized shouldBe true
         status.standby shouldBe false
@@ -23,19 +23,19 @@ class SysSpec extends Utils {
 
   "The leader endpoint" should {
     "return the leader status" in idempotently {
-      client.sys.leader.status().map { status =>
+      client.sys.leader.status.map { status =>
         status.haEnabled shouldBe false
         status.performanceStandby shouldBe false
       }
     }
     "be able to step down" in idempotently {
-      client.sys.leader.stepDown().map(_ shouldBe ())
+      client.sys.leader.stepDown.map(_ shouldBe ())
     }
   }
 
   "The seal endpoint" should {
     "return the seal status" in idempotently {
-      client.sys.seal.status().map { status =>
+      client.sys.seal.status.map { status =>
         status.`sealed` shouldBe false
         status.secretShares shouldBe 1
         status.secretThreshold shouldBe 1
@@ -64,7 +64,7 @@ class SysSpec extends Utils {
     }
 
     "return the root generation progress" in {
-      client.sys.generateRoot.progress().map { progress =>
+      client.sys.generateRoot.progress.map { progress =>
         progress.complete shouldBe false
         progress.progress shouldBe 0
         progress.required shouldBe 1
@@ -72,7 +72,7 @@ class SysSpec extends Utils {
     }
 
     "cancel the root generation progress" in idempotently {
-      client.sys.generateRoot.cancel().map(_ shouldBe ())
+      client.sys.generateRoot.cancel.map(_ shouldBe ())
     }
 
     "generate a root token" in {
@@ -158,12 +158,12 @@ class SysSpec extends Utils {
     }
     "list policies" in idempotently {
       //TODO: this test should stand on its own
-      client.sys.policy.list().map(_ should contain.allOf("test", "test2"))
+      client.sys.policy.list.map(_ should contain.allOf("test", "test2"))
     }
     "delete a policy" in idempotently {
       for {
         first <- client.sys.policy.delete("test2")
-        list <- client.sys.policy.list()
+        list <- client.sys.policy.list
       } yield {
         first shouldBe ()
         list should not contain ("teste2")
@@ -186,7 +186,7 @@ class SysSpec extends Utils {
       } yield result
     }
     "list authentication methods" in idempotently {
-      client.sys.auth.list().map { authMethods =>
+      client.sys.auth.list.map { authMethods =>
         authMethods should contain key "test/"
         authMethods should contain key "token/"
         authMethods.values.map(_.config) should contain(createAuthMethod("dummy").config)
@@ -195,7 +195,7 @@ class SysSpec extends Utils {
     "disable an authentication method" in idempotently {
       for {
         first <- client.sys.auth.disable("test2")
-        list <- client.sys.auth.list()
+        list <- client.sys.auth.list
       } yield {
         first shouldBe ()
         list should not contain key ("teste2/")
@@ -217,7 +217,7 @@ class SysSpec extends Utils {
       } yield result
     }
     "list secret engines" in idempotently {
-      client.sys.mounts.list().map { secretEngines =>
+      client.sys.mounts.list.map { secretEngines =>
         secretEngines should contain key "test/"
         secretEngines("test/").accessor should startWith("consul")
         secretEngines should contain key "test2/"
@@ -227,7 +227,7 @@ class SysSpec extends Utils {
     "disable a secret engine" in idempotently {
       for {
         first <- client.sys.mounts.disable("test2")
-        list <- client.sys.mounts.list()
+        list <- client.sys.mounts.list
       } yield {
         first shouldBe ()
         list should not contain key ("teste2/")
@@ -238,7 +238,7 @@ class SysSpec extends Utils {
       for {
         _ <- client.sys.mounts.enable("secret", createSecretEngine("kv"))
         firstRemount <- client.sys.mounts.remount("secret", "new-secret")
-        read <- client.sys.mounts.list()
+        read <- client.sys.mounts.list
         secondRemount <- client.sys.mounts.remount("new-secret", "secret")
       } yield {
         firstRemount shouldBe ()

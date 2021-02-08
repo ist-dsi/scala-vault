@@ -11,7 +11,7 @@ trait StaticRoles[F[_]] { self: Databases[F, _, _] =>
     val uri: Uri = self.uri / "static-roles"
 
     /** List the available roles. */
-    def list(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
+    val list: F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
     /** @return the role associated with `name`. */
     def get(name: String): F[Option[StaticRole]] = executeOptionWithContextData(GET(uri / name, token))

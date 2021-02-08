@@ -12,13 +12,13 @@ final class Seal[F[_]: Concurrent: Client](uri: Uri) {
   import dsl._
 
   /** @return the seal status of the Vault. */
-  def status(): F[SealStatus] = execute(GET(uri / "seal-status"))
+  val status: F[SealStatus] = execute(GET(uri / "seal-status"))
 
   /**
     * Seals the Vault. In HA mode, only an active node can be sealed. Standby nodes should be restarted to get the
     * same effect. Requires a token with `root` policy or `sudo` capability on the path.
     */
-  def seal(): F[Unit] = execute(PUT(uri / "seal"))
+  val seal: F[Unit] = execute(PUT(uri / "seal"))
 
   /**
     * This endpoint is used to enter a single master key share to progress the unsealing of the Vault.

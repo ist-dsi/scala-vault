@@ -18,14 +18,14 @@ class Plugins[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit
     val uri: Uri = self.uri / "catalog"
 
     /** Lists the plugins in the catalog by type. */
-    def list(): F[Map[String, List[String]]] = executeWithContextData(GET(uri, token))
+    val list: F[Map[String, List[String]]] = executeWithContextData(GET(uri, token))
 
     /** Lists the auth plugins in the catalog. */
-    def listAuth(): F[List[String]] = executeWithContextKeys(GET(uri / "auth", token))
+    val listAuth: F[List[String]] = executeWithContextKeys(GET(uri / "auth", token))
     /** Lists the database plugins in the catalog. */
-    def listDatabase(): F[List[String]] = executeWithContextKeys(GET(uri / "database", token))
+    val listDatabase: F[List[String]] = executeWithContextKeys(GET(uri / "database", token))
     /** Lists the secret plugins in the catalog. */
-    def listSecret(): F[List[String]] = executeWithContextKeys(GET(uri / "secret", token))
+    val listSecret: F[List[String]] = executeWithContextKeys(GET(uri / "secret", token))
 
     /**
       * Registers a new plugin, or updates an existing one with the supplied name.

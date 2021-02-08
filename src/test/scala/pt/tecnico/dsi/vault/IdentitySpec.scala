@@ -15,8 +15,8 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
       val names = List.tabulate(5)(i => s"list$i")
       for {
         createdIds <- names.traverse(create(_, Map.empty))
-        listedIds <- listById()
-        listedNames <- list()
+        listedIds <- listById
+        listedNames <- list
       } yield {
         listedIds should contain allElementsOf createdIds
         listedNames should contain allElementsOf names
@@ -214,7 +214,7 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
     } yield (id, accessor, aliasId)
 
     "list aliases" in withSubT("list-aliases").flatMap { case (_, _, aliasId) =>
-      aliasCrud.list().idempotently(_ should contain (aliasId))
+      aliasCrud.list.idempotently(_ should contain (aliasId))
     }
 
     "get alias (existing id)" in withSubT("get-alias").flatMap { case (id, accessor, aliasId) =>
@@ -248,7 +248,7 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
     }
   }
 
-  val mountAccessor: IO[String] = client.sys.auth.list().map { mountedAuths => mountedAuths("token/").accessor }
+  val mountAccessor: IO[String] = client.sys.auth.list.map { mountedAuths => mountedAuths("token/").accessor }
   "identity - entityAlias" should {
     behave like aliasCRUD[EntityAlias](identity.entityAlias, identity.entity.create(_), mountAccessor)
   }

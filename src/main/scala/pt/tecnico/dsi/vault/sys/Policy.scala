@@ -13,7 +13,7 @@ final class Policy[F[_]: Concurrent: Client](val path: String, val uri: Uri)(imp
   import dsl._
 
   /** @return all configured policies. */
-  def list(): F[List[String]] = {
+  val list: F[List[String]] = {
     implicit val d = Decoder[List[String]].at("policies")
     execute(GET(uri, token))
   }

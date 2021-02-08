@@ -12,7 +12,7 @@ final class Rekey[F[_]: Concurrent: Client](uri: Uri) { self =>
   import dsl._
 
   /** @return the configuration and progress of the current rekey attempt. */
-  def progress(): F[RekeyProgress] = execute(GET(uri / "init"))
+  val progress: F[RekeyProgress] = execute(GET(uri / "init"))
 
   /**
     * Start a new rekey attempt. Only a single rekey attempt can take place at a time.
@@ -53,7 +53,7 @@ final class Rekey[F[_]: Concurrent: Client](uri: Uri) { self =>
     * This must be called to change the parameters of the rekey.
     * Note: verification is still a part of a rekey. If rekeying is canceled during the verification flow, the current unseal keys remain valid.
     */
-  def cancel(): F[Unit] = execute(DELETE(uri / "init"))
+  val cancel: F[Unit] = execute(DELETE(uri / "init"))
 
   /**
     * This endpoint is used to enter a single master key share to progress the rekey of the Vault.
@@ -77,7 +77,7 @@ final class Rekey[F[_]: Concurrent: Client](uri: Uri) { self =>
       *          a map of PGP key fingerprint to hex-encoded PGP-encrypted key. */
     def apply(): F[BackupKeys] = execute(GET(uri))
     /** Deletes the backup copy of PGP-encrypted unseal keys. */
-    def delete(): F[Unit] = execute(DELETE(uri))
+    val delete: F[Unit] = execute(DELETE(uri))
   }
 
   final object verify {
@@ -85,12 +85,12 @@ final class Rekey[F[_]: Concurrent: Client](uri: Uri) { self =>
     val uri: Uri = self.uri / path
 
     /** @return the configuration and progress of the current rekey verification attempt. */
-    def progress(): F[RekeyVerificationProgress] = execute(GET(uri))
+    val progress: F[RekeyVerificationProgress] = execute(GET(uri))
     /**
       * Cancels any in-progress rekey verification operation. This clears any progress made and resets the nonce.
       * Unlike a DELETE against `sys/rekey/init`, this only resets the current verification operation, not the entire rekey atttempt.
       * The return value is the same as GET along with the new nonce. */
-    def cancel(): F[RekeyVerificationProgress] = execute(DELETE(uri))
+    val cancel: F[RekeyVerificationProgress] = execute(DELETE(uri))
     /**
       * This endpoint is used to enter a single new key share to progress the rekey verification operation.
       * If the threshold number of new key shares is reached, Vault will complete the rekey by performing the actual

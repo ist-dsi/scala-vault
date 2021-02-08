@@ -17,10 +17,10 @@ final class Keys[F[_]: Concurrent: Client](uri: Uri)(implicit token: Header) {
     * with the new key, while old values are decrypted with previous encryption keys.
     *
     * This path requires sudo capability in addition to update. */
-  def rotate(): F[Unit] = execute(PUT(uri / "rotate", token))
+  val rotate: F[Unit] = execute(PUT(uri / "rotate", token))
 
   /**
     * Returns information about the current encryption key used by Vault.
     */
-  def keyStatus(): F[KeyStatus] = execute(GET(uri / "key-status"))
+  val keyStatus: F[KeyStatus] = execute(GET(uri / "key-status"))
 }

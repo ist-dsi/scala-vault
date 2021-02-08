@@ -49,7 +49,7 @@ final class AppRole[F[_]: Concurrent: Client](val path: String, val uri: Uri)(im
         * Lists the accessors of all the SecretIDs issued against this AppRole role.
         * This includes the accessors for "custom" SecretIDs as well.
         */
-      def listAccessors(): F[List[String]] = executeWithContextKeys(LIST(uri, token))
+      val listAccessors: F[List[String]] = executeWithContextKeys(LIST(uri, token))
 
       /**
         * Generates and issues a new SecretID on an existing AppRole.

@@ -12,7 +12,7 @@ final class GenerateRoot[F[_]: Concurrent: Client](val path: String, val uri: Ur
   import dsl._
 
   /** @return the configuration and progress of the current root generation attempt. */
-  def progress(): F[RootGenerationProgress] = execute(GET(uri / "attempt"))
+  val progress: F[RootGenerationProgress] = execute(GET(uri / "attempt"))
 
   /**
     * Start a new root generation attempt. Only a single root generation attempt can take place at a time.
@@ -28,7 +28,7 @@ final class GenerateRoot[F[_]: Concurrent: Client](val path: String, val uri: Ur
     * Cancels any in-progress root generation attempt. This clears any progress made.
     * This must be called to change the OTP or PGP key being used.
     */
-  def cancel(): F[Unit] = execute(DELETE(uri / "attempt"))
+  val cancel: F[Unit] = execute(DELETE(uri / "attempt"))
 
   /**
     * This endpoint is used to enter a single master key share to progress the root generation attempt.

@@ -1,14 +1,14 @@
 package pt.tecnico.dsi.vault.sys.models
 
-import enumeratum.{Enum, EnumEntry}
+import enumeratum.EnumEntry.Lowercase
+import enumeratum.{CirceEnum, Enum, EnumEntry}
 import io.circe.Codec
 import io.circe.derivation.{deriveCodec, renaming}
-import pt.tecnico.dsi.vault.CirceLowercaseEnum
 
 object Plugin {
 
-  sealed trait Type extends EnumEntry
-  case object Type extends Enum[Type] with CirceLowercaseEnum[Type] {
+  sealed trait Type extends EnumEntry with Lowercase
+  case object Type extends Enum[Type] with CirceEnum[Type] {
     case object Auth extends Type
     case object Database extends Type
     case object Secret extends Type

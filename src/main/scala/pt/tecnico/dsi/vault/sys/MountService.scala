@@ -16,7 +16,7 @@ abstract class MountService[F[_]: Concurrent: Client, T <: Mount: Codec](val pat
   import dsl._
 
   /** Lists all the mounts. */
-  def list(): F[Map[String, Mounted]] = executeWithContextData(GET(uri, token))
+  val list: F[Map[String, Mounted]] = executeWithContextData(GET(uri, token))
 
   /**
     * Enables a new Mount at the given path.

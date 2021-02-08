@@ -28,7 +28,7 @@ abstract class AliasCRUD[F[_]: Concurrent: Client, T <: Alias: Decoder](basePath
   val uri: Uri = baseUri / s"$baseName-alias"
 
   /** List $name aliases by their identifiers. */
-  def list(): F[List[String]] = executeWithContextKeys(LIST(uri / "id", token))
+  val list: F[List[String]] = executeWithContextKeys(LIST(uri / "id", token))
 
   /**
     * Gets the $name alias with the given `id`.
@@ -96,9 +96,9 @@ abstract class BaseEndpoints[F[_]: Concurrent: Client, T <: Base: Decoder](baseP
   val uri: Uri = baseUri / s"$name"
 
   /** Lists $namePlural by their names. */
-  def list(): F[List[String]] = executeWithContextKeys(LIST(uri / "name", token))
+  val list: F[List[String]] = executeWithContextKeys(LIST(uri / "name", token))
   /** Lists $namePlural by their identifiers. */
-  def listById(): F[List[String]] = executeWithContextKeys(LIST(uri / "id", token))
+  val listById: F[List[String]] = executeWithContextKeys(LIST(uri / "id", token))
 
   /** Gets the $name with the given `name`. */
   def get(name: String): F[Option[T]] = executeOptionWithContextData(GET(uri / "name" / name, token))

@@ -4,7 +4,7 @@ import org.http4s.Method.POST
 
 trait RootRotation[F[_]] { self: Databases[F, _, _] =>
   import dsl._
-
+  
   /**
     * Rotates the root superuser credentials stored for the database connection.
     * This user must have permissions to update its own password.

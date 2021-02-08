@@ -14,5 +14,5 @@ final class Health[F[_]: Concurrent: Client](val path: String, val uri: Uri) {
   /** @return the health status of Vault. This matches the semantics of a Consul HTTP health check and provides a
     *         simple way to monitor the health of a Vault instance.
     */
-  def status(): F[HealthStatus] = execute(GET(uri))
+  val status: F[HealthStatus] = execute(GET(uri))
 }

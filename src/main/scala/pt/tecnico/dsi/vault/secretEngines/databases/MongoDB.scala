@@ -6,4 +6,4 @@ import org.http4s.client.Client
 import pt.tecnico.dsi.vault.secretEngines.databases.models.MongoDB._
 
 final class MongoDB[F[_]: Concurrent: Client](path: String, uri: Uri)(implicit token: Header)
-  extends Databases[F, Connection, Role](path, uri) with StaticRoles[F]
+  extends Databases[F, Connection, Role](path, uri) with StaticRoles[F] with RootRotation[F]
