@@ -6,7 +6,7 @@ import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST, PUT}
-import pt.tecnico.dsi.vault.DSL
+import pt.tecnico.dsi.vault.{Context, DSL, Keys}
 import pt.tecnico.dsi.vault.secretEngines.kv.models.{Configuration, Metadata, Secret, VersionMetadata}
 
 final class KeyValueV2[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) {
@@ -37,13 +37,17 @@ final class KeyValueV2[F[_]: Concurrent: Client](val path: String, val uri: Uri)
   def readMetadata(path: String): F[Metadata] = execute(GET(uri / "metadata" / path, token))
 
   /**
-    * Returns a list of key names at the specified location. Folders are suffixed with /.
-    * The input must be a folder; list on a file will not return a value.
-    * Note that no policy-based filtering is performed on keys; do not encode sensitive information in key names.
-    * The values themselves are not accessible via this command.
-    * @param path the path to list the secrets keys.
-    */
-  def list(path: String): F[List[String]] = executeWithContextKeys(LIST(uri / "metadata" / path, token))
+   * Returns a list of key names at the specified location. Folders are suffixed with /.
+   * The input must be a folder; list on a file will not return a value.
+   * Note that no policy-based filtering is performed on keys; do not encode sensitive information in key names.
+   * The values themselves are not accessible via this command.
+   * @param path the path to list the secrets keys.
+   * @return the list of keys at `path` or an empty list if that path does not exist.
+   */
+  def list(path: String): F[List[String]] = executeOption[Context[Keys]](LIST(uri / "metadata" / path, token)).map {
+    case Some(context) => context.data.keys
+    case None => List.empty
+  }
 
   /**
     * Reads the secret data and metadata at `path`.

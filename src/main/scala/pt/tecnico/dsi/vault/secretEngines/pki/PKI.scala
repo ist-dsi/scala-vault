@@ -384,6 +384,10 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   /** Revokes a certificate using its serial number. This is an alternative option to the standard method of revoking using Vault lease IDs.
     * A successful revocation will rotate the CRL. */
   def revoke(serial: String): F[Unit] = execute(POST(Map("serial_number" -> serial), uri / "revoke", token))
+  
+  /** Revokes a certificate using its serial number. This is an alternative option to the standard method of revoking using Vault lease IDs.
+   * A successful revocation will rotate the CRL. */
+  def revoke(certificate: X509Certificate): F[Unit] = revoke(toSerialString(certificate.getSerialNumber))
 
   /**
     * Retrieves the certificate with the given `serial`.
