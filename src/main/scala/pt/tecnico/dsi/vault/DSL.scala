@@ -8,7 +8,7 @@ import io.circe.{Decoder, Encoder, Printer}
 import org.http4s.Status.{BadRequest, Gone, InternalServerError, NotFound, Successful}
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.{Client, UnexpectedStatus}
-import org.http4s.{circe, EntityDecoder, EntityEncoder, Method, Request, Response, Status}
+import org.http4s.{EntityDecoder, EntityEncoder, Method, Request, Response, Status, circe}
 
 abstract class DSL[F[_]](implicit client: Client[F], F: Concurrent[F]) extends Http4sClientDsl[F] {
   val jsonPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
@@ -28,7 +28,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Concurrent[F]) extends H
     * @param request the request for the endpoint
     * @tparam Data the type we are interested in.
     */
-  def executeWithContextData[Data: Decoder](request: Request[F])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Data] =
+  def executeWithContextData[Data](request: Request[F])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Data] =
     execute[Context[Data]](request).map(_.data)
 
   /**
@@ -36,7 +36,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Concurrent[F]) extends H
     * @param request the request for the endpoint
     * @tparam Data the type we are interested in.
     */
-  def executeOptionWithContextData[Data: Decoder](request: Request[F])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Option[Data]] =
+  def executeOptionWithContextData[Data](request: Request[F])(implicit decoder: EntityDecoder[F, Context[Data]]): F[Option[Data]] =
     executeOption[Context[Data]](request).map(_.map(_.data))
 
   /**
@@ -61,7 +61,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Concurrent[F]) extends H
     * @param request the request to execute.
     * @tparam A the type to which the response will be decoded to.
     */
-  def execute[A: Decoder: EntityDecoderF](request: Request[F]): F[A] =
+  def execute[A](request: Request[F])(implicit d: EntityDecoderF[A]): F[A] =
     genericExecute(request) {
       case Successful(response) => response.as[A]
     }
@@ -74,7 +74,7 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Concurrent[F]) extends H
     * @param request the request to execute.
     * @tparam A the type to which the response will be decoded to.
     */
-  def executeOption[A: Decoder: EntityDecoderF](request: Request[F]): F[Option[A]] =
+  def executeOption[A](request: Request[F])(implicit d: EntityDecoderF[A]): F[Option[A]] =
     genericExecute(request) {
       case Successful(response) => response.as[A].map(Option.apply)
       case NotFound(_) | Gone(_) => Option.empty[A].pure[F]

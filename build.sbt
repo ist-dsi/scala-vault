@@ -5,7 +5,7 @@ name := "scala-vault"
 // ==== Compile Options =================================================================================================
 // ======================================================================================================================
 javacOptions ++= Seq("-Xlint", "-encoding", "UTF-8", "-Dfile.encoding=utf-8")
-scalaVersion := "2.13.4"
+scalaVersion := "2.13.5"
 
 scalacOptions ++= Seq(
   "-encoding", "utf-8",            // Specify character encoding used by source files.
@@ -39,13 +39,13 @@ fork := true
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
-  "org.http4s"      %% s"http4s-$module" % "1.0.0-M13"
+  "org.http4s"      %% s"http4s-$module" % "1.0.0-M16"
 } ++ Seq(
   "io.circe"        %% "circe-derivation" % "0.13.0-M5",
   "io.circe"        %% "circe-parser"     % "0.13.0", // Just used in Databases
   "com.beachape"    %% "enumeratum-circe" % "1.6.1",
   "ch.qos.logback"  %  "logback-classic"  % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"        % "3.2.3" % Test,
+  "org.scalatest"   %% "scalatest"        % "3.2.5" % Test,
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 

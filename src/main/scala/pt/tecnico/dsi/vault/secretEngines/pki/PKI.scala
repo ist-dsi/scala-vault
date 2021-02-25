@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.vault.secretEngines.pki
 
 import java.math.BigInteger
-import java.security.cert.{X509Certificate, X509CRL}
+import java.security.cert.{X509CRL, X509Certificate}
 import scala.concurrent.duration.Duration
 import scala.util.Try
 import cats.effect.Concurrent
@@ -14,7 +14,7 @@ import io.circe.syntax._
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
-import pt.tecnico.dsi.vault.{encodeDuration, Context, DSL, RolesCRUD}
+import pt.tecnico.dsi.vault.{Context, DSL, RolesCRUD, encodeDuration}
 import pt.tecnico.dsi.vault.secretEngines.pki.PKI._
 import pt.tecnico.dsi.vault.secretEngines.pki.models._
 
@@ -380,7 +380,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
     val body = singles.foldLeft(names.asJsonObject){ case (a, (k, v)) => a.add(k, v)}
     executeWithContextData(POST(body, uri / "sign" / role, token))
   }
-
+  
   /** Revokes a certificate using its serial number. This is an alternative option to the standard method of revoking using Vault lease IDs.
     * A successful revocation will rotate the CRL. */
   def revoke(serial: String): F[Unit] = execute(POST(Map("serial_number" -> serial), uri / "revoke", token))
@@ -388,7 +388,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   /** Revokes a certificate using its serial number. This is an alternative option to the standard method of revoking using Vault lease IDs.
    * A successful revocation will rotate the CRL. */
   def revoke(certificate: X509Certificate): F[Unit] = revoke(toSerialString(certificate.getSerialNumber))
-
+  
   /**
     * Retrieves the certificate with the given `serial`.
     *
@@ -403,13 +403,14 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
     implicit val d = Context.decoder(Decoder[X509Certificate].at("certificate"))
     executeOptionWithContextData[X509Certificate](GET(uri / "cert" / serial))
   }
+  
   /** Retrieves the certificate with the given `serial`. */
   def readCertificate(serial: BigInteger): F[Option[X509Certificate]] = readCertificate(toSerialString(serial))
-
+  
   /** Returns the serial numbers of the current certificates. */
   val listCertificates: F[List[String]] = executeWithContextKeys(GET(uri / "certs", token))
   //</editor-fold>
-
+  
   /**
     * Allows tidying up the storage backend and/or CRL by removing certificates that have expired and are past a certain buffer period beyond their expiration time.
     * @param tidyCertStore Specifies whether to tidy up the certificate store.
