@@ -1,6 +1,7 @@
 package pt.tecnico.dsi.vault
 
 import cats.effect.Concurrent
+import cats.syntax.functor._
 import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -14,8 +15,12 @@ class RolesCRUD[F[_]: Concurrent: Client, Role: Encoder: Decoder](basePath: Stri
   val uri: Uri = baseUri / "roles"
 
   /** List the available roles by name. */
-  val list: F[List[String]] = executeWithContextKeys(LIST(uri, token))
-
+  val list: F[List[String]] =
+    executeOption[Context[Keys]](LIST(uri, token)).map {
+      case None => List.empty
+      case Some(context) => context.data.keys
+    }
+  
   /**
     * Gets the role with the given name.
     *
