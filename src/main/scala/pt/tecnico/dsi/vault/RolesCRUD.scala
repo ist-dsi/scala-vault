@@ -15,7 +15,7 @@ class RolesCRUD[F[_]: Concurrent: Client, Role: Encoder: Decoder](basePath: Stri
   val uri: Uri = baseUri / "roles"
 
   /** List the available roles by name. */
-  val list: F[List[String]] =
+  def list: F[List[String]] =
     executeOption[Context[Keys]](LIST(uri, token)).map {
       case None => List.empty
       case Some(context) => context.data.keys
