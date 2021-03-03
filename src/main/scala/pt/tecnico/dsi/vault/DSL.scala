@@ -7,8 +7,8 @@ import cats.syntax.functor._
 import io.circe.{Decoder, Encoder, Printer}
 import org.http4s.Status.{BadRequest, Gone, InternalServerError, NotFound, Successful}
 import org.http4s.client.dsl.Http4sClientDsl
-import org.http4s.client.{Client, UnexpectedStatus}
-import org.http4s.{EntityDecoder, EntityEncoder, Method, Request, Response, Status, circe}
+import org.http4s.client.Client
+import org.http4s.{EntityDecoder, EntityEncoder, Method, Request, Response, circe}
 
 abstract class DSL[F[_]](implicit client: Client[F], F: Concurrent[F]) extends Http4sClientDsl[F] {
   val jsonPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
@@ -100,12 +100,19 @@ abstract class DSL[F[_]](implicit client: Client[F], F: Concurrent[F]) extends H
   def defaultErrorHandler[A](request: Request[F])(onErrorsPF: List[String] /=> F[A]): Response[F] => F[A] = {
     case response @ (BadRequest(_) | InternalServerError(_)) =>
       implicit val d = Decoder[List[String]].at("errors")
-      response.as[List[String]].flatMap(errors => onErrorsPF.applyOrElse(errors, raise(response.status)))
+      response.as[List[String]].flatMap(errors => onErrorsPF.applyOrElse(errors, (_: List[String]) => defaultOnError(request, response)))
     case response =>
       // https://github.com/http4s/http4s/issues/3707
-      response.body.compile.drain.flatMap(_ => F.raiseError(UnexpectedStatus(response.status, request.method, request.uri)))
+      response.body.compile.drain.flatMap(_ => defaultOnError(request, response))
   }
-
-  private def raise[A](status: Status)(errors: List[String]): F[A] =
-    F.raiseError(new Exception(s"unexpected HTTP $status with errors:\n\t${errors.mkString("\n\t")}"))
+  
+  protected def defaultOnError[R](request: Request[F], response: Response[F]): F[R] = for {
+    requestBody: String <- request.bodyText.compile.foldMonoid
+    responseBody: String <- response.bodyText.compile.foldMonoid
+    // The defaultOnError implemented in the DefaultClient is not very helpful to debug problems
+    // Most notably it does not show the body of the response when the request is not successful.
+    // https://github.com/http4s/http4s/issues/3707
+    // So we created our own UnexpectedStatus with a much more detailed information
+    result <- F.raiseError[R](UnexpectedStatus(request.method, request.uri, requestBody, response.status, responseBody))
+  } yield result
 }

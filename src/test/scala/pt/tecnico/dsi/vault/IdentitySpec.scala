@@ -38,7 +38,6 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
     }
 
     s"apply $article $name" in {
-      import org.http4s.client.UnexpectedStatus
       val name = "apply"
       for {
         failure <- apply(name).attempt
