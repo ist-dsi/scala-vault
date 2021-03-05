@@ -8,7 +8,7 @@ import org.http4s.Method.{GET, POST}
 import pt.tecnico.dsi.vault.{Auth, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.authMethods.approle.models._
 
-final class AppRole[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
+final class AppRole[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 

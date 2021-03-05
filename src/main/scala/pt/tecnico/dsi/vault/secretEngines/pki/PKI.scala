@@ -66,7 +66,7 @@ object PKI {
 /**
   * @define sudoRequired This endpoint requires sudo capabilities.
   */
-final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
+final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 

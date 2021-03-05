@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.Plugin
 import pt.tecnico.dsi.vault.sys.models.Plugin.Type
 
-class Plugins[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
+class Plugins[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 

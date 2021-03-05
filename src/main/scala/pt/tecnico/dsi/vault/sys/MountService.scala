@@ -11,7 +11,7 @@ import org.http4s.Status.Successful
 import pt.tecnico.dsi.vault.{DSL, VaultClient}
 import pt.tecnico.dsi.vault.sys.models.{Mount, Mounted, TuneOptions}
 
-abstract class MountService[F[_]: Concurrent: Client, T <: Mount: Codec](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header) {
+abstract class MountService[F[_]: Concurrent: Client, T <: Mount: Codec](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
   import dsl._
 

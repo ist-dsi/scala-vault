@@ -10,7 +10,7 @@ import pt.tecnico.dsi.vault.sys.models.AuthMethod
   * These endpoints require sudo capability in addition to any path-specific capabilities.
   * However the same functionality can be achieved without sudo via the Mounts service.
   */
-final class Auth[F[_]: Concurrent: Client](path: String, uri: Uri, vaultClient: VaultClient[F])(implicit token: Header)
+final class Auth[F[_]: Concurrent: Client](path: String, uri: Uri, vaultClient: VaultClient[F])(implicit token: Header.Raw)
   extends MountService[F, AuthMethod](path, uri, vaultClient) {
   /** @inheritdoc */
   override def remount(from: String, to: String): F[Unit] = super.remount(s"auth/$from", s"auth/$to")

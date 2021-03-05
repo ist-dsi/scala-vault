@@ -7,7 +7,7 @@ import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, PUT}
 import pt.tecnico.dsi.vault.DSL
 
-final class KeyValueV1[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) {
+final class KeyValueV1[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
   import dsl._
 

@@ -20,7 +20,7 @@ object AliasCRUD {
   implicit val encoder: Encoder[AliasCreate] = deriveEncoder(renaming.snakeCase)
 }
 /** @define name */
-abstract class AliasCRUD[F[_]: Concurrent: Client, T <: Alias: Decoder](basePath: String, baseUri: Uri, baseName: String)(implicit token: Header) {
+abstract class AliasCRUD[F[_]: Concurrent: Client, T <: Alias: Decoder](basePath: String, baseUri: Uri, baseName: String)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -88,7 +88,7 @@ abstract class AliasCRUD[F[_]: Concurrent: Client, T <: Alias: Decoder](basePath
   * @define name
   * @define namePlural
   */
-abstract class BaseEndpoints[F[_]: Concurrent: Client, T <: Base: Decoder](basePath: String, baseUri: Uri, name: String)(implicit token: Header) {
+abstract class BaseEndpoints[F[_]: Concurrent: Client, T <: Base: Decoder](basePath: String, baseUri: Uri, name: String)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
   import dsl._
 
@@ -124,7 +124,7 @@ abstract class BaseEndpoints[F[_]: Concurrent: Client, T <: Base: Decoder](baseP
   def deleteById(id: String): F[Unit] = execute(DELETE(uri / "id" / id, token))
 }
 
-final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) { self =>
+final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) { self =>
   private val dsl = new DSL[F] {}
   import dsl._
 

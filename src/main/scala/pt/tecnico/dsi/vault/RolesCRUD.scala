@@ -7,7 +7,7 @@ import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
 
-class RolesCRUD[F[_]: Concurrent: Client, Role: Encoder: Decoder](basePath: String, baseUri: Uri)(implicit token: Header) {
+class RolesCRUD[F[_]: Concurrent: Client, Role: Encoder: Decoder](basePath: String, baseUri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
   import dsl._
 

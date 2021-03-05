@@ -39,7 +39,7 @@ fork := true
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
-  "org.http4s"      %% s"http4s-$module" % "1.0.0-M16"
+  "org.http4s"      %% s"http4s-$module" % "1.0.0-M19"
 } ++ Seq(
   "io.circe"        %% "circe-derivation" % "0.13.0-M5",
   "io.circe"        %% "circe-parser"     % "0.13.0", // Just used in Databases

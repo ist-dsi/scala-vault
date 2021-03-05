@@ -9,7 +9,7 @@ import org.http4s.Method.{DELETE, GET, POST, PUT}
 import pt.tecnico.dsi.vault.{Context, DSL, Keys}
 import pt.tecnico.dsi.vault.secretEngines.kv.models.{Configuration, Metadata, Secret, VersionMetadata}
 
-final class KeyValueV2[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) {
+final class KeyValueV2[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
   import dsl._
 

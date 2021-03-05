@@ -8,7 +8,7 @@ import org.http4s.Method.{DELETE, GET, PUT}
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{Policy => PolicyModel}
 
-final class Policy[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) {
+final class Policy[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
   import dsl._
 

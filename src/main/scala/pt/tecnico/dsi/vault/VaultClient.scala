@@ -5,6 +5,7 @@ import io.circe.{Decoder, Encoder}
 import org.http4s._
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, PUT}
+import org.typelevel.ci.CIString
 
 // Some operations don't require a token. So the fact that we are requiring one might be misleading.
 // We could implement something like this:
@@ -35,7 +36,7 @@ import org.http4s.Method.{DELETE, GET, PUT}
 // But is it worth the extra complexity?
 
 final class VaultClient[F[_]: Concurrent](val baseUri: Uri, val token: String)(implicit client: Client[F]) { self =>
-  implicit val tokenHeader: Header = Header("X-Vault-Token", token)
+  implicit val tokenHeader: Header.Raw = Header.Raw(CIString("X-Vault-Token"), token)
 
   val uri: Uri = baseUri / "v1"
 

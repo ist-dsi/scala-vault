@@ -7,7 +7,7 @@ import org.http4s.Method.{GET, PUT}
 import pt.tecnico.dsi.vault._
 import pt.tecnico.dsi.vault.sys.models.LeaderStatus
 
-final class Leader[F[_]: Concurrent: Client](uri: Uri)(implicit token: Header) {
+final class Leader[F[_]: Concurrent: Client](uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
   import dsl._
 

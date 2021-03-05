@@ -8,7 +8,7 @@ import org.http4s.Method.PUT
 import pt.tecnico.dsi.vault.DSL
 import pt.tecnico.dsi.vault.sys.models.{Lease, LeaseRenew}
 
-final class Leases[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) {
+final class Leases[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
   import dsl._
 

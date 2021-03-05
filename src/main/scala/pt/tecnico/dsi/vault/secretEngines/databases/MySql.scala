@@ -5,5 +5,5 @@ import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.vault.secretEngines.databases.models.MySQL._
 
-final class MySql[F[_]: Concurrent: Client](path: String, uri: Uri)(implicit token: Header)
+final class MySql[F[_]: Concurrent: Client](path: String, uri: Uri)(implicit token: Header.Raw)
   extends Databases[F, Connection, Role](path, uri) with StaticRoles[F] with RootRotation[F]

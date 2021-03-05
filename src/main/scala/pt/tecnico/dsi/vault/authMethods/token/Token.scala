@@ -16,7 +16,7 @@ import org.http4s.Status.Successful
 import pt.tecnico.dsi.vault.{Auth, Context, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token => MToken}
 
-final class Token[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header) {
+final class Token[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
   import dsl._
 
