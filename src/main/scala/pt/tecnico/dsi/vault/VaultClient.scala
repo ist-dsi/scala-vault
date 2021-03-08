@@ -1,5 +1,6 @@
 package pt.tecnico.dsi.vault
 
+import cats.syntax.functor._
 import cats.effect.Concurrent
 import io.circe.{Decoder, Encoder}
 import org.http4s._
@@ -95,6 +96,10 @@ final class VaultClient[F[_]: Concurrent](val baseUri: Uri, val token: String)(i
 
   def write[A: Encoder](path: Uri.Path, body: A): F[Unit] = execute(PUT(body, uri.withPath(path), tokenHeader))
   def read[A: Decoder](path: Uri.Path): F[Context[A]] = execute(GET(uri.withPath(path), tokenHeader))
-  def list(path: Uri.Path): F[List[String]] = executeWithContextKeys(LIST(uri.withPath(path)))
+  def list(path: Uri.Path): F[List[String]] =
+    executeOption[Context[Keys]](LIST(uri.withPath(path), tokenHeader)).map {
+      case None => List.empty
+      case Some(context) => context.data.keys
+    }
   def delete(path: Uri.Path): F[Unit] = execute(DELETE(uri.withPath(path)))
 }
