@@ -93,8 +93,8 @@ final class VaultClient[F[_]: Concurrent](val baseUri: Uri, val token: String)(i
   private val dsl = new DSL[F] {}
   import dsl._
 
-  def write[A: Encoder](path: String, body: A): F[Unit] = execute(PUT(body, uri / path, tokenHeader))
-  def read[A: Decoder](path: String): F[Context[A]] = execute(GET(uri / path, tokenHeader))
-  def list(path: String): F[List[String]] = executeWithContextKeys(LIST(uri / path))
-  def delete(path: String): F[Unit] = execute(DELETE(uri / path))
+  def write[A: Encoder](path: Uri.Path, body: A): F[Unit] = execute(PUT(body, uri.withPath(path), tokenHeader))
+  def read[A: Decoder](path: Uri.Path): F[Context[A]] = execute(GET(uri.withPath(path), tokenHeader))
+  def list(path: Uri.Path): F[List[String]] = executeWithContextKeys(LIST(uri.withPath(path)))
+  def delete(path: Uri.Path): F[Unit] = execute(DELETE(uri.withPath(path)))
 }
