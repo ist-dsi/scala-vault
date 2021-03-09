@@ -11,7 +11,7 @@ import io.circe.syntax._
 import io.circe.Json
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
-import org.http4s.Method.POST
+import org.http4s.Method.{GET, POST}
 import org.http4s.Status.Successful
 import pt.tecnico.dsi.vault.{Auth, Context, DSL, RolesCRUD}
 import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token => MToken}
@@ -69,7 +69,7 @@ final class Token[F[_]: Concurrent: Client](val path: String, val uri: Uri)(impl
 
   /** @return returns information about the current client token.
     */
-  val lookupSelf: F[MToken] = executeWithContextData(POST(uri / "lookup-self", token))
+  val lookupSelf: F[MToken] = executeWithContextData(GET(uri / "lookup-self", token))
 
   /** @param accessor the token accessor for which to retrieve the information.
     * @return returns information about the client token from the `accessor`.
