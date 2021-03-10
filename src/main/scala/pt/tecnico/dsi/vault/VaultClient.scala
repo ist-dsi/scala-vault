@@ -5,7 +5,7 @@ import cats.effect.Concurrent
 import io.circe.{Decoder, Encoder}
 import org.http4s._
 import org.http4s.client.Client
-import org.http4s.Method.{DELETE, GET, POST}
+import org.http4s.Method.{DELETE, GET, PUT}
 import org.typelevel.ci.CIString
 
 // Some operations don't require a token. So the fact that we are requiring one might be misleading.
@@ -94,7 +94,7 @@ final class VaultClient[F[_]: Concurrent](val baseUri: Uri, val token: String)(i
   private val dsl = new DSL[F] {}
   import dsl._
 
-  def write[A: Encoder](path: String, body: A, method: Method = POST): F[Unit] = execute(method.apply(body, uri.addPath(path), tokenHeader))
+  def write[A: Encoder](path: String, body: A, method: Method = PUT): F[Unit] = execute(method.apply(body, uri.addPath(path), tokenHeader))
   def read[A: Decoder](path: String): F[Context[A]] = execute(GET(uri.addPath(path), tokenHeader))
   def list(path: String): F[List[String]] =
     executeOption[Context[Keys]](LIST(uri.addPath(path), tokenHeader)).map {
