@@ -5,7 +5,7 @@ import cats.effect.Concurrent
 import io.circe.{Decoder, Encoder}
 import org.http4s._
 import org.http4s.client.Client
-import org.http4s.Method.{DELETE, GET, PUT}
+import org.http4s.Method.{DELETE, GET, POST}
 import org.typelevel.ci.CIString
 
 // Some operations don't require a token. So the fact that we are requiring one might be misleading.
@@ -94,12 +94,12 @@ final class VaultClient[F[_]: Concurrent](val baseUri: Uri, val token: String)(i
   private val dsl = new DSL[F] {}
   import dsl._
 
-  def write[A: Encoder](path: Uri.Path, body: A): F[Unit] = execute(PUT(body, uri.withPath(path), tokenHeader))
-  def read[A: Decoder](path: Uri.Path): F[Context[A]] = execute(GET(uri.withPath(path), tokenHeader))
-  def list(path: Uri.Path): F[List[String]] =
-    executeOption[Context[Keys]](LIST(uri.withPath(path), tokenHeader)).map {
+  def write[A: Encoder](path: String, body: A, method: Method = POST): F[Unit] = execute(method.apply(body, uri.addPath(path), tokenHeader))
+  def read[A: Decoder](path: String): F[Context[A]] = execute(GET(uri.addPath(path), tokenHeader))
+  def list(path: String): F[List[String]] =
+    executeOption[Context[Keys]](LIST(uri.addPath(path), tokenHeader)).map {
       case None => List.empty
       case Some(context) => context.data.keys
     }
-  def delete(path: Uri.Path): F[Unit] = execute(DELETE(uri.withPath(path)))
+  def delete(path: String): F[Unit] = execute(DELETE(uri.addPath(path)))
 }
