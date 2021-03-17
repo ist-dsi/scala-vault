@@ -11,7 +11,7 @@ import cats.syntax.flatMap._
 import cats.syntax.traverse._
 import io.circe.{Decoder, JsonObject}
 import io.circe.syntax._
-import org.http4s.{Header, Uri}
+import org.http4s.{EntityDecoder, Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
 import pt.tecnico.dsi.vault.{Context, DSL, RolesCRUD, encodeDuration}
@@ -75,14 +75,14 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   // TODO: these read methods return 204 when no CA is configured
 
   /** Retrieves the CA certificate in a PEM format. */
-  val readCACertificatePem: F[String] = execute(GET(uri / "ca" / "pem"))
+  val readCACertificatePem: F[String] = execute(GET(uri / "ca" / "pem"))(EntityDecoder.text[F])
   /** Retrieves the CA certificate. */
   val readCACertificate: F[X509Certificate] = readCACertificatePem.flatMap { pem =>
     implicitly[Concurrent[F]].fromTry(parseCertificate(pem))
   }
 
   /** Retrieves the CA certificate chain, including the CA in PEM format. */
-  val readCACertificateChainPem: F[String] = execute(GET(uri / "ca_chain"))
+  val readCACertificateChainPem: F[String] = execute(GET(uri / "ca_chain"))(EntityDecoder.text[F])
   /** Retrieves the CA certificate chain, including the CA. */
   val readCACertificateChain: F[List[X509Certificate]] = readCACertificateChainPem.flatMap { pem =>
     implicitly[Concurrent[F]].fromTry(parseChain(pem))
@@ -123,7 +123,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   def setURLs(urls: URLs): F[Unit] = execute(POST(urls, uri / "config" / "urls", token))
 
   /** Retrieves the current CRL in a PEM format. */
-  val readCRLPem: F[String] = execute(GET(uri / "crl" / "pem", token))
+  val readCRLPem: F[String] = execute(GET(uri / "crl" / "pem", token))(EntityDecoder.text[F])
   /** Retrieves the current CRL. */
   val readCRL: F[X509CRL] = readCRLPem.flatMap{ pem =>
     implicitly[Concurrent[F]].fromTry(parseCRL(pem))
@@ -408,7 +408,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   def readCertificate(serial: BigInteger): F[Option[X509Certificate]] = readCertificate(toSerialString(serial))
   
   /** Returns the serial numbers of the current certificates. */
-  val listCertificates: F[List[String]] = executeWithContextKeys(GET(uri / "certs", token))
+  val listCertificates: F[List[String]] = executeWithContextKeys(LIST(uri / "certs", token))
   //</editor-fold>
   
   /**
