@@ -4,6 +4,7 @@ import java.math.BigInteger
 import java.security.cert.{X509CRL, X509Certificate}
 import scala.concurrent.duration.Duration
 import scala.util.Try
+import cats.Parallel
 import cats.effect.Concurrent
 import cats.instances.list._
 import cats.instances.try_._
@@ -408,7 +409,13 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   def readCertificate(serial: BigInteger): F[Option[X509Certificate]] = readCertificate(toSerialString(serial))
   
   /** Returns the serial numbers of the current certificates. */
-  val listCertificates: F[List[String]] = executeWithContextKeys(LIST(uri / "certs", token))
+  val listCertificatesSerials: F[List[String]] = executeWithContextKeys(LIST(uri / "certs", token))
+  
+  /** Returns the current certificates. */
+  def listCertificates(implicit P: Parallel[F]): F[List[X509Certificate]] = {
+    import cats.implicits._
+    listCertificatesSerials.flatMap(_.parTraverseFilter(readCertificate))
+  }
   //</editor-fold>
   
   /**
