@@ -63,7 +63,7 @@ object PKI {
   val decoderPemCAChain: Decoder[List[X509Certificate]] = Decoder[String].emapTry(parseChain)
 }
 
-// TODO: refactor de documentation. Extract variables.
+// TODO: refactor documentation. Extract variables.
 /**
   * @define sudoRequired This endpoint requires sudo capabilities.
   */
@@ -76,14 +76,14 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   // TODO: these read methods return 204 when no CA is configured
 
   /** Retrieves the CA certificate in a PEM format. */
-  val readCACertificatePem: F[String] = execute(GET(uri / "ca" / "pem"))(EntityDecoder.text[F])
+  val readCACertificatePem: F[String] = execute(GET(uri / "ca" / "pem", token))(EntityDecoder.text[F])
   /** Retrieves the CA certificate. */
   val readCACertificate: F[X509Certificate] = readCACertificatePem.flatMap { pem =>
     implicitly[Concurrent[F]].fromTry(parseCertificate(pem))
   }
 
   /** Retrieves the CA certificate chain, including the CA in PEM format. */
-  val readCACertificateChainPem: F[String] = execute(GET(uri / "ca_chain"))(EntityDecoder.text[F])
+  val readCACertificateChainPem: F[String] = execute(GET(uri / "ca_chain", token))(EntityDecoder.text[F])
   /** Retrieves the CA certificate chain, including the CA. */
   val readCACertificateChain: F[List[X509Certificate]] = readCACertificateChainPem.flatMap { pem =>
     implicitly[Concurrent[F]].fromTry(parseChain(pem))

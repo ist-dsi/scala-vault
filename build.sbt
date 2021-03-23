@@ -45,7 +45,7 @@ libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
   "io.circe"        %% "circe-parser"     % "0.13.0", // Just used in Databases
   "com.beachape"    %% "enumeratum-circe" % "1.6.1",
   "ch.qos.logback"  %  "logback-classic"  % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"        % "3.2.5" % Test,
+  "org.scalatest"   %% "scalatest"        % "3.2.6" % Test,
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
