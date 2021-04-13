@@ -101,5 +101,5 @@ final class VaultClient[F[_]: Concurrent](val baseUri: Uri, val token: String)(i
       case None => List.empty
       case Some(context) => context.data.keys
     }
-  def delete(path: String): F[Unit] = execute(DELETE(uri.addPath(path)))
+  def delete(path: String): F[Unit] = execute(DELETE(uri.addPath(path), tokenHeader))
 }
