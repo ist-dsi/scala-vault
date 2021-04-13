@@ -39,13 +39,13 @@ fork := true
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
-  "org.http4s"      %% s"http4s-$module" % "1.0.0-M19"
+  "org.http4s"      %% s"http4s-$module" % "1.0.0-M21"
 } ++ Seq(
   "io.circe"        %% "circe-derivation" % "0.13.0-M5",
   "io.circe"        %% "circe-parser"     % "0.13.0", // Just used in Databases
   "com.beachape"    %% "enumeratum-circe" % "1.6.1",
   "ch.qos.logback"  %  "logback-classic"  % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"        % "3.2.6" % Test,
+  "org.scalatest"   %% "scalatest"        % "3.2.7" % Test,
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
@@ -53,7 +53,7 @@ addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 //   -o[configs...] - causes test results to be written to the standard output.
 //      D - show all durations
 //      F - show full stack traces
-testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
+Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
 
 Test / logBuffered := false
 Test / fork := true

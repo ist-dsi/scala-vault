@@ -12,7 +12,7 @@ final class Leases[F[_]: Concurrent: Client](val path: String, val uri: Uri)(imp
   private val dsl = new DSL[F] {}
   import dsl._
 
-  private def literalAppendToPath(uri: Uri, prefix: String): Uri = uri.withPath(Uri.Path.fromString(s"${uri.path}/$prefix"))
+  private def literalAppendToPath(uri: Uri, prefix: String): Uri = uri.withPath(Uri.Path.unsafeFromString(s"${uri.path}/$prefix"))
 
   /**
     * This endpoint returns a list of lease ids. This endpoint requires 'sudo' capability.

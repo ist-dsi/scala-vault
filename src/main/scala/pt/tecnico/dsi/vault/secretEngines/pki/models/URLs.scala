@@ -18,7 +18,7 @@ object URLs {
     * @param pkiPath the path where the PKI is mounted in Vault.
     */
   def vaultDefaultsFor(vaultFrontendAddress: Uri, pkiPath: String): URLs = {
-    def baseUri(extra: String) = Some(Array(vaultFrontendAddress.withPath(Uri.Path.fromString(s"${vaultFrontendAddress.path}/$pkiPath/$extra"))))
+    def baseUri(extra: String) = Some(Array(vaultFrontendAddress.withPath(Uri.Path.unsafeFromString(s"${vaultFrontendAddress.path}/$pkiPath/$extra"))))
     URLs(baseUri("ca"), baseUri("crl"), None)
   }
 }
