@@ -109,13 +109,13 @@ abstract class BaseEndpoints[F[_]: Concurrent: Client, T <: Base: Decoder](baseP
   /** Gets the $name with the given `id`, assuming it exists. */
   def applyById(id: String): F[T] = executeWithContextData(GET(uri / "id" / id, token))
 
-  protected def create(name: String): F[String]
+  protected def create(name: String): F[T]
 
   /** Gets the $name named `name`, creating one if one does not exist. */
   def findOrCreate(name: String): F[T] =
     get(name).flatMap {
       case Some(value) => value.pure[F]
-      case None => create(name).flatMap(applyById)
+      case None => create(name)
     }
 
   /** Deletes the $name with `name` and all its associated aliases. */
@@ -146,7 +146,7 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
       * @param metadata metadata to be associated with the entity.
       * @return the entity id.
       */
-    def create(name: String, policies: List[String] = List.empty, disabled: Boolean = false, metadata: Map[String, String] = Map.empty): F[String] = {
+    def create(name: String, policies: List[String] = List.empty, disabled: Boolean = false, metadata: Map[String, String] = Map.empty): F[Entity] = {
       val body = Map(
         "policies" -> policies.asJson,
         "disabled" -> disabled.asJson,
@@ -157,8 +157,8 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
       genericExecute(POST(body, uri / "name" / name, token)) {
         case Ok(response) =>
           implicit val d: Decoder[String] = Decoder.decodeString.at("id")
-          response.as[Context[String]].map(_.data)
-        case NoContent(_) => apply(name).map(_.id)
+          response.as[Context[String]].flatMap(c => applyById(c.data))
+        case NoContent(_) => apply(name)
       }
     }
 
@@ -188,7 +188,7 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
       */
     def update(entity: Entity): F[Unit] = update(entity.id, entity.name, entity.policies, entity.disabled, entity.metadata)
 
-    override protected def create(name: String): F[String] = create(name, List.empty)
+    override protected def create(name: String): F[Entity] = create(name, List.empty)
 
     /**
       * Appends `policies` to an entity named `name`. If no entity exists with that name a new entity will be created.
@@ -252,7 +252,7 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
       * @return the id of the created group.
       */
     def create(name: String, policies: List[String] = List.empty, members: List[String] = List.empty, subgroups: List[String] = List.empty,
-               `type`: Group.Type = Group.Type.Internal, metadata: Map[String, String] = Map.empty): F[String] = {
+               `type`: Group.Type = Group.Type.Internal, metadata: Map[String, String] = Map.empty): F[Group] = {
       val body = Map(
         "policies" -> policies.asJson,
         "member_entity_ids" -> members.asJson,
@@ -265,8 +265,8 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
       genericExecute(POST(body, uri / "name" / name, token)) {
         case Ok(response) =>
           implicit val d: Decoder[String] = Decoder.decodeString.at("id")
-          response.as[Context[String]].map(_.data)
-        case NoContent(_) => apply(name).map(_.id)
+          response.as[Context[String]].flatMap(c => applyById(c.data))
+        case NoContent(_) => apply(name)
       }
     }
 
@@ -300,7 +300,7 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
     def update(group: Group): F[Unit] =
       update(group.id, group.name, group.policies, group.members, group.subgroups, group.`type`, group.metadata)
 
-    override protected def create(name: String): F[String] = create(name, List.empty)
+    override protected def create(name: String): F[Group] = create(name, List.empty)
 
     /**
       * Appends `policies` to a group named `name`. If no group exists with that name a new group will be created.
@@ -328,11 +328,11 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
       * Appends `subgroups` to a group named `name`. If no group exists with that name a new group will be created.
       *
       * @param name name of the group.
-      * @param subgroups the list of group Is to append to the subgroups of group.
+      * @param subgroupsIDs the list of group Ids to append to the subgroups of group.
       * @return the group id to which the subgroups were appended to.
       */
-    def addSubgroups(name: String, subgroups: String*): F[String] = findOrCreate(name).flatMap { group =>
-      update(group.copy(subgroups = (group.subgroups ++ subgroups).distinct)).map(_ => group.id)
+    def addSubgroups(name: String, subgroupsIDs: String*): F[String] = findOrCreate(name).flatMap { group =>
+      update(group.copy(subgroups = (group.subgroups ++ subgroupsIDs).distinct)).map(_ => group.id)
     }
   }
 

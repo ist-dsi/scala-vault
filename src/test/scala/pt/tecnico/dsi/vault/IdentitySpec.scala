@@ -8,17 +8,17 @@ import pt.tecnico.dsi.vault.secretEngines.identity.models._
 class IdentitySpec extends Utils with EitherValues with OptionValues {
   import client.secretEngines.identity
 
-  def baseEndpoints[T <: Base](endpoints: BaseEndpoints[IO, T], name: String, article: String, create: (String, Map[String, String]) => IO[String]): Unit = {
+  def baseEndpoints[T <: Base](endpoints: BaseEndpoints[IO, T], name: String, article: String, create: (String, Map[String, String]) => IO[T]): Unit = {
     import endpoints._
     s"list $name" in {
       import cats.implicits._
       val names = List.tabulate(5)(i => s"list$i")
       for {
-        createdIds <- names.traverse(create(_, Map.empty))
+        createdModels <- names.traverse(create(_, Map.empty))
         listedIds <- listById
         listedNames <- list
       } yield {
-        listedIds should contain allElementsOf createdIds
+        listedIds should contain allElementsOf createdModels.map(_.id)
         listedNames should contain allElementsOf names
       }
     }
@@ -27,9 +27,9 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
       val name = "get"
       for {
         empty <- get(name)
-        id <- create(name, Map.empty)
+        model <- create(name, Map.empty)
         entity <- get(name)
-        entityById <- getById(id)
+        entityById <- getById(model.id)
         _ <- delete(name) // Just so we can re-run the tests
       } yield {
         empty.isEmpty shouldBe true
@@ -54,12 +54,12 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
     s"create $article $name" in {
       val name = "create"
       for {
-        id <- create(name, Map("a" -> "a"))
-        id2 <- create(name, Map("b" -> "b"))
+        model1 <- create(name, Map("a" -> "a"))
+        model2 <- create(name, Map("b" -> "b"))
         entity <- apply(name)
-        _ <- deleteById(id) // Just so we can re-run the tests
+        _ <- deleteById(model1.id) // Just so we can re-run the tests
       } yield {
-        id shouldBe id2
+        model1.id shouldBe model2.id
         // Create also updates
         entity.metadata should not contain ("a" -> "a")
         entity.metadata should contain ("b" -> "b")
@@ -83,8 +83,8 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
       for {
         _ <- create("first", Map.empty)
         _ <- delete("first").idempotently(_ shouldBe ())
-        id <- create("second", Map.empty)
-        result <- deleteById(id).idempotently(_ shouldBe ())
+        model <- create("second", Map.empty)
+        result <- deleteById(model.id).idempotently(_ shouldBe ())
       } yield result
     }
   }
@@ -97,14 +97,14 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
     "update an entity" in {
       val name = "update"
       for {
-        id <- create(name, metadata = Map("a" -> "a"))
+        model <- create(name, metadata = Map("a" -> "a"))
         entity <- apply(name)
         newName = name * 2
-        _ <- update(id, newName, metadata = Map("c" -> "c")).idempotently(_ shouldBe ())
+        _ <- update(model.id, newName, metadata = Map("c" -> "c")).idempotently(_ shouldBe ())
         firstUpdate <- apply(newName)
         _ <- update(entity.copy(policies = List("policy1"))).idempotently(_ shouldBe ())
         secondUpdate <- apply(name)
-        _ <- deleteById(id) // Just so we can re-run the tests
+        _ <- deleteById(model.id) // Just so we can re-run the tests
       } yield {
         firstUpdate.name shouldBe newName
         firstUpdate.metadata should not contain ("a" -> "a")
@@ -138,14 +138,14 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
     "update a group" in {
       val name = "update"
       for {
-        id <- create(name, metadata = Map("a" -> "a"))
+        model <- create(name, metadata = Map("a" -> "a"))
         entity <- apply(name)
         newName = name * 2
-        _ <- update(id, newName, metadata = Map("c" -> "c")).idempotently(_ shouldBe ())
+        _ <- update(model.id, newName, metadata = Map("c" -> "c")).idempotently(_ shouldBe ())
         firstUpdate <- apply(newName)
         _ <- update(entity.copy(policies = List("policy1"))).idempotently(_ shouldBe ())
         secondUpdate <- apply(name)
-        _ <- deleteById(id) // Just so we can re-run the tests
+        _ <- deleteById(model.id) // Just so we can re-run the tests
       } yield {
         firstUpdate.name shouldBe newName
         firstUpdate.metadata should not contain ("a" -> "a")
@@ -174,16 +174,16 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
       val name = "addMembers"
       for {
         empty <- get(name)
-        member1Id <- identity.entity.create("member1")
-        member2Id <- identity.entity.create("member2")
-        first <- addMembers(name, member1Id)
-        second <- addMembers(name, member2Id)
+        member1 <- identity.entity.create("member1")
+        member2 <- identity.entity.create("member2")
+        first <- addMembers(name, member1.id)
+        second <- addMembers(name, member2.id)
         entity <- apply(name)
         _ <- delete(name) // Just so we can re-run the tests
       } yield {
         empty.isEmpty shouldBe true
         first shouldBe second
-        entity.members should contain.allOf(member1Id, member2Id)
+        entity.members should contain.allOf(member1.id, member2.id)
       }
     }
 
@@ -205,12 +205,12 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
     }
   }
 
-  def aliasCRUD[T <: Alias](aliasCrud: AliasCRUD[IO, T], create: String => IO[String], mountAccessor: IO[String]): Unit = {
+  def aliasCRUD[T <: Alias, B <: Base](aliasCrud: AliasCRUD[IO, T], create: String => IO[B], mountAccessor: IO[String]): Unit = {
     def withSubT(name: String): IO[(String, String, String)] = for {
       accessor <- mountAccessor
-      id <- create(name)
-      aliasId <- aliasCrud.create(name, id, accessor)
-    } yield (id, accessor, aliasId)
+      model <- create(name)
+      aliasId <- aliasCrud.create(name, model.id, accessor)
+    } yield (model.id, accessor, aliasId)
 
     "list aliases" in withSubT("list-aliases").flatMap { case (_, _, aliasId) =>
       aliasCrud.list.idempotently(_ should contain (aliasId))
@@ -249,7 +249,7 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
 
   val mountAccessor: IO[String] = client.sys.auth.list.map { mountedAuths => mountedAuths("token/").accessor }
   "identity - entityAlias" should {
-    behave like aliasCRUD[EntityAlias](identity.entityAlias, identity.entity.create(_), mountAccessor)
+    behave like aliasCRUD(identity.entityAlias, identity.entity.create(_), mountAccessor)
   }
 
   // Group Alias can only be set on external groups. We would need to mount Ldap or Github auth for the tests
