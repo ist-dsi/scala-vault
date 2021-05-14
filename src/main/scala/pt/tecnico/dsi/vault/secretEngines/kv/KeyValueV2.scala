@@ -2,6 +2,7 @@ package pt.tecnico.dsi.vault.secretEngines.kv
 
 import cats.effect.Concurrent
 import cats.syntax.functor._
+import cats.syntax.flatMap._
 import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -93,6 +94,28 @@ final class KeyValueV2[F[_]: Concurrent: Client](val path: String, val uri: Uri)
     )
     executeWithContextData(PUT(body, uri / "data" / path, token))
   }
+  
+  /**
+   * A special case of `write`:
+   *   - only accepts secrets with type `Map[String, String]`.
+   *   - first performs a read on `path` and compares the existing secrets with `secrets`:
+   *     - If the existing secrets contains all `secrets` no further action is taken.
+   *     - Otherwise the secrets are updated to contain all `secrets`. For the same key values in `secrets` take precedence over the
+   *       values in previous secrets.
+   *     - If no secrets exist in `path` they will be created there.
+   * @param path the path at which to create the secret.
+   * @param secrets the secrets to write/update.
+   */
+  def writeIfNeeded(path: String, secrets: Map[String, String]): F[Unit] =
+    read[Map[String, String]](path).flatMap {
+      case Some(existingSecrets) if existingSecrets.forall { case (k, v) => secrets.get(k).contains(v) } =>
+        // If `existingSecrets` already has all `secrets` we don't perform a write to ensure the secret version doesn't increase ad aeternum
+        Concurrent[F].unit
+      case Some(existingSecrets) =>
+        write(path, existingSecrets ++ secrets).void
+      case None =>
+        write(path, secrets).void
+    }
 
   /**
     * Issues a soft delete of the specified versions of the secret.
