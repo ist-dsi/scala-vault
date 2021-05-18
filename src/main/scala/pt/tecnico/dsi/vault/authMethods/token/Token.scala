@@ -111,7 +111,7 @@ final class Token[F[_]: Concurrent: Client](val path: String, val uri: Uri)(impl
     */
   def renewAccessor(accessor: String, increment: Option[FiniteDuration]): F[Auth] = {
     val body = Map("accessor" -> accessor.asJson, "increment" -> incrementToJson(increment))
-    executeWithContextData(POST(body, uri / "renew-accessor", token))
+    executeWithContextAuth(POST(body, uri / "renew-accessor", token))
   }
 
 
