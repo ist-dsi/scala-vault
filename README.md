@@ -48,8 +48,19 @@ We use [semantic versioning](http://semver.org).
 ## How to publish
 
   1. Launch the vault docker with the following command `docker run --cap-add IPC_LOCK -d --name=dev-vault -p 8200:8200 vault`.
-  3. Ensure your PGP key is added to your agent.
-  2. Run `sbt publish`
+  2. Ensure your PGP key is added to your agent.
+  3. Create the file `~/.sbt/1.0/credentials.sbt` with:
+
+    ```
+    credentials += Credentials(
+      "Sonatype Nexus Repository Manager",
+      "oss.sonatype.org",
+      "<your sonatype username>",
+      "<your sonatype password>"
+    )
+    ```
+
+  4. Run `sbt publish`
 
 ## License
 scala-vault is open source and available under the [MIT license](LICENSE).
