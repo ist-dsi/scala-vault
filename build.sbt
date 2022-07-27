@@ -121,7 +121,7 @@ releaseUseGlobalVersion := false
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 import ReleaseTransformations._
 releaseProcess := Seq[ReleaseStep](
-  releaseStepTask(dependencyUpdates),
+  //releaseStepTask(dependencyUpdates),
   checkSnapshotDependencies,
   inquireVersions,
   runClean,

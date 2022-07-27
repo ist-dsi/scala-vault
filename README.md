@@ -45,5 +45,11 @@ libraryDependencies += "pt.tecnico.dsi" %% "scala-vault" % "0.0.0"
 ```
 We use [semantic versioning](http://semver.org).
 
+## How to publish
+
+  1. Launch the vault docker with the following command `docker run --cap-add IPC_LOCK -d --name=dev-vault -p 8200:8200 vault`.
+  3. Ensure your PGP key is added to your agent.
+  2. Run `sbt publish`
+
 ## License
 scala-vault is open source and available under the [MIT license](LICENSE).
