@@ -5,7 +5,7 @@ name := "scala-vault"
 // ==== Compile Options =================================================================================================
 // ======================================================================================================================
 javacOptions ++= Seq("-Xlint", "-encoding", "UTF-8", "-Dfile.encoding=utf-8")
-scalaVersion := "2.13.6"
+scalaVersion := "2.13.10"
 
 scalacOptions ++= Seq(
   "-encoding", "utf-8",            // Specify character encoding used by source files.
@@ -44,8 +44,8 @@ libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
   "io.circe"        %% "circe-derivation" % "0.13.0-M5",
   "io.circe"        %% "circe-parser"     % "0.13.0", // Just used in Databases
   "com.beachape"    %% "enumeratum-circe" % "1.6.1",
-  "ch.qos.logback"  %  "logback-classic"  % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"        % "3.2.9" % Test,
+  "ch.qos.logback"  %  "logback-classic"  % "1.4.7" % Test,
+  "org.scalatest"   %% "scalatest"        % "3.2.16" % Test,
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
@@ -63,7 +63,6 @@ Test / fork := true
 // ==== Scaladoc ========================================================================================================
 // ======================================================================================================================
 git.remoteRepo := s"git@github.com:ist-dsi/${name.value}.git"
-git.useGitDescribe := true // Get version by calling `git describe` on the repository
 val latestReleasedVersion = SettingKey[String]("latest released version")
 latestReleasedVersion := git.gitDescribedVersion.value.getOrElse("0.0.1-SNAPSHOT")
 

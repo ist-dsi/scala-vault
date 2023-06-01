@@ -6,18 +6,18 @@ import scala.concurrent.duration.Duration
 import scala.util.Try
 import cats.Parallel
 import cats.effect.Concurrent
-import cats.instances.list._
-import cats.instances.try_._
-import cats.syntax.flatMap._
-import cats.syntax.traverse._
+import cats.instances.list.*
+import cats.instances.try_.*
+import cats.syntax.flatMap.*
+import cats.syntax.traverse.*
 import io.circe.{Decoder, JsonObject}
-import io.circe.syntax._
+import io.circe.syntax.*
 import org.http4s.{EntityDecoder, Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
 import pt.tecnico.dsi.vault.{Context, DSL, RolesCRUD, encodeDuration}
-import pt.tecnico.dsi.vault.secretEngines.pki.PKI._
-import pt.tecnico.dsi.vault.secretEngines.pki.models._
+import pt.tecnico.dsi.vault.secretEngines.pki.PKI.*
+import pt.tecnico.dsi.vault.secretEngines.pki.models.*
 
 object PKI {
   import java.io.ByteArrayInputStream
@@ -69,7 +69,7 @@ object PKI {
   */
 final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) { self =>
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   //<editor-fold desc="Configurations">
 
@@ -413,7 +413,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   
   /** Returns the current certificates. */
   def listCertificates(implicit P: Parallel[F]): F[List[X509Certificate]] = {
-    import cats.implicits._
+    import cats.implicits.*
     listCertificatesSerials.flatMap(_.parTraverseFilter(readCertificate))
   }
   //</editor-fold>

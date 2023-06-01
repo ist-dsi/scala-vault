@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.sys.models.KeyStatus
 
 final class Keys[F[_]: Concurrent: Client](uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /**
     * Triggers a rotation of the backend encryption key. This is the key that is used to encrypt data written to the

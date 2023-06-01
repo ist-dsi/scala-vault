@@ -2,8 +2,8 @@ package pt.tecnico.dsi.vault.secretEngines.databases
 
 import org.http4s.Method.POST
 
-trait RootRotation[F[_]] { self: Databases[F, _, _] =>
-  import dsl._
+trait RootRotation[F[_]] { self: Databases[F, ?, ?] =>
+  import dsl.*
   
   /**
     * Rotates the root superuser credentials stored for the database connection.

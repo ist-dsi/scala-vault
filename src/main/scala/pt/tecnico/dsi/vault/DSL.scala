@@ -1,9 +1,9 @@
 package pt.tecnico.dsi.vault
 
 import cats.effect.Concurrent
-import cats.syntax.applicative._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.syntax.applicative.*
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
 import io.circe.{Decoder, Encoder, Printer}
 import org.http4s.Status.{BadRequest, Gone, InternalServerError, NotFound, Successful}
 import org.http4s.client.dsl.Http4sClientDsl

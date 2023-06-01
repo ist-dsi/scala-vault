@@ -4,8 +4,8 @@ import org.http4s.Method.{DELETE, GET, POST}
 import org.http4s.Uri
 import pt.tecnico.dsi.vault.secretEngines.databases.models.{StaticCredential, StaticRole}
 
-trait StaticRoles[F[_]] { self: Databases[F, _, _] =>
-  import dsl._
+trait StaticRoles[F[_]] { self: Databases[F, ?, ?] =>
+  import dsl.*
 
   object staticRoles {
     val uri: Uri = self.uri / "static-roles"

@@ -19,7 +19,7 @@ object Role {
   * @param local Indicates that the token should not be replicated globally and instead be local to the current datacenter.
   */
 case class Role(
-  policies: List[String],
+  consulPolicies: List[String],
   ttl: Duration = Duration.Undefined,
   maxTtl: Duration = Duration.Undefined,
   tokenType: TokenType = TokenType.Client,

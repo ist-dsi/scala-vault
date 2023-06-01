@@ -2,23 +2,23 @@ package pt.tecnico.dsi.vault.authMethods.token
 
 import scala.concurrent.duration.FiniteDuration
 import cats.effect.Concurrent
-import cats.instances.list._
-import cats.syntax.applicative._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
-import cats.syntax.traverse._
-import io.circe.syntax._
+import cats.instances.list.*
+import cats.syntax.applicative.*
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
+import cats.syntax.traverse.*
+import io.circe.syntax.*
 import io.circe.Json
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{GET, POST}
 import org.http4s.Status.Successful
 import pt.tecnico.dsi.vault.{Auth, Context, DSL, RolesCRUD}
-import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token => MToken}
+import pt.tecnico.dsi.vault.authMethods.token.models.{CreateOptions, Role, Token as MToken}
 
 final class Token[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /** @return a list with all token accessor. This requires sudo capability, and access to it should be tightly
     *         controlled as the accessors can be used to revoke very large numbers of tokens and their associated

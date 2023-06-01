@@ -1,9 +1,9 @@
 package pt.tecnico.dsi.vault
 
-import cats.syntax.functor._
+import cats.syntax.functor.*
 import cats.effect.Concurrent
 import io.circe.{Decoder, Encoder}
-import org.http4s._
+import org.http4s.*
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, PUT}
 import org.typelevel.ci.CIString
@@ -17,7 +17,7 @@ import org.typelevel.ci.CIString
     object sys {
       val uri: Uri = self.uri / "sys"
 
-      import pt.tecnico.dsi.vault.sys._
+      import pt.tecnico.dsi.vault.sys.*
 
       val init = new Init[F](uri / "init")
       val health = new Health[F](uri / "health")
@@ -56,8 +56,8 @@ final class VaultClient[F[_]: Concurrent](val baseUri: Uri, val token: String)(i
   object secretEngines {
     import pt.tecnico.dsi.vault.secretEngines.identity.Identity
     import pt.tecnico.dsi.vault.secretEngines.consul.Consul
-    import pt.tecnico.dsi.vault.secretEngines.databases._
-    import pt.tecnico.dsi.vault.secretEngines.kv._
+    import pt.tecnico.dsi.vault.secretEngines.databases.*
+    import pt.tecnico.dsi.vault.secretEngines.kv.*
     import pt.tecnico.dsi.vault.secretEngines.pki.PKI
 
     // The Identity secret engine is always mounted at this location, and cannot be changed.
@@ -75,7 +75,7 @@ final class VaultClient[F[_]: Concurrent](val baseUri: Uri, val token: String)(i
     val path: String = "sys"
     val uri: Uri = self.uri / path
 
-    import pt.tecnico.dsi.vault.sys._
+    import pt.tecnico.dsi.vault.sys.*
 
     val init = new Init[F](s"$path/init", uri / "init") // Does not require a token
     val health = new Health[F](s"$path/health", uri / "health") // Does not require a token
@@ -92,7 +92,7 @@ final class VaultClient[F[_]: Concurrent](val baseUri: Uri, val token: String)(i
   }
 
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   def write[A: Encoder](path: String, body: A, method: Method = PUT): F[Unit] = execute(method.apply(body, uri.addPath(path), tokenHeader))
   def read[A: Decoder](path: String): F[Context[A]] = execute(GET(uri.addPath(path), tokenHeader))

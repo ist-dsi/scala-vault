@@ -1,10 +1,10 @@
 package pt.tecnico.dsi.vault.secretEngines.identity
 
 import cats.effect.Concurrent
-import cats.syntax.applicative._
-import cats.syntax.functor._
-import cats.syntax.flatMap._
-import io.circe.syntax._
+import cats.syntax.applicative.*
+import cats.syntax.functor.*
+import cats.syntax.flatMap.*
+import io.circe.syntax.*
 import io.circe.{Decoder, Encoder}
 import io.circe.derivation.{deriveEncoder, renaming}
 import org.http4s.{Header, Uri}
@@ -12,8 +12,8 @@ import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
 import org.http4s.Status.{NoContent, Ok}
 import pt.tecnico.dsi.vault.{Context, DSL}
-import pt.tecnico.dsi.vault.secretEngines.identity.models._
-import pt.tecnico.dsi.vault.secretEngines.identity.AliasCRUD._
+import pt.tecnico.dsi.vault.secretEngines.identity.models.*
+import pt.tecnico.dsi.vault.secretEngines.identity.AliasCRUD.*
 
 object AliasCRUD {
   case class AliasCreate(name: String, canonicalId: String, mountAccessor: String, id: Option[String] = None)
@@ -22,7 +22,7 @@ object AliasCRUD {
 /** @define name */
 abstract class AliasCRUD[F[_]: Concurrent: Client, T <: Alias: Decoder](basePath: String, baseUri: Uri, baseName: String)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   val path: String = s"$basePath/$baseName-alias"
   val uri: Uri = baseUri / s"$baseName-alias"
@@ -90,7 +90,7 @@ abstract class AliasCRUD[F[_]: Concurrent: Client, T <: Alias: Decoder](basePath
   */
 abstract class BaseEndpoints[F[_]: Concurrent: Client, T <: Base: Decoder](basePath: String, baseUri: Uri, name: String)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   val path: String = s"$basePath/$name"
   val uri: Uri = baseUri / s"$name"
@@ -126,7 +126,7 @@ abstract class BaseEndpoints[F[_]: Concurrent: Client, T <: Base: Decoder](baseP
 
 final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) { self =>
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /**
     * @define name entity

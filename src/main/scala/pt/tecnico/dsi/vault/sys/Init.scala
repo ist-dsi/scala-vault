@@ -10,7 +10,7 @@ import pt.tecnico.dsi.vault.sys.models.{InitOptions, InitResult}
 
 final class Init[F[_]: Concurrent: Client](val path: String, val uri: Uri) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /** @return the initialization status of Vault. */
   val initialized: F[Boolean] = {

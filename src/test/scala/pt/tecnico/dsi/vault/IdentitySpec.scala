@@ -3,15 +3,15 @@ package pt.tecnico.dsi.vault
 import cats.effect.IO
 import org.scalatest.{EitherValues, OptionValues}
 import pt.tecnico.dsi.vault.secretEngines.identity.{AliasCRUD, BaseEndpoints}
-import pt.tecnico.dsi.vault.secretEngines.identity.models._
+import pt.tecnico.dsi.vault.secretEngines.identity.models.*
 
 class IdentitySpec extends Utils with EitherValues with OptionValues {
   import client.secretEngines.identity
 
   def baseEndpoints[T <: Base](endpoints: BaseEndpoints[IO, T], name: String, article: String, create: (String, Map[String, String]) => IO[T]): Unit = {
-    import endpoints._
+    import endpoints.*
     s"list $name" in {
-      import cats.implicits._
+      import cats.implicits.*
       val names = List.tabulate(5)(i => s"list$i")
       for {
         createdModels <- names.traverse(create(_, Map.empty))
@@ -90,7 +90,7 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
   }
 
   "identity - entity" should {
-    import identity.entity._
+    import identity.entity.*
 
     behave like baseEndpoints[Entity](identity.entity, "entity", "an", (name, metadata) => create(name, metadata = metadata))
 
@@ -131,7 +131,7 @@ class IdentitySpec extends Utils with EitherValues with OptionValues {
   }
 
   "identity - group" should {
-    import identity.group._
+    import identity.group.*
 
     behave like baseEndpoints[Group](identity.group, "group", "a", (name, metadata) => create(name, metadata = metadata))
 

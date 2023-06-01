@@ -1,8 +1,8 @@
 package pt.tecnico.dsi.vault.sys
 
 import cats.effect.Concurrent
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
 import io.circe.Codec
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -13,7 +13,7 @@ import pt.tecnico.dsi.vault.sys.models.{Mount, Mounted, TuneOptions}
 
 abstract class MountService[F[_]: Concurrent: Client, T <: Mount: Codec](val path: String, val uri: Uri, vaultClient: VaultClient[F])(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /** Lists all the mounts. */
   val list: F[Map[String, Mounted]] = executeWithContextData(GET(uri, token))

@@ -1,16 +1,16 @@
 package pt.tecnico.dsi.vault.authMethods.approle
 
 import cats.effect.Concurrent
-import cats.syntax.functor._
+import cats.syntax.functor.*
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{GET, POST}
 import pt.tecnico.dsi.vault.{Auth, DSL, RolesCRUD}
-import pt.tecnico.dsi.vault.authMethods.approle.models._
+import pt.tecnico.dsi.vault.authMethods.approle.models.*
 
 final class AppRole[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) { self =>
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   object roles extends RolesCRUD[F, Role](path, uri) {
     override val path: String = s"${self.path}/role"
@@ -69,7 +69,7 @@ final class AppRole[F[_]: Concurrent: Client](val path: String, val uri: Uri)(im
         * @param properties the secret id properties to use while generating the new secret id.
         */
       def createCustom(secretId: String, properties: SecretIdProperties): F[SecretIdResponse] = {
-        import io.circe.syntax._
+        import io.circe.syntax.*
         val body = SecretIdProperties.codec(properties).mapObject(_.add("secret_id", secretId.asJson))
         executeWithContextData[SecretIdResponse](POST(body, uri, token))
       }

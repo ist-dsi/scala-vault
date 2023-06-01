@@ -6,7 +6,7 @@ import io.circe.derivation.{deriveCodec, renaming}
 import io.circe.Codec
 import pt.tecnico.dsi.vault.{decoderDuration, encodeDuration}
 import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
-import pt.tecnico.dsi.vault.secretEngines.databases.models.MySQL.Role._
+import pt.tecnico.dsi.vault.secretEngines.databases.models.MySQL.Role.*
 
 object Role {
   implicit val codec: Codec.AsObject[Role] = deriveCodec(renaming.snakeCase)

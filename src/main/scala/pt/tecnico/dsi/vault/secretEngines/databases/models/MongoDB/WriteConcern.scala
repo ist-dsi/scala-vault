@@ -2,8 +2,8 @@ package pt.tecnico.dsi.vault.secretEngines.databases.models.MongoDB
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import io.circe.{Decoder, Encoder}
-import io.circe.parser._
-import io.circe.syntax._
+import io.circe.parser.*
+import io.circe.syntax.*
 import pt.tecnico.dsi.vault.decoderFiniteDuration
 
 object WriteConcern {

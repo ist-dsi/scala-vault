@@ -10,7 +10,7 @@ import pt.tecnico.dsi.vault.sys.models.{Lease, LeaseRenew}
 
 final class Leases[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   private def literalAppendToPath(uri: Uri, prefix: String): Uri = uri.withPath(Uri.Path.unsafeFromString(s"${uri.path}/$prefix"))
 
@@ -38,7 +38,7 @@ final class Leases[F[_]: Concurrent: Client](val path: String, val uri: Uri)(imp
     */
   def renew(id: String, increment: FiniteDuration = 0.second): F[LeaseRenew] = {
     //Unfortunately we cannot use increment.asJson directly because this endpoint is expecting an Int
-    import io.circe.syntax._
+    import io.circe.syntax.*
     val body = Map("lease_id" -> id.asJson, "increment" -> increment.toSeconds.toInt.asJson)
     execute(PUT(body, uri / "renew", token))
   }

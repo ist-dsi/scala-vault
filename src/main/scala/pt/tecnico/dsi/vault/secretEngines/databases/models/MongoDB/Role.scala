@@ -1,9 +1,9 @@
 package pt.tecnico.dsi.vault.secretEngines.databases.models.MongoDB
 
 import scala.concurrent.duration.Duration
-import io.circe._
+import io.circe.*
 import io.circe.derivation.{deriveCodec, renaming}
-import io.circe.syntax._
+import io.circe.syntax.*
 import pt.tecnico.dsi.vault.decoderDuration
 import pt.tecnico.dsi.vault.secretEngines.databases.models.BaseRole
 

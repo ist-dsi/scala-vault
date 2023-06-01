@@ -1,8 +1,8 @@
 package pt.tecnico.dsi.vault.secretEngines.kv
 
 import cats.effect.Concurrent
-import cats.syntax.functor._
-import cats.syntax.flatMap._
+import cats.syntax.functor.*
+import cats.syntax.flatMap.*
 import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -12,7 +12,7 @@ import pt.tecnico.dsi.vault.secretEngines.kv.models.{Configuration, Metadata, Se
 
 final class KeyValueV2[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /** Sets backend level configurations that are applied to every key in the key-value store. */
   def configure(configuration: Configuration): F[Unit] = execute(POST(configuration, uri / "config", token))
@@ -87,7 +87,7 @@ final class KeyValueV2[F[_]: Concurrent: Client](val path: String, val uri: Uri)
     * @tparam A the type of the secret to be created.
     */
   def write[A: Encoder.AsObject](path: String, secret: A, cas: Option[Int] = None): F[VersionMetadata] = {
-    import io.circe.syntax._
+    import io.circe.syntax.*
     val body = Map(
       "options" -> cas.map(value => Map("cas" -> value)).getOrElse(Map.empty).asJson,
       "data" -> secret.asJson,

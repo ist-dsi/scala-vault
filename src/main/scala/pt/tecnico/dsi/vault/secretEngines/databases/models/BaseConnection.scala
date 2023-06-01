@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.vault.secretEngines.databases.models
 
 import io.circe.Codec
-import io.circe.syntax._
+import io.circe.syntax.*
 
 trait BaseConnectionObject[C <: BaseConnection] {
   val pluginName: String

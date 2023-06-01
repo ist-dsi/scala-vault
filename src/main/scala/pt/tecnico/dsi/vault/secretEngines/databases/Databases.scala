@@ -6,12 +6,12 @@ import org.http4s.{Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
 import pt.tecnico.dsi.vault.{DSL, RolesCRUD}
-import pt.tecnico.dsi.vault.secretEngines.databases.models._
+import pt.tecnico.dsi.vault.secretEngines.databases.models.*
 
 abstract class Databases[F[_]: Client, Connection <: BaseConnection : Codec, Role <: BaseRole : Codec]
                         (val path: String, val uri: Uri)(implicit protected val token: Header.Raw, protected val F: Concurrent[F]) { self =>
   protected val dsl: DSL[F] = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   object connections {
     val path: String = s"${self.path}/config"

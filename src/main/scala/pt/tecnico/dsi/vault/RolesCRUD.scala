@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.vault
 
 import cats.effect.Concurrent
-import cats.syntax.functor._
+import cats.syntax.functor.*
 import io.circe.{Decoder, Encoder}
 import org.http4s.{Header, Uri}
 import org.http4s.client.Client
@@ -9,7 +9,7 @@ import org.http4s.Method.{DELETE, GET, POST}
 
 class RolesCRUD[F[_]: Concurrent: Client, Role: Encoder: Decoder](basePath: String, baseUri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   val path: String = s"$basePath/roles"
   val uri: Uri = baseUri / "roles"

@@ -10,7 +10,7 @@ import pt.tecnico.dsi.vault.secretEngines.consul.models.Role
 
 final class Consul[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /**
     * Configures the access information for Consul. This access information is used so that Vault can communicate

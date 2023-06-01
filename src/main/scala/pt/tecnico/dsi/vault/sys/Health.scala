@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.sys.models.HealthStatus
 
 final class Health[F[_]: Concurrent: Client](val path: String, val uri: Uri) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /** @return the health status of Vault. This matches the semantics of a Consul HTTP health check and provides a
     *         simple way to monitor the health of a Vault instance.

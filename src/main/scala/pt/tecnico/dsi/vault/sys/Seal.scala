@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.sys.models.{SealStatus, UnsealOptions}
 
 final class Seal[F[_]: Concurrent: Client](uri: Uri) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /** @return the seal status of the Vault. */
   val status: F[SealStatus] = execute(GET(uri / "seal-status"))

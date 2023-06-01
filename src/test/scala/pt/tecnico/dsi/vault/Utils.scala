@@ -2,17 +2,17 @@ package pt.tecnico.dsi.vault
 
 import cats.effect.unsafe.implicits.global
 import cats.effect.IO
-import cats.implicits._
+import cats.implicits.*
 import org.http4s.client.blaze.BlazeClientBuilder
-import org.http4s.syntax.literals._
-import org.log4s._
+import org.http4s.syntax.literals.*
+import org.log4s.*
 import org.scalatest.exceptions.TestFailedException
-import org.scalatest._
+import org.scalatest.*
 import org.scalatest.wordspec.AsyncWordSpec
 import org.scalatest.matchers.should.Matchers
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.sys.process._
+import scala.sys.process.*
 import org.http4s.client.Client
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll {

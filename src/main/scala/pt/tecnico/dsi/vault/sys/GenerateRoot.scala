@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.sys.models.RootGenerationProgress
 
 final class GenerateRoot[F[_]: Concurrent: Client](val path: String, val uri: Uri) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /** @return the configuration and progress of the current root generation attempt. */
   val progress: F[RootGenerationProgress] = execute(GET(uri / "attempt"))

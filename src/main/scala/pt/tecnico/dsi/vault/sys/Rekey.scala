@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.sys.models.{BackupKeys, RekeyProgress, RekeyVerifica
 
 final class Rekey[F[_]: Concurrent: Client](uri: Uri) { self =>
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /** @return the configuration and progress of the current rekey attempt. */
   val progress: F[RekeyProgress] = execute(GET(uri / "init"))
@@ -37,7 +37,7 @@ final class Rekey[F[_]: Concurrent: Client](uri: Uri) { self =>
     * @return the configuration and progress of the current rekey attempt.
     */
   def start(shares: Int, threshold: Int, pgpKeys: Option[List[String]] = None, backup: Boolean = false, requireVerification: Boolean = false): F[RekeyProgress] = {
-    import io.circe.syntax._
+    import io.circe.syntax.*
     val body = Map(
       "secret_shares" -> shares.asJson,
       "secret_threshold" -> threshold.asJson,

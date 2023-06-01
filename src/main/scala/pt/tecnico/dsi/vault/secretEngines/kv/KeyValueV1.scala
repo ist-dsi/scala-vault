@@ -9,7 +9,7 @@ import pt.tecnico.dsi.vault.DSL
 
 final class KeyValueV1[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implicit token: Header.Raw) {
   private val dsl = new DSL[F] {}
-  import dsl._
+  import dsl.*
 
   /**
     * Returns a list of key names at the specified location. Folders are suffixed with /.
