@@ -277,3 +277,6 @@ server.pid
 .metals/
 .bloop/
 .bsp/
+
+.vscode
+metals.sbt

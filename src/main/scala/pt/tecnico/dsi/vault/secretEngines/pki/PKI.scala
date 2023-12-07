@@ -272,6 +272,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
       "type" -> `type`.asJson,
       "serial_number" -> serialNumber.asJson,
       "format" -> (Format.Pem: Format).asJson,
+      "issuer_name" -> (names.commonName.concat("issuer").replace('.', '-').replace(' ', '-').toLowerCase()).asJson
     )
     val parts = names.asJsonObject.toIterable ++ subject.asJsonObject.toIterable ++ keySettings.asJsonObject.toIterable ++ singles
     executeWithContextData(POST(JsonObject.fromIterable(parts), uri / "intermediate" / "generate" / `type`.toString.toLowerCase, token))
