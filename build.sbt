@@ -104,7 +104,17 @@ ghpagesPushSite / envVars := Map("SBT_GHPAGES_COMMIT_MESSAGE" -> s"Add Scaladocs
 // ======================================================================================================================
 // ==== Deployment ======================================================================================================
 // ======================================================================================================================
-publishTo := sonatypePublishTo.value
+credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")
+
+publishTo := {
+  // For accounts created after Feb 2021:
+  // val nexus = "https://s01.oss.sonatype.org/"
+  val nexus = "https://fenix-ashes.tecnico.ulisboa.pt/nexus/"
+  if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
+  else Some("releases" at nexus + "repository/dsi-private-repo")
+}
+
+
 sonatypeProfileName := organization.value
 
 licenses += "MIT" -> url("http://opensource.org/licenses/MIT")
