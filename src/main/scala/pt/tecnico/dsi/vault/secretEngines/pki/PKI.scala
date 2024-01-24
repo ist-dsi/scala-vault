@@ -182,7 +182,8 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
       "permitted_dns_domains" -> permittedDNSDomains.asJson,
       "format" -> "pem".asJson,
       "serial_number" -> serialNumber.asJson,
-      "max_path_length" -> maxPathLength.asJson)
+      "max_path_length" -> maxPathLength.asJson,
+      "issuer_name" -> "primary".asJson)
     val parts = names.asJsonObject.toIterable ++ subject.asJsonObject.toIterable ++ keySettings.asJsonObject.toIterable ++ singles
     executeWithContextData(POST(JsonObject.fromIterable(parts), uri / "root" / "generate" / `type`.toString.toLowerCase, token))
   }
@@ -326,8 +327,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
       "use_csr_values" -> useCsrValues.asJson,
       "format" -> (Format.Pem: Format).asJson,
       "serial_number" -> serialNumber.asJson,
-      "max_path_length" -> maxPathLength.asJson,
-      "issuer_ref" -> "default".asJson)
+      "max_path_length" -> maxPathLength.asJson)
     val parts = names.asJsonObject.toIterable ++ subject.asJsonObject.toIterable ++ singles
     executeWithContextData(POST(JsonObject.fromIterable(parts), uri / "root" / "sign-intermediate", token))
   }
