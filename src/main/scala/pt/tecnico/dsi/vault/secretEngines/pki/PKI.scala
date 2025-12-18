@@ -7,6 +7,9 @@ import scala.util.Try
 import cats.Parallel
 import cats.effect.Concurrent
 import cats.instances.list.*
+import cats.syntax.functor.*
+import cats.syntax.applicative.*
+
 import cats.instances.try_.*
 import cats.syntax.flatMap.*
 import cats.syntax.traverse.*
@@ -15,6 +18,7 @@ import io.circe.syntax.*
 import org.http4s.{EntityDecoder, Header, Uri}
 import org.http4s.client.Client
 import org.http4s.Method.{DELETE, GET, POST}
+import org.http4s.Status.{BadRequest, Gone, NotFound, Successful}
 import pt.tecnico.dsi.vault.{Context, DSL, RolesCRUD, encodeDuration}
 import pt.tecnico.dsi.vault.secretEngines.pki.PKI.*
 import pt.tecnico.dsi.vault.secretEngines.pki.models.*
@@ -404,6 +408,10 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
   def readCertificate(serial: String): F[Option[X509Certificate]] = {
     implicit val d = Context.decoder(Decoder[X509Certificate].at("certificate"))
     executeOptionWithContextData[X509Certificate](GET(uri / "cert" / serial))
+    genericExecute(GET(uri / "cert" / serial)) {
+      case Successful(response) => response.as[Context[X509Certificate]].map(Option.apply).map(_.map(_.data))
+      case NotFound(_) | Gone(_) | BadRequest(_) => Option.empty[X509Certificate].pure[F]
+    }
   }
   
   /** Retrieves the certificate with the given `serial`. */
