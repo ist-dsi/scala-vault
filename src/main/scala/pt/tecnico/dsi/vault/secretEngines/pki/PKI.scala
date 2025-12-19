@@ -409,12 +409,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
     genericExecute(GET(uri / "cert" / serial))({
       case Successful(response) => response.as[Context[X509Certificate]].map(Option.apply).map(_.map(_.data))
       case NotFound(_) | Gone(_) | BadRequest(_) => Option.empty[X509Certificate].pure[F]
-    },
-    {
-      case List(errors) if errors.contains("no default issuer currently configured") => {
-        Option.empty[X509Certificate].pure[F]
-      }
-    })
+    }, { case List(errors) if errors.contains("no default issuer currently configured") => Option.empty[X509Certificate].pure[F]})
   }
   
   /** Retrieves the certificate with the given `serial`. */
