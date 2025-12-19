@@ -407,7 +407,6 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
     */
   def readCertificate(serial: String): F[Option[X509Certificate]] = {
     implicit val d = Context.decoder(Decoder[X509Certificate].at("certificate"))
-    executeOptionWithContextData[X509Certificate](GET(uri / "cert" / serial))
     genericExecute(GET(uri / "cert" / serial)) {
       case Successful(response) => response.as[Context[X509Certificate]].map(Option.apply).map(_.map(_.data))
       case NotFound(_) | Gone(_) | BadRequest(_) => Option.empty[X509Certificate].pure[F]
