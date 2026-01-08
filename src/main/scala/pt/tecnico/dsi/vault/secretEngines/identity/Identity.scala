@@ -154,7 +154,7 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
       )
       // If a new entity is created an Ok will be returned with the body containing the entity id.
       // If an entity with `name` already exists a NoContent will be returned.
-      genericExecute(POST(body, uri / "name" / name, token)) {
+      genericExecute(POST(body, this.uri / "name" / name, token)) {
         case Ok(response) =>
           implicit val d: Decoder[String] = Decoder.decodeString.at("id")
           response.as[Context[String]].flatMap(c => applyById(c.data))
@@ -179,7 +179,7 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
         "disabled" -> disabled.asJson,
         "metadata" -> metadata.asJson,
       )
-      execute(POST(body, uri / "id" / id, token))
+      execute(POST(body, this.uri / "id" / id, token))
     }
     /**
       * Updates an entity using `entity` to fetch the values for `id`, `name`, `policies`, `disabled`, and `metadata`.
@@ -216,7 +216,7 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
       *              will be unaltered. If not set, this API will throw an error containing all the conflicts.
       */
     def merge(from: List[String], to: String, force: Boolean = false): F[Unit] =
-      execute(POST(Map("from_entity_ids" -> from.asJson, "to_entity_id" -> to.asJson, "force" -> force.asJson), uri / "merge", token))
+      execute(POST(Map("from_entity_ids" -> from.asJson, "to_entity_id" -> to.asJson, "force" -> force.asJson), this.uri / "merge", token))
   }
 
   /** @define name entity */
@@ -262,7 +262,7 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
       )
       // If a new group is created an Ok will be returned with the body containing the entity id.
       // If a group with `name` already exists a NoContent will be returned.
-      genericExecute(POST(body, uri / "name" / name, token)) {
+      genericExecute(POST(body, this.uri / "name" / name, token)) {
         case Ok(response) =>
           implicit val d: Decoder[String] = Decoder.decodeString.at("id")
           response.as[Context[String]].flatMap(c => applyById(c.data))
@@ -291,7 +291,7 @@ final class Identity[F[_]: Concurrent: Client](val path: String, val uri: Uri)(i
         "type" -> `type`.asJson,
         "metadata" -> metadata.asJson,
       )
-      execute(POST(body, uri / "id" / id, token))
+      execute(POST(body, this.uri / "id" / id, token))
     }
     /**
       * Updates `group`.

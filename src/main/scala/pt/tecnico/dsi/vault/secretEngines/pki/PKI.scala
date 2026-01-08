@@ -287,8 +287,9 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
     * @param certificatePEM Specifies the certificate in PEM format. May optionally append additional CA certificates
     *                       to populate the whole chain, which will then enable returning the full chain from issue and sign operations.
     */
-  def setSignedIntermediate(certificatePEM: String): F[Unit] =
+  def setSignedIntermediate(certificatePEM: String): F[Unit] = {
     execute(POST(Map("certificate" -> certificatePEM), uri / "intermediate" / "set-signed", token))
+  }
   def setSignedIntermediate(certificate: X509Certificate): F[Unit] = setSignedIntermediate(PKI.pemEncode(certificate))
 
   // We could make the result be a dependent type based upon the Type value
