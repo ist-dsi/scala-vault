@@ -288,7 +288,7 @@ final class PKI[F[_]: Concurrent: Client](val path: String, val uri: Uri)(implic
     *                       to populate the whole chain, which will then enable returning the full chain from issue and sign operations.
     */
   def setSignedIntermediate(certificatePEM: String): F[Issuers] = 
-    execute(POST(Map("certificate" -> certificatePEM), uri / "intermediate" / "set-signed", token))
+    executeWithContextData(POST(Map("certificate" -> certificatePEM), uri / "intermediate" / "set-signed", token))
 
   def setSignedIntermediate(certificate: X509Certificate): F[Issuers] = setSignedIntermediate(PKI.pemEncode(certificate))
 
